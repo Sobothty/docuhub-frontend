@@ -9,6 +9,7 @@ import paperReducer from "@/feature/paperSlice/paperSlice";
 import mediaReducer from "@/feature/mediaSlice/mediaSlice";
 import { categoryApi } from "@/feature/apiSlice/categoryApiSlice";
 import { profileApi } from "@/feature/profileSlice/profileSlice";
+import { papersApi } from "@/feature/paperSlice/papers";
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +23,7 @@ export const store = configureStore({
     [apiSlide.reducerPath]: apiSlide.reducer,
     [authApi.reducerPath]: authApi.reducer,
     [categoryApi.reducerPath]: categoryApi.reducer,
+    [papersApi.reducerPath]: papersApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -55,13 +57,20 @@ export const store = configureStore({
           "categoryApi/executeQuery/pending",
           "categoryApi/executeQuery/fulfilled",
           "categoryApi/executeQuery/rejected",
+          "papersApi/executeMutation/pending",
+          "papersApi/executeMutation/fulfilled",
+          "papersApi/executeMutation/rejected",
+          "papersApi/executeQuery/pending",
+          "papersApi/executeQuery/fulfilled",
+          "papersApi/executeQuery/rejected",
         ],
       },
     }).concat(
       apiSlide.middleware,
       authApi.middleware,
       categoryApi.middleware,
-      profileApi.middleware
+      profileApi.middleware,
+      papersApi.middleware
     ),
   devTools: process.env.NODE_ENV !== "production",
 });

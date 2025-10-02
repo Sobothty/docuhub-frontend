@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import {
   FileText,
   CheckCircle,
@@ -23,85 +23,71 @@ import {
   Plus,
   BookOpen,
   TrendingUp,
-} from 'lucide-react';
-import Link from 'next/link';
-import HorizontalCard from '@/components/card/HorizontalCard';
-import { useState } from 'react';
-
-// Updated savedDocuments to match HorizontalCardProps
-const savedDocuments = [
-  {
-    id: 'ml-healthcare-2024', // change id to string for compatibility
-    title: 'Machine Learning Applications in Healthcare',
-    status: 'approved',
-    savedDate: '2024-08-15',
-    feedback: 'Excellent work with comprehensive analysis',
-    progress: 100,
-    fileSize: '2.4 MB',
-    downloads: 45,
-    citations: 8,
-    isWishlist: false,
-    authors: ['Sarah Chen', 'John Doe'],
-    journal: 'Journal of Medical AI',
-    year: '2024',
-    abstract:
-      'This paper explores the applications of machine learning in healthcare, focusing on diagnostic tools and predictive analytics.',
-    tags: ['Machine Learning', 'Healthcare', 'AI'],
-    image: '/placeholder.svg?height=200&width=300',
-  },
-  {
-    id: 'climate-impact-2024', // change id to string for compatibility
-    title: 'Climate Change Impact Analysis',
-    status: 'pending',
-    savedDate: '2024-08-20',
-    feedback: 'Under review by mentor',
-    progress: 75,
-    fileSize: '1.8 MB',
-    downloads: 12,
-    citations: 2,
-    isWishlist: true,
-    authors: ['Emma Thompson'],
-    journal: 'Environmental Science Review',
-    year: '2024',
-    abstract:
-      'An analysis of climate change impacts on coastal ecosystems, with a focus on adaptation strategies.',
-    tags: ['Climate Change', 'Environment', 'Sustainability'],
-    image: '/placeholder.svg?height=200&width=300',
-  },
-  {
-    id: 'economic-recovery-2024', // change id to string for compatibility
-    title: 'Economic Recovery Patterns',
-    status: 'revision',
-    savedDate: '2024-08-18',
-    feedback: 'Please address the methodology section',
-    progress: 60,
-    fileSize: '3.1 MB',
-    downloads: 8,
-    citations: 1,
-    isWishlist: false,
-    authors: ['Alex Kim'],
-    journal: 'Economic Studies Quarterly',
-    year: '2024',
-    abstract:
-      'This study examines patterns of economic recovery post-recession, with emphasis on regional differences.',
-    tags: ['Economics', 'Recovery', 'Policy'],
-    image: '/placeholder.svg?height=200&width=300',
-  },
-];
+} from "lucide-react";
+import Link from "next/link";
+import HorizontalCard from "@/components/card/HorizontalCard";
+import { useState } from "react";
+import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
+import { useGetPapersByAuthorQuery } from "@/feature/paperSlice/papers";
 
 export default function StudentOverviewPage() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const { data: user, error, isLoading } = useGetUserProfileQuery();
+
+  if (user?.user.isStudent === false) {
+    window.location.href = "/";
+  }
+
+  // Fetch author's papers with pagination
+  const {
+    data: papersData,
+    error: paperError,
+    isLoading: papersLoading,
+  } = useGetPapersByAuthorQuery({
+    page: 0,
+    size: 10,
+    sortBy: "createdAt",
+    direction: "desc",
+  });
+
+  // Extract papers from the response
+  const authorPapers = papersData?.papers?.content || [];
+  console.log(authorPapers);
 
   // Filter documents based on search query
-  const filteredDocuments = savedDocuments.filter((doc) =>
-    doc.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredDocuments = authorPapers
+    .filter((paper) =>
+      paper.title.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .map((paper) => ({
+      id: paper.uuid,
+      title: paper.title,
+      status: paper.status,
+      savedDate: new Date(paper.createdAt).toLocaleDateString("en-US"),
+      feedback: paper.isApproved ? "Approved" : "Under review",
+      progress: paper.isApproved ? 100 : 75,
+      fileSize: "2.4 MB", // You may need to calculate this from fileUrl
+      downloads: 0, // Add this to your backend if needed
+      citations: 0, // Add this to your backend if needed
+      isWishlist: false,
+      authors: [paper.authorUuid],
+      journal: paper.categoryNames[0] || "N/A",
+      year: new Date(paper.publishedAt || paper.createdAt)
+        .getFullYear()
+        .toString(),
+      abstract: paper.abstractText,
+      tags: paper.categoryNames,
+      image: paper.thumbnailUrl || "/placeholder.svg?height=200&width=300",
+    }));
 
   return (
     <DashboardLayout
       userRole="student"
-      userName="Sarah Chen"
-      userAvatar="/placeholder.svg?height=40&width=40"
+      userName={user?.user.fullName}
+      userAvatar={
+        user?.user.imageUrl ||
+        "https://www.shutterstock.com/image-vector/avatar-gender-neutral-silhouette-vector-600nw-2470054311.jpg"
+      }
     >
       <div className="space-y-6">
         {/* Header */}
@@ -128,15 +114,13 @@ export default function StudentOverviewPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Saved Documents
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">Documents</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{savedDocuments.length}</div>
+              <div className="text-2xl font-bold">{authorPapers.length}</div>
               <p className="text-xs text-muted-foreground">
-                <span className="text-green-600">+1</span> this month
+                {papersLoading ? "Loading..." : "Total papers submitted"}
               </p>
             </CardContent>
           </Card>
@@ -144,16 +128,16 @@ export default function StudentOverviewPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Wishlist Items
+                Approved Papers
               </CardTitle>
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {savedDocuments.filter((doc) => doc.isWishlist).length}
+                {authorPapers.filter((p) => p.isApproved).length}
               </div>
               <p className="text-xs text-muted-foreground">
-                <span className="text-green-600">25%</span> of total
+                Published documents
               </p>
             </CardContent>
           </Card>
@@ -166,9 +150,9 @@ export default function StudentOverviewPage() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              {/* <div className="text-2xl font-bold">
                 {savedDocuments.reduce((sum, doc) => sum + doc.downloads, 0)}
-              </div>
+              </div> */}
               <p className="text-xs text-muted-foreground">
                 <span className="text-green-600">+10</span> this week
               </p>
@@ -181,9 +165,9 @@ export default function StudentOverviewPage() {
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              {/* <div className="text-2xl font-bold">
                 {savedDocuments.reduce((sum, doc) => sum + doc.citations, 0)}
-              </div>
+              </div> */}
               <p className="text-xs text-muted-foreground">Academic impact</p>
             </CardContent>
           </Card>
@@ -193,58 +177,60 @@ export default function StudentOverviewPage() {
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="documents">Wishlist</TabsTrigger>
+            <TabsTrigger value="documents">My Papers</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Saved/Wishlist Documents */}
+              {/* Recent Papers */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Saved & Wishlist Documents</CardTitle>
+                  <CardTitle>Recent Papers</CardTitle>
                   <CardDescription>
-                    Your saved papers and wishlist items
+                    Your recently submitted papers
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {savedDocuments.slice(0, 3).map((doc) => (
-                      <div key={doc.id} className="p-3 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-sm">{doc.title}</h4>
-                          <Badge
-                            variant={doc.isWishlist ? 'secondary' : 'default'}
-                            className="capitalize"
-                          >
-                            {doc.isWishlist ? 'Wishlist' : 'Saved'}
-                          </Badge>
+                  {papersLoading ? (
+                    <div className="text-center py-4">Loading papers...</div>
+                  ) : paperError ? (
+                    <div className="text-center py-4 text-red-500">
+                      Failed to load papers
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {authorPapers.slice(0, 3).map((paper) => (
+                        <div key={paper.uuid} className="p-3 rounded-lg border">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-medium text-sm">
+                              {paper.title}
+                            </h4>
+                            <Badge
+                              variant={
+                                paper.isApproved ? "default" : "secondary"
+                              }
+                              className="capitalize"
+                            >
+                              {paper.status}
+                            </Badge>
+                          </div>
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>
+                              Submitted:{" "}
+                              {new Date(paper.createdAt).toLocaleDateString()}
+                            </span>
+                            <span>{paper.categoryNames.join(", ")}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Progress value={doc.progress} className="flex-1" />
-                          <span className="text-xs text-muted-foreground">
-                            {doc.progress}%
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                          <span>{doc.feedback}</span>
-                          <span>{doc.fileSize}</span>
-                        </div>
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>Saved: {doc.savedDate}</span>
-                          <span>
-                            {doc.downloads} downloads • {doc.citations}{' '}
-                            citations
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                   <Button
                     variant="outline"
                     className="w-full mt-4 bg-transparent"
                     asChild
                   >
-                    <Link href="/student/saved">View All Saved Documents</Link>
+                    <Link href="/student/proposals">View All Papers</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -321,10 +307,10 @@ export default function StudentOverviewPage() {
               <CardContent>
                 <div className="flex flex-wrap gap-2">
                   {[
-                    'Machine Learning',
-                    'Healthcare Technology',
-                    'Data Analysis',
-                    'Computer Vision',
+                    "Machine Learning",
+                    "Healthcare Technology",
+                    "Data Analysis",
+                    "Computer Vision",
                   ].map((interest, index) => (
                     <Badge key={index} variant="secondary">
                       {interest}
@@ -344,16 +330,16 @@ export default function StudentOverviewPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Saved & Wishlist Documents</CardTitle>
+                    <CardTitle>My Papers</CardTitle>
                     <CardDescription>
-                      Manage your saved academic papers and wishlist items
+                      Manage your submitted academic papers
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
                     <div className="relative">
                       <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                       <Input
-                        placeholder="Search saved documents..."
+                        placeholder="Search papers..."
                         className="pl-8 w-64"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -367,30 +353,42 @@ export default function StudentOverviewPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {filteredDocuments.map((doc) => (
-                    <HorizontalCard
-                      key={doc.id}
-                      id={doc.id} // use id prop instead of paperId
-                      title={doc.title}
-                      authors={doc.authors}
-                      authorImage="/placeholder.svg?height=24&width=24"
-                      journal={doc.journal}
-                      year={doc.year}
-                      citations={`${doc.citations}`}
-                      abstract={doc.abstract}
-                      tags={doc.tags}
-                      image={doc.image}
-                      isBookmarked={doc.isWishlist}
-                      onDownloadPDF={() =>
-                        console.log(`Download PDF for ${doc.title}`)
-                      }
-                      onToggleBookmark={() =>
-                        console.log(`Toggle bookmark for ${doc.title}`)
-                      }
-                    />
-                  ))}
-                </div>
+                {papersLoading ? (
+                  <div className="text-center py-8">Loading your papers...</div>
+                ) : paperError ? (
+                  <div className="text-center py-8 text-red-500">
+                    Failed to load papers. Please try again.
+                  </div>
+                ) : filteredDocuments.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No papers found. Start by submitting your first paper!
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredDocuments.map((doc) => (
+                      <HorizontalCard
+                        key={doc.id}
+                        id={doc.id}
+                        title={doc.title}
+                        authors={doc.authors}
+                        authorImage="/placeholder.svg?height=24&width=24"
+                        journal={doc.journal}
+                        year={doc.year}
+                        citations={doc.citations.toString()}
+                        abstract={doc.abstract || ""}
+                        tags={doc.tags}
+                        image={doc.image}
+                        isBookmarked={doc.isWishlist}
+                        onDownloadPDF={() =>
+                          window.open(`/papers/${doc.id}`, "_blank")
+                        }
+                        onToggleBookmark={() =>
+                          console.log(`Toggle bookmark for ${doc.title}`)
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
