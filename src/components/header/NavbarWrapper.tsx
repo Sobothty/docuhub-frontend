@@ -32,8 +32,7 @@ function NavbarSkeleton() {
 export default function NavbarWrapper() {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-  const { status } = useSession(); 
-  const { isAuthenticated } = useAuth();
+  const { data } = useSession();
   
   // Prevent hydration mismatch by rendering nothing until mounted on client
   useEffect(() => {
@@ -51,8 +50,8 @@ export default function NavbarWrapper() {
   if (!mounted) return null;
 
   // Show skeleton while NextAuth is resolving
-  if (status === 'loading') return <NavbarSkeleton />;
+  if (status) return <NavbarSkeleton />;
 
-  const showUser = status === 'authenticated' || isAuthenticated;
+  const showUser = data?.user.
   return showUser ? <NavbarUser /> : <NavbarGuest />;
 }
