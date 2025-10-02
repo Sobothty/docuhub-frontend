@@ -1,0 +1,164 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* Theme configuration */
+:root {
+  /* Brand Colors */
+  --primary: #1e2a38;
+  --secondary: #2563eb;
+  --accent: #f59e0b;
+  --accent-hover: #e38519;
+  --secondary-hover: #1951cc;
+  --background-light: #f3f4f6;
+  --background-dark: #0f172a;
+  --text-white: #ffffff;
+  --text-dark: #4b4b4b;
+  --dynamic: var(--secondary);
+
+  --font-english: var(--font-english); /* Poppins */
+  --font-khmer: var(--font-khmer); /* Kantumroy Pro */
+
+  /* General UI Tokens */
+  --background: var(--background-light);
+  --foreground: var(--text-dark);
+  --card: #ffffff;
+  --card-foreground: var(--text-dark);
+  --border: #e5e7eb;
+  --radius: 0.625rem;
+}
+
+.dark {
+  --background: var(--background-dark);
+  --foreground: var(--text-white);
+  --card: #1e293b;
+  --card-foreground: var(--text-white);
+  --border: #334155;
+  --dynamic: var(--primary);
+}
+
+/* Tailwind theme bindings */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --secondary-hover: var(--secondary-hover);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-dynamic: var(--dynamic);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* Base styles */
+@layer base {
+  body {
+    @apply bg-background text-foreground font-sans;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  body {
+    font-family: var(--font-english), sans-serif;
+  }
+  /* Switch base font automatically by current document language */
+  html[lang='kh'] body {
+    font-family: var(--font-khmer), sans-serif;
+  }
+  html[lang='en'] body {
+    font-family: var(--font-english), sans-serif;
+  }
+  .font-khmer {
+    font-family: var(--font-khmer), sans-serif;
+  }
+}
+
+/* Typography utilities */
+@layer utilities {
+  .text-hero-title {
+    @apply text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-relaxed;
+  }
+  .text-hero-subtitle {
+    @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold;
+  }
+  .text-section-headings {
+    @apply text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold;
+  }
+  .text-subheadings {
+    @apply text-base sm:text-lg md:text-xl lg:text-2xl font-semibold;
+  }
+  .text-body-text {
+    @apply text-sm sm:text-base md:text-lg lg:text-xl font-normal;
+  }
+  .text-small-text {
+    @apply text-xs sm:text-sm md:text-base lg:text-lg font-normal;
+  }
+  .text-buttons {
+    @apply text-sm sm:text-base md:text-lg lg:text-xl font-medium;
+  }
+  .text-navigation-links {
+    @apply text-xs sm:text-sm md:text-base lg:text-lg font-medium;
+  }
+  .text-footer-links {
+    @apply text-xs sm:text-sm md:text-base lg:text-lg font-normal;
+  }
+  .text-quote {
+    @apply text-base sm:text-lg md:text-xl lg:text-2xl italic;
+  }
+  .text-descriptions {
+    @apply text-base sm:text-lg md:text-xl lg:text-2xl font-normal;
+  }
+  .text-display-large {
+    @apply text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold;
+  }
+  .text-display-alt {
+    @apply text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-relaxed;
+  }
+
+  /* Color */
+  /* Active link text */
+  .sidebar-active-text {
+    @apply font-medium;
+    color: white; /* Light mode default */
+  }
+  .dark .sidebar-active-text {
+    color: var(--color-primary); /* Dark mode override */
+  }
+
+  /* Inactive link text */
+  .sidebar-inactive-text {
+    @apply font-medium;
+    color: var(--color-primary); /* Light mode default */
+  }
+  .dark .sidebar-inactive-text {
+    color: white; /* Dark mode override */
+  }
+}
+
+/* Components */
+@layer components {
+  .card {
+    @apply bg-card text-card-foreground p-6 rounded-lg border;
+  }
+}
+/* Removed duplicate body font that overrode language-specific rules */
+.khmer-text {
+  font-family: var(--font-khmer), serif;
+}
+@keyframes infinite-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-infinite-scroll {
+  display: flex;
+  animation: infinite-scroll 30s linear infinite;
+}
