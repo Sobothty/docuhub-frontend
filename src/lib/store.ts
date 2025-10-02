@@ -8,6 +8,7 @@ import userReducer from "@/feature/users/userSlice";
 import paperReducer from "@/feature/paperSlice/paperSlice";
 import mediaReducer from "@/feature/mediaSlice/mediaSlice";
 import { categoryApi } from "@/feature/apiSlice/categoryApiSlice";
+import { profileApi } from "@/feature/profileSlice/profileSlice";
 
 export const store = configureStore({
   reducer: {
@@ -17,6 +18,7 @@ export const store = configureStore({
     user: userReducer,
     paper: paperReducer,
     media: mediaReducer,
+    [profileApi.reducerPath]: profileApi.reducer,
     [apiSlide.reducerPath]: apiSlide.reducer,
     [authApi.reducerPath]: authApi.reducer,
     [categoryApi.reducerPath]: categoryApi.reducer,
@@ -26,41 +28,42 @@ export const store = configureStore({
       serializableCheck: {
         // Ignore these action types
         ignoredActions: [
-          'persist/PERSIST', 
-          'persist/REHYDRATE',
+          "persist/PERSIST",
+          "persist/REHYDRATE",
           // RTK Query internal actions for all reducerPaths used
-          'api/executeMutation/pending',
-          'api/executeMutation/fulfilled',
-          'api/executeMutation/rejected',
-          'api/executeQuery/pending',
-          'api/executeQuery/fulfilled',
-          'api/executeQuery/rejected',
-          'apiSlide/executeMutation/pending',
-          'apiSlide/executeMutation/fulfilled',
-          'apiSlide/executeMutation/rejected',
-          'apiSlide/executeQuery/pending',
-          'apiSlide/executeQuery/fulfilled',
-          'apiSlide/executeQuery/rejected',
-          'authApi/executeMutation/pending',
-          'authApi/executeMutation/fulfilled',
-          'authApi/executeMutation/rejected',
-          'authApi/executeQuery/pending',
-          'authApi/executeQuery/fulfilled',
-          'authApi/executeQuery/rejected',
-          'categoryApi/executeMutation/pending',
-          'categoryApi/executeMutation/fulfilled',
-          'categoryApi/executeMutation/rejected',
-          'categoryApi/executeQuery/pending',
-          'categoryApi/executeQuery/fulfilled',
-          'categoryApi/executeQuery/rejected',
+          "api/executeMutation/pending",
+          "api/executeMutation/fulfilled",
+          "api/executeMutation/rejected",
+          "api/executeQuery/pending",
+          "api/executeQuery/fulfilled",
+          "api/executeQuery/rejected",
+          "apiSlide/executeMutation/pending",
+          "apiSlide/executeMutation/fulfilled",
+          "apiSlide/executeMutation/rejected",
+          "apiSlide/executeQuery/pending",
+          "apiSlide/executeQuery/fulfilled",
+          "apiSlide/executeQuery/rejected",
+          "authApi/executeMutation/pending",
+          "authApi/executeMutation/fulfilled",
+          "authApi/executeMutation/rejected",
+          "authApi/executeQuery/pending",
+          "authApi/executeQuery/fulfilled",
+          "authApi/executeQuery/rejected",
+          "categoryApi/executeMutation/pending",
+          "categoryApi/executeMutation/fulfilled",
+          "categoryApi/executeMutation/rejected",
+          "categoryApi/executeQuery/pending",
+          "categoryApi/executeQuery/fulfilled",
+          "categoryApi/executeQuery/rejected",
         ],
       },
     }).concat(
       apiSlide.middleware,
       authApi.middleware,
-      categoryApi.middleware
+      categoryApi.middleware,
+      profileApi.middleware
     ),
-  devTools: process.env.NODE_ENV !== "production"
+  devTools: process.env.NODE_ENV !== "production",
 });
 
 export type RootState = ReturnType<typeof store.getState>;

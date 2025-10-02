@@ -209,30 +209,6 @@ export default function Home() {
 
   const papersToShow = apiPapers.length > 0 ? apiPapers : researchPapers;
 
-  useEffect(() => {
-    const fetchProtected = async () => {
-      try {
-        const res = await fetch("/api/auth/tokens", {
-          method: "GET",
-          credentials: "include",
-        });
-
-        let body: unknown;
-        try {
-          body = await res.json();
-        } catch {
-          body = await res.text();
-        }
-
-        console.log("Protected data:", body);
-      } catch (err) {
-        console.error("❌ Fetch error:", err);
-      }
-    };
-
-    fetchProtected();
-  }, []);
-
   return (
     <div className="min-h-screen flex flex-col">
       

@@ -1,15 +1,20 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { Moon, Sun, Bell, Heart, User as UserIcon, Settings, LogOut, ChevronDown } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import Image from 'next/image';
-import { signOut, useSession } from 'next-auth/react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import {
+  Moon,
+  Sun,
+  Bell,
+  Heart,
+  User,
+  Settings,
+  LogOut,
+  ChevronDown,
+} from "lucide-react";
+import { useTranslation } from "react-i18next";
+import Image from "next/image";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,111 +22,140 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useGetUserProfileQuery, useGetCurrentUserQuery } from '@/feature/apiSlice/userAuthApi';
-import { CurrentUser, UserProfileResponse, UserResponse } from '@/types/userAuthType';
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
+import { signOut } from "next-auth/react";
 
 export default function NavbarUser() {
   const pathname = usePathname();
   const router = useRouter();
-  const { t, i18n } = useTranslation('common');
-  const { status } = useSession();
+  const { t, i18n } = useTranslation("common");
+  const { data: user, error, isLoading } = useGetUserProfileQuery();
+
+  console.log("Profile data:", user);
+  console.log("Profile error:", error);
+  console.log("Profile loading:", isLoading);
+
   const [mounted, setMounted] = useState(false);
-  const [, forceUpdate] = useState(0); // used to re-render
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [currentLang, setCurrentLang] = useState<"en" | "kh">("en");
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [currentLang, setCurrentLang] = useState<'en' | 'kh'>('en');
-  const isAuthenticated = status === 'authenticated';
-  const { data: currentUser, isLoading: isLoadingCurrent, error: errorCurrent } = useGetCurrentUserQuery(undefined, { skip: !isAuthenticated });
-  const { data: profile, isLoading: isLoadingProfile, error: errorProfile } = useGetUserProfileQuery(undefined, { skip: !isAuthenticated });
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
 
-    const savedDarkMode = localStorage.getItem('darkMode');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initialDarkMode = savedDarkMode ? savedDarkMode === 'true' : prefersDark;
+    const savedDarkMode = localStorage.getItem("darkMode");
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
+    const initialDarkMode = savedDarkMode
+      ? savedDarkMode === "true"
+      : prefersDark;
     setIsDarkMode(initialDarkMode);
-    document.documentElement.classList.toggle('dark', initialDarkMode);
+    document.documentElement.classList.toggle("dark", initialDarkMode);
 
-    if (i18n?.language) setCurrentLang(i18n.language as 'en' | 'kh');
+    if (i18n?.language) setCurrentLang(i18n.language as "en" | "kh");
   }, [i18n]);
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
-    document.documentElement.classList.toggle('dark', newMode);
-    localStorage.setItem('darkMode', newMode.toString());
+    document.documentElement.classList.toggle("dark", newMode);
+    localStorage.setItem("darkMode", newMode.toString());
   };
 
   const toggleLanguage = async () => {
     if (!mounted || !i18n?.changeLanguage) return;
-    const newLang = currentLang === 'en' ? 'kh' : 'en';
+    const newLang = currentLang === "en" ? "kh" : "en";
     try {
       await i18n.changeLanguage(newLang);
       setCurrentLang(newLang);
-      // Force re-render to avoid hydration issues after language switch
-      forceUpdate((n) => n + 1);
+      // Force re-render after language change
+      setMounted(false);
+      setTimeout(() => setMounted(true), 0);
     } catch (err) {
-      console.error('Failed to change language', err);
+      console.error("Failed to change language", err);
     }
   };
 
-  const navLinks = [
-    { path: '/', name: t('home') },
-    { path: '/browse', name: t('browse') },
-    { path: '/about', name: t('about') },
-    { path: '/contact', name: t('contact') },
-  ];
-
-  // Type guard to detect UserProfileResponse
-  const isUserProfileResponse = (u: unknown): u is UserProfileResponse => {
-    return !!u && typeof u === 'object' && 'user' in (u as Record<string, unknown>);
+  const getInitials = (name: string | undefined) => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
-  // Normalize image URL; if it's a bare filename, prepend CDN base
-  const getImageSrc = (imageUrl?: string | null): string | undefined => {
-    if (!imageUrl) return undefined;
-    if (/^https?:\/\//i.test(imageUrl)) return imageUrl;
-    const cdnBase = process.env.NEXT_PUBLIC_CDN_BASE || 'https://s3.docuhub.me/docuhub';
-    return `${cdnBase}/${imageUrl.replace(/^\/+/, '')}`;
+  const getRoleBadge = () => {
+    if (!user) return null;
+    if (user.adviser)
+      return (
+        <Badge variant="secondary" className="text-xs">
+          Mentor
+        </Badge>
+      );
+    if (user.student)
+      return (
+        <Badge variant="outline" className="text-xs">
+          Student
+        </Badge>
+      );
+    return (
+      <Badge variant="default" className="text-xs">
+        User
+      </Badge>
+    );
   };
 
-  // Prefer full profile payload for display, fallback to currentId (id-only)
-  const user: CurrentUser | UserProfileResponse | undefined = profile ?? currentUser;
-  // Extract display user details if profile shape is available
-  const displayUser: UserResponse | undefined =
-    user && isUserProfileResponse(user) ? user.user : undefined;
-  const isStudent = !!(displayUser?.isStudent);
-  const isAdviser = !!(displayUser?.isAdvisor);
-  const isLoading = isLoadingCurrent || isLoadingProfile;
-  const error = errorCurrent || errorProfile;
-  console.log('NavbarUser profile:', { user, displayUser, isStudent, isAdviser, error, isLoading });
-
-  const getInitials = (name?: string | null, slug?: string | null) => {
-    const base = (name || slug || 'User').trim();
-    const parts = base.split(' ');
-    const initials = parts.length >= 2 ? `${parts[0][0]}${parts[1][0]}` : base.slice(0, 2);
-    return initials.toUpperCase();
-  };
-
-  const roleBadge = () => {
-    if (isAdviser) return <Badge variant="secondary">Mentor</Badge>;
-    if (isStudent) return <Badge variant="outline">Student</Badge>;
-    return <Badge variant="default">User</Badge>;
+  const handleLogout = () => {
+    signOut({
+      callbackUrl: "/",
+      redirect: true,
+    });
   };
 
   const handleProfileClick = () => {
-    if (displayUser?.isAdmin) return router.push('/admin');
-    if (displayUser?.isAdvisor) return router.push('/mentor');
-    if (displayUser?.isStudent) return router.push('/student');
-    return router.push('/profile');
+    if (
+      user?.user.isUser &&
+      !user?.user.isAdvisor &&
+      !user.user.isStudent &&
+      !user?.user.isAdmin
+    ) {
+      router.push(`/users/${user.user.uuid}`);
+    } else if (
+      user?.user.isUser &&
+      user?.user.isAdvisor &&
+      !user.user.isStudent &&
+      !user?.user.isAdmin
+    ) {
+      router.push("/mentor");
+    } else if (
+      user?.user.isUser &&
+      !user?.user.isAdvisor &&
+      user.user.isStudent &&
+      !user?.user.isAdmin
+    ) {
+      router.push("/student");
+    }
   };
 
   if (!mounted) return null;
 
+  const navLinks = [
+    { path: "/", name: t("home") },
+    { path: "/browse", name: t("browse") },
+    { path: "/about", name: t("about") },
+    { path: "/contact", name: t("contact") },
+  ];
+
   return (
-    <nav className="fixed top-14 left-0 w-full z-40 border-b border-border py-2 shadow-md backdrop-blur-sm bg-background/95">
+    <nav className="fixed top-14 left-0 w-full z-40 border-b bg-background/95 backdrop-blur-sm border-border py-2 shadow-md transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
         <Link href="/" className="inline-block">
           <Image
@@ -133,21 +167,24 @@ export default function NavbarUser() {
             priority
           />
         </Link>
+
+        {/* Desktop nav */}
         <div className="hidden md:flex space-x-6">
           {navLinks.map((link, idx) => (
             <Link
               key={idx}
               href={link.path}
-              className={`relative text-foreground hover:text-accent transition-all duration-200 hover:scale-105 ${
+              className={`transition-all duration-200 ${
                 pathname === link.path
-                  ? 'text-accent font-semibold after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:bg-accent after:w-full'
-                  : ''
+                  ? "text-accent font-semibold border-b-2 border-accent pb-1"
+                  : "text-foreground hover:text-accent hover:scale-105"
               }`}
             >
               {link.name}
             </Link>
           ))}
         </div>
+
         {/* Desktop actions */}
         <div className="hidden md:flex items-center space-x-4">
           <button
@@ -160,18 +197,21 @@ export default function NavbarUser() {
               <Moon className="h-5 w-5 text-secondary" />
             )}
           </button>
+
           <button className="p-2 rounded-full hover:bg-muted transition">
             <Bell className="h-5 w-5 text-secondary" />
           </button>
+
           <button className="p-2 rounded-full hover:bg-muted transition">
             <Heart className="h-5 w-5 text-secondary" />
           </button>
+
           <div
             className="flex items-center space-x-2 cursor-pointer"
             onClick={toggleLanguage}
           >
             <Image
-              src={currentLang === 'en' ? '/flag-UK.svg' : '/flag-Cam.svg'}
+              src={currentLang === "en" ? "/flag-UK.svg" : "/flag-Cam.svg"}
               alt="flag"
               width={45}
               height={25}
@@ -181,80 +221,81 @@ export default function NavbarUser() {
               {currentLang.toUpperCase()}
             </span>
           </div>
-          {/* Desktop user dropdown */}
-          <DropdownMenu>
+
+          {/* User Profile Dropdown */}
+          <DropdownMenu open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-10 px-2 flex items-center gap-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage
-                    src={getImageSrc(displayUser?.imageUrl)}
-                    alt={displayUser?.userName || 'User'}
-                    onError={(e) => {
-                      const img = e.currentTarget as HTMLImageElement;
-                      img.style.display = 'none';
-                    }}
-                  />
-                  <AvatarFallback>{getInitials(displayUser?.fullName, displayUser?.slug)}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col items-start">
-                  <span className="text-sm font-medium leading-4">{displayUser?.userName || 'User'}</span>
-                  <div className="text-[10px] mt-0.5">{roleBadge()}</div>
-                </div>
-                <ChevronDown className="h-4 w-4 opacity-70" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64">
-              <DropdownMenuLabel>
-                <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                className="relative h-10 w-auto px-2 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center space-x-2">
                   <Avatar className="h-8 w-8">
                     <AvatarImage
-                      src={getImageSrc(displayUser?.imageUrl)}
-                      alt={displayUser?.userName || 'User'}
-                      onError={(e) => {
-                        const img = e.currentTarget as HTMLImageElement;
-                        img.style.display = 'none';
-                      }}
+                      src={
+                        user?.user.imageUrl ||
+                        "https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png"
+                      }
+                      alt={user?.user.firstName || "User"}
                     />
-                    <AvatarFallback>{getInitials(displayUser?.fullName, displayUser?.slug)}</AvatarFallback>
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {user ? getInitials(user.user.slug) : "U"}
+                    </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium truncate">{displayUser?.fullName || 'User'}</span>
-                      {roleBadge()}
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate">{displayUser?.email || 'user@example.com'}</p>
+                  <div className="hidden md:flex flex-col items-start">
+                    <span className="text-sm font-medium truncate max-w-24">
+                      {user?.user.userName || "User"}
+                    </span>
+                    {getRoleBadge()}
                   </div>
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {user?.user.fullName || "User"}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.user.email || "user@example.com"}
+                  </p>
+                  <div className="mt-1">{getRoleBadge()}</div>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleProfileClick} className="cursor-pointer">
-                <UserIcon className="h-4 w-4 mr-2" /> Profile
+              <DropdownMenuItem onClick={handleProfileClick}>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/profile/settings" className="cursor-pointer">
-                  <Settings className="h-4 w-4 mr-2" /> Settings
+                <Link href="/profile/settings">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/profile/discussions" className="cursor-pointer">
-                  <Bell className="h-4 w-4 mr-2" /> Notifications
+                <Link href="/profile/discussions">
+                  <Bell className="mr-2 h-4 w-4" />
+                  <span>Notifications</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/profile/downloads" className="cursor-pointer">
-                  <Heart className="h-4 w-4 mr-2" /> Saved Papers
+                <Link href="/profile/downloads">
+                  <Heart className="mr-2 h-4 w-4" />
+                  <span>Saved Papers</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-red-600 focus:text-red-600 cursor-pointer"
-                onClick={() => signOut({ callbackUrl: '/' })}
-              >
-                <LogOut className="h-4 w-4 mr-2" /> Log Out
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
         {/* Mobile hamburger */}
         <button
           className="md:hidden p-2 rounded-lg border border-border text-foreground"
@@ -269,8 +310,10 @@ export default function NavbarUser() {
 
       {/* Mobile menu */}
       <div
-        className={`md:hidden border-t border-border bg-background overflow-hidden transition-all duration-300 ease-in-out ${
-          mobileOpen ? 'max-h-96' : 'max-h-0'
+        className={`md:hidden border-t border-border bg-background/95 backdrop-blur-sm transition-all duration-300 ease-in-out ${
+          mobileOpen
+            ? "max-h-96 opacity-100"
+            : "max-h-0 opacity-0 overflow-hidden"
         }`}
       >
         <div className="px-4 py-3 flex flex-col gap-3">
@@ -280,8 +323,8 @@ export default function NavbarUser() {
               href={link.path}
               className={`transition ${
                 pathname === link.path
-                  ? 'text-accent font-semibold'
-                  : 'text-foreground hover:text-accent'
+                  ? "text-accent font-semibold"
+                  : "text-foreground hover:text-accent"
               }`}
               onClick={() => setMobileOpen(false)}
             >
@@ -304,7 +347,7 @@ export default function NavbarUser() {
               onClick={toggleLanguage}
             >
               <Image
-                src={currentLang === 'en' ? '/flag-UK.svg' : '/flag-Cam.svg'}
+                src={currentLang === "en" ? "/flag-UK.svg" : "/flag-Cam.svg"}
                 alt="flag"
                 width={32}
                 height={20}
@@ -314,31 +357,30 @@ export default function NavbarUser() {
                 {currentLang.toUpperCase()}
               </span>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 items-center">
               <button className="p-2 rounded-full hover:bg-muted transition">
                 <Bell className="h-5 w-5 text-secondary" />
               </button>
               <button className="p-2 rounded-full hover:bg-muted transition">
                 <Heart className="h-5 w-5 text-secondary" />
               </button>
-            </div>
-          </div>
-          {/* Mobile user info */}
-          <div className="flex items-center gap-3 pt-2">
-            <Avatar className="h-10 w-10">
-              <AvatarImage
-                src={getImageSrc(displayUser?.imageUrl)}
-                alt={displayUser?.userName || 'User'}
-                onError={(e) => {
-                  const img = e.currentTarget as HTMLImageElement;
-                  img.style.display = 'none';
-                }}
-              />
-              <AvatarFallback>{getInitials(displayUser?.fullName, displayUser?.slug)}</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">{displayUser?.fullName || 'User'}</span>
-              <div className="text-xs">{roleBadge()}</div>
+              <div className="flex items-center space-x-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage
+                    src={user?.user.imageUrl || "/avatar.png"}
+                    alt={user?.user.slug || "User"}
+                  />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {user ? getInitials(user.user.firstName) : "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium">
+                    {user?.user.fullName || "User"}
+                  </span>
+                  {getRoleBadge()}
+                </div>
+              </div>
             </div>
           </div>
         </div>

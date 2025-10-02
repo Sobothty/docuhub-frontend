@@ -5,6 +5,6 @@ export const apiSlide = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: '/api', // Use internal Next.js API routes
   }),
-  tagTypes: ["Paper", "User", "StudentDetail"],
+  tagTypes: ["Paper", "User", "StudentDetail", "Profile"],
   endpoints: () => ({}),
 });

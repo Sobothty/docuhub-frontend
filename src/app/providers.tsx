@@ -1,36 +1,44 @@
 "use client";
 
-import { Provider } from "react-redux";
-import { store } from "@/lib/store";
-import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
-import { Toaster } from "sonner";
+import { I18nextProvider } from "react-i18next";
+import i18n from "@/lib/i18nClient";
+import { useEffect } from "react";
+import { NotificationProvider } from "@/components/contexts/notification-context";
+import ReduxProvider from "@/lib/Provider";
 import { SessionProvider } from "next-auth/react";
-import { I18nProvider } from "@/components/providers/I18nProvider";
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children }: { children: React.ReactNode }) {
+  // Keep <html lang> in sync with current language
+  useEffect(() => {
+    const setLangAttr = (lng: string | undefined) => {
+      if (typeof document !== "undefined" && lng) {
+        document.documentElement.setAttribute("lang", lng);
+      }
+    };
+
+    setLangAttr(i18n.language);
+    const handler = (lng: string) => setLangAttr(lng);
+    i18n.on("languageChanged", handler);
+    return () => {
+      i18n.off("languageChanged", handler);
+    };
+  }, []);
+
   return (
-    <Provider store={store}>
+    <ReduxProvider>
       <SessionProvider>
-        <I18nProvider>
+        <I18nextProvider i18n={i18n} defaultNS="common">
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
-            <AuthProvider>
-              {children}
-              <Toaster 
-                position="top-right" 
-                richColors 
-                closeButton 
-                expand={true}
-              />
-            </AuthProvider>
+            <NotificationProvider>{children}</NotificationProvider>
           </ThemeProvider>
-        </I18nProvider>
+        </I18nextProvider>
       </SessionProvider>
-    </Provider>
+    </ReduxProvider>
   );
 }

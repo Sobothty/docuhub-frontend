@@ -1,57 +1,40 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import NavbarGuest from './NavbarGuest';
-import NavbarUser from './NavbarUser';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth } from '@/contexts/AuthContext';
+"use client";
 
-function NavbarSkeleton() {
-  return (
-    <nav className="fixed top-14 left-0 w-full z-40 border-b bg-background border-border py-2 shadow-md">
-      <div className="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
-        <Skeleton className="h-10 w-32" /> {/* Logo */}
-        <div className="hidden md:flex space-x-6">
-          <Skeleton className="h-6 w-16" />
-          <Skeleton className="h-6 w-16" />
-          <Skeleton className="h-6 w-16" />
-          <Skeleton className="h-6 w-16" />
-        </div>
-        <div className="hidden md:flex items-center space-x-4">
-          <Skeleton className="h-8 w-8 rounded-full" />
-          <Skeleton className="h-8 w-16" />
-          <Skeleton className="h-8 w-24" />
-        </div>
-        <Skeleton className="md:hidden h-8 w-8" /> {/* Mobile menu */}
-      </div>
-    </nav>
-  );
-}
+import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
+import NavbarGuest from "./NavbarGuest";
+import NavbarUser from "./NavbarUser";
 
 export default function NavbarWrapper() {
-  const [mounted, setMounted] = useState(false);
+  const { data: session, status } = useSession();
   const pathname = usePathname();
-  const { data } = useSession();
-  
-  // Prevent hydration mismatch by rendering nothing until mounted on client
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
-  const hiddenPaths = ['/login', '/register', '/dashboard', '/student', '/mentor'];
-  const shouldHideNavbar = hiddenPaths.some(
-      (path) => pathname === path || pathname.startsWith(`${path}/`)
+  console.log("=== NavbarWrapper Debug ===");
+  console.log("1. Status:", status);
+  console.log("2. Pathname:", pathname);
+  console.log("3. Session:", session);
+  console.log("4. Has accessToken?", !!session?.accessToken);
+  console.log(
+    "5. AccessToken (first 20):",
+    session?.accessToken?.substring(0, 20)
   );
 
-  if (shouldHideNavbar) return null;
+  if (pathname.startsWith("/mentor") || pathname.startsWith("/student")) {
+    console.log("❌ Returning null - protected route");
+    return null;
+  }
 
-  // Avoid SSR/CSR differences
-  if (!mounted) return null;
+  if (status === "loading") {
+    console.log("⏳ Returning Loading...");
+    return <div>Loading...</div>;
+  }
 
-  // Show skeleton while NextAuth is resolving
-  if (status) return <NavbarSkeleton />;
+  if (status === "authenticated" && session?.accessToken) {
+    console.log("✅ Returning NavbarUser - authenticated with token");
+    return <NavbarUser />;
+  }
 
-  const showUser = data?.user.
-  return showUser ? <NavbarUser /> : <NavbarGuest />;
+  console.log("❌ Returning NavbarGuest - not authenticated");
+  console.log("=== End Debug ===");
+  return <NavbarGuest />;
 }

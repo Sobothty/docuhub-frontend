@@ -52,7 +52,10 @@ const handler = NextAuth({
   ],
   callbacks: {
     async jwt({ token, account }) {
+      console.log("=== JWT Callback ===");
+      console.log("Account exists:", !!account);
       if (account) {
+        console.log("Setting accessToken from account:", !!account.access_token);
         token.accessToken = account.access_token!;
         token.refreshToken = account.refresh_token!;
 
@@ -70,10 +73,14 @@ const handler = NextAuth({
               ?.roles || []),
           ],
         };
+        console.log("Token user set:", token.user);
       }
+      console.log("Token has accessToken:", !!token.accessToken);
       return token;
     },
     async session({ session, token }) {
+      console.log("=== Session Callback ===");
+      console.log("Token has accessToken:", !!token.accessToken);
       session.user = token.user as {
         id: string | null;
         username: string | null;
@@ -83,6 +90,10 @@ const handler = NextAuth({
       session.accessToken = token.accessToken as string;
       session.refreshToken = token.refreshToken as string;
       session.accessTokenExpires = token.exp as number;
+      console.log("Session has accessToken:", !!session.accessToken);
+      console.log("Session accessToken (first 20 chars):", 
+        session.accessToken ? session.accessToken.substring(0, 20) + "..." : "NONE"
+      );
       return session;
     },
   },
