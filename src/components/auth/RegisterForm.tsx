@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { Eye, EyeOff, User, Mail, Lock, UserCheck } from 'lucide-react';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { Eye, EyeOff, User, Mail, Lock } from "lucide-react";
+import Link from "next/link";
 
 interface RegisterFormData {
+  username: string;
   email: string;
+  firstname: string;
+  lastname: string;
   password: string;
-  confirmPassword: string;
-  firstName: string;
-  lastName: string;
-  userName: string;
-  userType: 'student' | 'mentor' | 'user';
+  confirmedPassword: string;
 }
 
 interface RegisterFormProps {
@@ -20,92 +20,94 @@ interface RegisterFormProps {
   onSwitchToLogin?: () => void;
 }
 
-const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin }) => {
+const RegisterForm: React.FC<RegisterFormProps> = ({
+  onSuccess,
+  onSwitchToLogin,
+}) => {
   const router = useRouter();
   const { login } = useAuth();
-  
+
   const [formData, setFormData] = useState<RegisterFormData>({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    firstName: '',
-    lastName: '',
-    userName: '',
-    userType: 'student'
+    username: "",
+    email: "",
+    firstname: "",
+    lastname: "",
+    password: "",
+    confirmedPassword: "",
   });
 
   const [errors, setErrors] = useState<Partial<RegisterFormData>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [apiError, setApiError] = useState<string>('');
+  const [showConfirmedPassword, setShowConfirmedPassword] = useState(false);
+  const [apiError, setApiError] = useState<string>("");
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
 
   // Real-time validation
   const validateField = (name: keyof RegisterFormData, value: string) => {
     const newErrors = { ...errors };
 
     switch (name) {
-      case 'email':
+      case "username":
+        const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+        if (!value) {
+          newErrors.username = "Username is required";
+        } else if (!usernameRegex.test(value)) {
+          newErrors.username =
+            "Username must be 3-20 characters (letters, numbers, underscore only)";
+        } else {
+          delete newErrors.username;
+        }
+        break;
+
+      case "email":
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!value) {
-          newErrors.email = 'Email is required';
+          newErrors.email = "Email is required";
         } else if (!emailRegex.test(value)) {
-          newErrors.email = 'Please enter a valid email address';
+          newErrors.email = "Please enter a valid email address";
         } else {
           delete newErrors.email;
         }
         break;
 
-      case 'password':
+      case "firstname":
         if (!value) {
-          newErrors.password = 'Password is required';
+          newErrors.firstname = "First name is required";
+        } else if (value.length < 2) {
+          newErrors.firstname = "First name must be at least 2 characters";
+        } else {
+          delete newErrors.firstname;
+        }
+        break;
+
+      case "lastname":
+        if (!value) {
+          newErrors.lastname = "Last name is required";
+        } else if (value.length < 2) {
+          newErrors.lastname = "Last name must be at least 2 characters";
+        } else {
+          delete newErrors.lastname;
+        }
+        break;
+
+      case "password":
+        if (!value) {
+          newErrors.password = "Password is required";
         } else if (value.length < 6) {
-          newErrors.password = 'Password must be at least 6 characters';
-        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
-          newErrors.password = 'Password must contain uppercase, lowercase, and number';
+          newErrors.password = "Password must be at least 6 characters";
         } else {
           delete newErrors.password;
         }
         break;
 
-      case 'confirmPassword':
+      case "confirmedPassword":
         if (!value) {
-          newErrors.confirmPassword = 'Please confirm your password';
+          newErrors.confirmedPassword = "Please confirm your password";
         } else if (value !== formData.password) {
-          newErrors.confirmPassword = 'Passwords do not match';
+          newErrors.confirmedPassword = "Passwords do not match";
         } else {
-          delete newErrors.confirmPassword;
-        }
-        break;
-
-      case 'firstName':
-        if (!value) {
-          newErrors.firstName = 'First name is required';
-        } else if (value.length < 2) {
-          newErrors.firstName = 'First name must be at least 2 characters';
-        } else {
-          delete newErrors.firstName;
-        }
-        break;
-
-      case 'lastName':
-        if (!value) {
-          newErrors.lastName = 'Last name is required';
-        } else if (value.length < 2) {
-          newErrors.lastName = 'Last name must be at least 2 characters';
-        } else {
-          delete newErrors.lastName;
-        }
-        break;
-
-      case 'userName':
-        const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-        if (!value) {
-          newErrors.userName = 'Username is required';
-        } else if (!usernameRegex.test(value)) {
-          newErrors.userName = 'Username must be 3-20 characters (letters, numbers, underscore only)';
-        } else {
-          delete newErrors.userName;
+          delete newErrors.confirmedPassword;
         }
         break;
     }
@@ -113,27 +115,17 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin 
     setErrors(newErrors);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
 
-    // Auto-generate fullName when first or last name changes
-    if (name === 'firstName' || name === 'lastName') {
-      const firstName = name === 'firstName' ? value : formData.firstName;
-      const lastName = name === 'lastName' ? value : formData.lastName;
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
 
     // Clear API error when user starts typing
     if (apiError) {
-      setApiError('');
+      setApiError("");
     }
 
     // Validate field on change
@@ -144,54 +136,55 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin 
     const newErrors: Partial<RegisterFormData> = {};
 
     // Validate all fields
-    Object.keys(formData).forEach(key => {
+    Object.keys(formData).forEach((key) => {
       const fieldName = key as keyof RegisterFormData;
-      if (fieldName !== 'userType') {
-        validateField(fieldName, formData[fieldName]);
-      }
+      validateField(fieldName, formData[fieldName]);
     });
+
+    // Check terms agreement
+    if (!agreeToTerms) {
+      setApiError("You must agree to the Terms & Privacy Policy");
+      return false;
+    }
 
     return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
-    setApiError('');
+    setApiError("");
 
     try {
-      const fullName = `${formData.firstName} ${formData.lastName}`;
-      
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          username: formData.username,
           email: formData.email,
+          firstname: formData.firstname,
+          lastname: formData.lastname,
           password: formData.password,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          userName: formData.userName,
-          fullName,
-          userType: formData.userType
+          confirmedPassword: formData.confirmedPassword,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
+        throw new Error(data.error || "Registration failed");
       }
 
       // Registration successful
-      console.log('✅ Registration successful:', data);
-      
+      console.log("✅ Registration successful:", data);
+
       // Auto-login the user
       if (data.token && data.user) {
         login(data.token, data.user);
@@ -201,11 +194,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin 
       if (onSuccess) {
         onSuccess();
       } else {
-        router.push('/dashboard');
+        router.push("/dashboard");
       }
-
     } catch (error) {
-      console.error('❌ Registration error:', error);
+      console.error("❌ Registration error:", error);
       setApiError((error as Error).message);
     } finally {
       setIsLoading(false);
@@ -214,114 +206,54 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin 
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 border border-gray-200 dark:border-gray-700">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Join DocuHub
+            Create Your Account
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Create your account to access academic resources
+            Join us today and get started
           </p>
         </div>
 
         {apiError && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm dark:bg-red-900 dark:border-red-600 dark:text-red-200">
             {apiError}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* User Type Selection */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Account Type
-            </label>
-            <select
-              name="userType"
-              value={formData.userType}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            >
-              <option value="student">Student</option>
-              <option value="mentor">Mentor/Advisor</option>
-              <option value="user">General User</option>
-            </select>
-          </div>
-
-          {/* Name Fields */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                First Name
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
-                    errors.firstName ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-                  }`}
-                  placeholder="John"
-                />
-              </div>
-              {errors.firstName && (
-                <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Last Name
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
-                    errors.lastName ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-                  }`}
-                  placeholder="Doe"
-                />
-              </div>
-              {errors.lastName && (
-                <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Username */}
+          {/* Username - First field as requested */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Username
             </label>
             <div className="relative">
-              <UserCheck className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                name="userName"
-                value={formData.userName}
+                name="username"
+                value={formData.username}
                 onChange={handleInputChange}
-                className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
-                  errors.userName ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 transition-colors ${
+                  errors.username
+                    ? "border-red-500 dark:border-red-400"
+                    : "border-gray-300 dark:border-gray-600"
                 }`}
-                placeholder="johndoe123"
+                placeholder="Enter your username"
               />
             </div>
-            {errors.userName && (
-              <p className="text-red-500 text-xs mt-1">{errors.userName}</p>
+            {errors.username && (
+              <p className="text-red-500 text-xs mt-1 dark:text-red-400">
+                {errors.username}
+              </p>
             )}
           </div>
 
-          {/* Email */}
+          {/* Email - Second field as requested */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Email Address
+              Email
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -330,18 +262,76 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin 
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
-                  errors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 transition-colors ${
+                  errors.email
+                    ? "border-red-500 dark:border-red-400"
+                    : "border-gray-300 dark:border-gray-600"
                 }`}
-                placeholder="john@example.com"
+                placeholder="Enter your email"
               />
             </div>
             {errors.email && (
-              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+              <p className="text-red-500 text-xs mt-1 dark:text-red-400">
+                {errors.email}
+              </p>
             )}
           </div>
 
-          {/* Password */}
+          {/* First Name - Third field as requested */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              First Name
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                name="firstname"
+                value={formData.firstname}
+                onChange={handleInputChange}
+                className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 transition-colors ${
+                  errors.firstname
+                    ? "border-red-500 dark:border-red-400"
+                    : "border-gray-300 dark:border-gray-600"
+                }`}
+                placeholder="Enter your first name"
+              />
+            </div>
+            {errors.firstname && (
+              <p className="text-red-500 text-xs mt-1 dark:text-red-400">
+                {errors.firstname}
+              </p>
+            )}
+          </div>
+
+          {/* Last Name - Fourth field as requested */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Last Name
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                name="lastname"
+                value={formData.lastname}
+                onChange={handleInputChange}
+                className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 transition-colors ${
+                  errors.lastname
+                    ? "border-red-500 dark:border-red-400"
+                    : "border-gray-300 dark:border-gray-600"
+                }`}
+                placeholder="Enter your last name"
+              />
+            </div>
+            {errors.lastname && (
+              <p className="text-red-500 text-xs mt-1 dark:text-red-400">
+                {errors.lastname}
+              </p>
+            )}
+          </div>
+
+          {/* Password - Fifth field as requested */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Password
@@ -349,29 +339,37 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin 
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
-                className={`w-full pl-10 pr-10 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
-                  errors.password ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                className={`w-full pl-10 pr-10 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 transition-colors ${
+                  errors.password
+                    ? "border-red-500 dark:border-red-400"
+                    : "border-gray-300 dark:border-gray-600"
                 }`}
-                placeholder="••••••••"
+                placeholder="Create a password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
             {errors.password && (
-              <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+              <p className="text-red-500 text-xs mt-1 dark:text-red-400">
+                {errors.password}
+              </p>
             )}
           </div>
 
-          {/* Confirm Password */}
+          {/* Confirm Password - Sixth field as requested */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Confirm Password
@@ -379,33 +377,66 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin 
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                name="confirmPassword"
-                value={formData.confirmPassword}
+                type={showConfirmedPassword ? "text" : "password"}
+                name="confirmedPassword"
+                value={formData.confirmedPassword}
                 onChange={handleInputChange}
-                className={`w-full pl-10 pr-10 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
-                  errors.confirmPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                className={`w-full pl-10 pr-10 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 transition-colors ${
+                  errors.confirmedPassword
+                    ? "border-red-500 dark:border-red-400"
+                    : "border-gray-300 dark:border-gray-600"
                 }`}
-                placeholder="••••••••"
+                placeholder="Confirm your password"
               />
               <button
                 type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                onClick={() => setShowConfirmedPassword(!showConfirmedPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
-                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showConfirmedPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
-            {errors.confirmPassword && (
-              <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
+            {errors.confirmedPassword && (
+              <p className="text-red-500 text-xs mt-1 dark:text-red-400">
+                {errors.confirmedPassword}
+              </p>
             )}
+          </div>
+
+          {/* Terms Agreement */}
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="agreeToTerms"
+              checked={agreeToTerms}
+              onChange={(e) => setAgreeToTerms(e.target.checked)}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+            />
+            <label
+              htmlFor="agreeToTerms"
+              className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+            >
+              I agree to the{" "}
+              <a
+                href="#"
+                className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
+              >
+                Terms & Privacy Policy
+              </a>
+            </label>
           </div>
 
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={isLoading || Object.keys(errors).length > 0}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-md transition duration-200 flex items-center justify-center"
+            disabled={
+              isLoading || Object.keys(errors).length > 0 || !agreeToTerms
+            }
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-md transition duration-200 flex items-center justify-center dark:bg-blue-700 dark:hover:bg-blue-600 dark:disabled:bg-gray-600"
           >
             {isLoading ? (
               <>
@@ -413,7 +444,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin 
                 Creating Account...
               </>
             ) : (
-              'Create Account'
+              "Create Account"
             )}
           </button>
         </form>
@@ -421,13 +452,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin 
         {/* Switch to Login */}
         <div className="text-center mt-6">
           <p className="text-gray-600 dark:text-gray-400">
-            Already have an account?{' '}
-            <button
-              onClick={onSwitchToLogin}
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Sign in here
-            </button>
+            Already have an account?{" "}
+             <Link 
+      href="/login"
+      className="text-blue-600 hover:text-blue-700 font-medium dark:text-blue-400 dark:hover:text-blue-300"
+    >
+      Sign In
+    </Link>
           </p>
         </div>
       </div>
