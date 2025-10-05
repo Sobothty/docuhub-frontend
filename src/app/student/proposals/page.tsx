@@ -1,27 +1,26 @@
-'use client';
+"use client";
 
-import type React from 'react';
-import { useState } from 'react';
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
-import { Button } from '@/components/ui/button';
+import React, { useRef, useState } from "react";
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import {
   Clock,
   CheckCircle,
@@ -29,82 +28,109 @@ import {
   FileText,
   Send,
   UserCheck,
-} from 'lucide-react';
+  X,
+} from "lucide-react";
+import { useGetAllCategoriesQuery } from "@/feature/categoriesSlice/categoriesSlices";
+import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
+import { useCreateMediaMutation } from "@/feature/media/mediaSlice";
+import { useCreatePaperMutation } from "@/feature/paperSlice/papers";
 
 const mockProposals = [
   {
     id: 1,
-    title: 'Machine Learning Applications in Healthcare',
-    subject: 'Computer Science',
-    description: 'Exploring the use of ML algorithms for medical diagnosis...',
-    status: 'pending_admin',
-    submittedDate: '2024-01-15',
-    mentorFeedback: '',
-    assignedMentor: '',
+    title: "Machine Learning Applications in Healthcare",
+    subject: "Computer Science",
+    description: "Exploring the use of ML algorithms for medical diagnosis...",
+    status: "pending_admin",
+    submittedDate: "2024-01-15",
+    mentorFeedback: "",
+    assignedMentor: "",
     pdfFile: null as File | null,
   },
   {
     id: 2,
-    title: 'Climate Change Impact on Marine Ecosystems',
-    subject: 'Environmental Science',
-    description:
-      'Analyzing the effects of rising temperatures on ocean life...',
-    status: 'pending_mentor',
-    submittedDate: '2024-01-20',
-    mentorFeedback: '',
-    assignedMentor: 'Dr. Michael Rodriguez',
+    title: "Climate Change Impact on Marine Ecosystems",
+    subject: "Environmental Science",
+    description: "Analyzing the effects of rising temperatures on ocean life...",
+    status: "pending_mentor",
+    submittedDate: "2024-01-20",
+    mentorFeedback: "",
+    assignedMentor: "Dr. Michael Rodriguez",
     pdfFile: null as File | null,
   },
   {
     id: 3,
-    title: 'Quantum Computing Fundamentals',
-    subject: 'Physics',
-    description: 'A comprehensive study of quantum computing principles...',
-    status: 'rejected',
-    submittedDate: '2024-01-10',
+    title: "Quantum Computing Fundamentals",
+    subject: "Physics",
+    description: "A comprehensive study of quantum computing principles...",
+    status: "rejected",
+    submittedDate: "2024-01-10",
     mentorFeedback:
-      'The scope is too broad. Narrow focus to a specific aspect.',
-    assignedMentor: '',
+      "The scope is too broad. Narrow focus to a specific aspect.",
+    assignedMentor: "",
     pdfFile: null as File | null,
   },
 ];
 
 export default function StudentProposalsPage() {
   const [showNewProposal, setShowNewProposal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [formData, setFormData] = useState({
-    title: '',
-    subject: '',
-    description: '',
-    objectives: '',
-    methodology: '',
-    pdfFile: null as File | null,
+    title: "",
+    description: "",
+    fileUrl: "",
+    thumbnailUrl: "",
+    category: [] as string[],
   });
   const [proposals, setProposals] = useState(mockProposals);
 
+  const { data: categories, isLoading: categoriesLoading } =
+    useGetAllCategoriesQuery();
+
+  const { data: user } = useGetUserProfileQuery();
+
+  const [uploadMedia, { isLoading: isUploading }] = useCreateMediaMutation();
+  const [createPaper, { isLoading: isCreatingPaper }] = useCreatePaperMutation();
+
+  const [thumbnailFile, setThumbnailFile] = useState<string>("");
+  const [pdfFile, setPdfFile] = useState<string>("");
+
+  const thumbnailInputRef = useRef<HTMLInputElement | null>(null);
+  const pdfInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Helper to format filename
+  const getFileName = (url: string) => {
+    try {
+      return decodeURIComponent(url.split("/").pop()?.split("?")[0] || "");
+    } catch {
+      return "Unknown file";
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending_admin':
+      case "pending_admin":
         return (
           <Badge variant="secondary">
             <Clock className="w-3 h-3 mr-1" />
             Pending Admin Review
           </Badge>
         );
-      case 'pending_mentor':
+      case "pending_mentor":
         return (
           <Badge variant="outline">
             <Clock className="w-3 h-3 mr-1" />
             Pending Mentor Review
           </Badge>
         );
-      case 'approved':
+      case "approved":
         return (
           <Badge variant="default" className="bg-green-500">
             <CheckCircle className="w-3 h-3 mr-1" />
             Approved
           </Badge>
         );
-      case 'rejected':
+      case "rejected":
         return (
           <Badge variant="destructive" className="bg-red-500">
             <XCircle className="w-3 h-3 mr-1" />
@@ -116,39 +142,6 @@ export default function StudentProposalsPage() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFormData({ ...formData, pdfFile: e.target.files[0] });
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const currentDate = new Date().toISOString().split('T')[0]; // 2025-08-28
-    const newProposal = {
-      id: Date.now(),
-      title: formData.title,
-      subject: formData.subject,
-      description: formData.description,
-      status: 'pending_admin',
-      submittedDate: currentDate,
-      mentorFeedback: '',
-      assignedMentor: '',
-      pdfFile: formData.pdfFile,
-    };
-    setProposals([...proposals, newProposal]);
-    setShowNewProposal(false);
-    setFormData({
-      title: '',
-      subject: '',
-      description: '',
-      objectives: '',
-      methodology: '',
-      pdfFile: null,
-    });
-    console.log('Proposal submitted to admin:', newProposal);
-  };
-
   const handleAdminReview = (id: number, status: string, feedback?: string) => {
     setProposals((prev) =>
       prev.map((proposal) =>
@@ -158,29 +151,137 @@ export default function StudentProposalsPage() {
               status,
               mentorFeedback: feedback || proposal.mentorFeedback,
               assignedMentor:
-                status === 'pending_mentor'
-                  ? 'Dr. Assigned Mentor'
+                status === "pending_mentor"
+                  ? "Dr. Assigned Mentor"
                   : proposal.assignedMentor,
             }
           : proposal
       )
     );
-    console.log(`Admin reviewed proposal ${id} with status: ${status}`);
   };
 
   const handleSubmitDocument = (id: number) => {
     setProposals((prev) =>
       prev.map((proposal) =>
-        proposal.id === id && proposal.status === 'approved'
-          ? { ...proposal, status: 'pending_mentor' }
+        proposal.id === id && proposal.status === "approved"
+          ? { ...proposal, status: "pending_mentor" }
           : proposal
       )
     );
     console.log(`Document submitted for mentor review: ${id}`);
   };
 
+  const handleAddSubject = (value: string) => {
+    if (value && !formData.category.includes(value)) {
+      setFormData((prev) => ({
+        ...prev,
+        category: [...prev.category, value],
+      }));
+    }
+    setSelectedCategory("");
+  };
+
+  const handleRemoveSubject = (subject: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      category: prev.category.filter((s) => s !== subject),
+    }));
+  };
+
+  const handleThumbnailFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const data = new FormData();
+      data.append("file", file);
+
+      const response = await uploadMedia(data).unwrap();
+      if (!response?.data?.uri) throw new Error("No URI returned from upload.");
+
+      setThumbnailFile(response.data.uri);
+      setFormData((prev) => ({ ...prev, thumbnailUrl: response.data.uri }));
+    } catch (error) {
+      console.error("Thumbnail upload failed:", error);
+      alert("Thumbnail upload failed. Please try again.");
+    }
+  };
+
+  const handlePdfFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const data = new FormData();
+      data.append("file", file);
+
+      const response = await uploadMedia(data).unwrap();
+      if (!response?.data?.uri) throw new Error("No URI returned from upload.");
+
+      setPdfFile(response.data.uri);
+      setFormData((prev) => ({ ...prev, fileUrl: response.data.uri }));
+    } catch (error) {
+      console.error("PDF upload failed:", error);
+      alert("PDF upload failed. Please try again.");
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (
+      !formData.title ||
+      !formData.description ||
+      !formData.fileUrl ||
+      !formData.thumbnailUrl ||
+      formData.category.length === 0
+    ) {
+      alert("Please fill in all required fields and upload files.");
+      return;
+    }
+
+    try {
+      const result = await createPaper({
+        title: formData.title,
+        abstractText: formData.description,
+        fileUrl: formData.fileUrl,
+        thumbnailUrl: formData.thumbnailUrl,
+        categoryNames: formData.category,
+      }).unwrap();
+
+      console.log("Paper created successfully:", result);
+
+      // Reset form
+      setFormData({
+        title: "",
+        description: "",
+        fileUrl: "",
+        thumbnailUrl: "",
+        category: [],
+      });
+      setThumbnailFile("");
+      setPdfFile("");
+      setShowNewProposal(false);
+
+      alert("Paper submitted successfully!");
+    } catch (error) {
+    console.log("Failed to create paper - Full Error:", error);
+  }
+  };
+
   return (
-    <DashboardLayout userRole="student">
+    <DashboardLayout
+      userRole="student"
+      userName={user?.user.fullName}
+      userAvatar={
+        user?.user.imageUrl ||
+        "https://www.shutterstock.com/image-vector/avatar-gender-neutral-silhouette-vector-600nw-2470054311.jpg"
+      }
+    >
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
@@ -222,29 +323,55 @@ export default function StudentProposalsPage() {
                   <div className="space-y-2">
                     <Label htmlFor="subject">Subject Area</Label>
                     <Select
-                      value={formData.subject}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, subject: value })
-                      }
+                      value={selectedCategory}
+                      onValueChange={handleAddSubject}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select subject area" />
+                        <SelectValue placeholder="Select subject areas" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="computer-science">
-                          Computer Science
-                        </SelectItem>
-                        <SelectItem value="environmental-science">
-                          Environmental Science
-                        </SelectItem>
-                        <SelectItem value="physics">Physics</SelectItem>
-                        <SelectItem value="biology">Biology</SelectItem>
-                        <SelectItem value="chemistry">Chemistry</SelectItem>
-                        <SelectItem value="mathematics">Mathematics</SelectItem>
-                        <SelectItem value="psychology">Psychology</SelectItem>
-                        <SelectItem value="literature">Literature</SelectItem>
+                        {categoriesLoading ? (
+                          <SelectItem value="loading" disabled>
+                            Loading categories...
+                          </SelectItem>
+                        ) : Array.isArray(categories?.content) &&
+                          categories.content.length > 0 ? (
+                          categories.content.map((category) => (
+                            <SelectItem
+                              value={category.name}
+                              key={category.uuid}
+                              disabled={formData.category.includes(
+                                category.name
+                              )}
+                            >
+                              {category.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-categories" disabled>
+                            No categories available
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
+
+                    {formData.category.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {formData.category.map((subject) => (
+                          <Badge
+                            key={subject}
+                            variant="secondary"
+                            className="flex items-center gap-1"
+                          >
+                            {subject}
+                            <X
+                              className="w-3 h-3 cursor-pointer hover:text-destructive"
+                              onClick={() => handleRemoveSubject(subject)}
+                            />
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -262,76 +389,95 @@ export default function StudentProposalsPage() {
                   />
                 </div>
 
+                {/* Thumbnail Upload */}
                 <div className="space-y-2">
-                  <Label htmlFor="objectives">Research Objectives</Label>
-                  <Textarea
-                    id="objectives"
-                    value={formData.objectives}
-                    onChange={(e) =>
-                      setFormData({ ...formData, objectives: e.target.value })
-                    }
-                    placeholder="What are your main research objectives?"
-                    rows={4}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="methodology">Proposed Methodology</Label>
-                  <Textarea
-                    id="methodology"
-                    value={formData.methodology}
-                    onChange={(e) =>
-                      setFormData({ ...formData, methodology: e.target.value })
-                    }
-                    placeholder="How do you plan to conduct your research?"
-                    rows={4}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="pdfFile">Upload PDF Document</Label>
+                  <Label>Upload Thumbnail of Document</Label>
                   <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary/50 transition-colors">
                     <Input
-                      id="pdfFile"
+                      ref={thumbnailInputRef}
                       type="file"
-                      accept="application/pdf"
-                      onChange={handleFileChange}
+                      accept="image/*"
+                      onChange={handleThumbnailFileChange}
                       className="hidden"
                       required
                     />
                     <Button
                       type="button"
-                      onClick={() =>
-                        document.getElementById('pdfFile')?.click()
-                      }
+                      onClick={() => thumbnailInputRef.current?.click()}
                       className="mb-2 bg-primary text-gray-50 hover:bg-primary/90"
                     >
                       <FileText className="w-4 h-4 mr-2" />
-                      Choose PDF
+                      Choose Image
+                    </Button>
+                    <p className="text-sm text-muted-foreground">
+                      or drag and drop an image file here
+                    </p>
+                    {thumbnailFile && (
+                      <div className="mt-4">
+                        <p className="text-sm text-foreground mb-2">
+                          Selected: {getFileName(thumbnailFile)}
+                        </p>
+                        <img
+                          src={thumbnailFile}
+                          alt="Thumbnail preview"
+                          className="max-w-full h-auto max-h-48 mx-auto rounded-lg border border-border object-cover"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* PDF Upload */}
+                <div className="space-y-2">
+                  <Label>Upload File of Document</Label>
+                  <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary/50 transition-colors">
+                    <Input
+                      ref={pdfInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      onChange={handlePdfFileChange}
+                      className="hidden"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => pdfInputRef.current?.click()}
+                      className="mb-2 bg-primary text-gray-50 hover:bg-primary/90"
+                      disabled={isUploading}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      {isUploading ? "Uploading..." : "Choose PDF"}
                     </Button>
                     <p className="text-sm text-muted-foreground">
                       or drag and drop a PDF file here
                     </p>
-                    {formData.pdfFile && (
-                      <p className="text-sm text-foreground mt-2">
-                        Selected: {formData.pdfFile.name} (
-                        {(formData.pdfFile.size / 1024).toFixed(1)} KB)
-                      </p>
+                    {pdfFile && (
+                      <div className="mt-4 p-3 bg-muted rounded-lg">
+                        <p className="text-sm text-foreground mb-2">
+                          <strong>Selected:</strong> {getFileName(pdfFile)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          PDF preview not available
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>
 
                 <div className="flex gap-4">
-                  <Button type="submit" className="w-full md:w-auto">
-                    Submit for Review
+                  <Button
+                    type="submit"
+                    className="w-full md:w-auto"
+                    disabled={isCreatingPaper || isUploading}
+                  >
+                    {isCreatingPaper ? "Submitting..." : "Submit for Review"}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowNewProposal(false)}
                     className="w-full md:w-auto"
+                    disabled={isCreatingPaper || isUploading}
                   >
                     Cancel
                   </Button>
@@ -341,6 +487,7 @@ export default function StudentProposalsPage() {
           </Card>
         )}
 
+        {/* Existing Proposals */}
         <div className="space-y-4">
           {proposals.map((proposal) => (
             <Card key={proposal.id}>
@@ -371,14 +518,6 @@ export default function StudentProposalsPage() {
                       <strong>Mentor:</strong> {proposal.assignedMentor}
                     </div>
                   )}
-                  {proposal.pdfFile && (
-                    <div>
-                      <strong>Attached PDF:</strong>{' '}
-                      {proposal.pdfFile instanceof File
-                        ? proposal.pdfFile.name
-                        : 'N/A'}
-                    </div>
-                  )}
                 </div>
 
                 {proposal.mentorFeedback && (
@@ -390,7 +529,7 @@ export default function StudentProposalsPage() {
                   </div>
                 )}
 
-                {proposal.status === 'approved' && (
+                {proposal.status === "approved" && (
                   <div className="mt-4">
                     <Button
                       className="bg-green-500 hover:bg-green-600"
@@ -401,23 +540,23 @@ export default function StudentProposalsPage() {
                     </Button>
                   </div>
                 )}
-                {proposal.status === 'pending_admin' && (
+                {proposal.status === "pending_admin" && (
                   <div className="mt-4 text-sm text-muted-foreground">
                     Awaiting admin review. Check back soon!
                   </div>
                 )}
-                {proposal.status === 'pending_mentor' && (
+                {proposal.status === "pending_mentor" && (
                   <div className="mt-4">
                     <Button
                       variant="outline"
-                      onClick={() => handleAdminReview(proposal.id, 'approved')}
+                      onClick={() => handleAdminReview(proposal.id, "approved")}
                     >
                       <UserCheck className="w-4 h-4 mr-2" />
                       Track Progress with Mentor
                     </Button>
                   </div>
                 )}
-                {proposal.status === 'rejected' && (
+                {proposal.status === "rejected" && (
                   <div className="mt-4 text-sm text-destructive">
                     Rejected. Please revise and resubmit based on feedback.
                   </div>

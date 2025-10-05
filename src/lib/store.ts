@@ -10,6 +10,9 @@ import mediaReducer from "@/feature/mediaSlice/mediaSlice";
 import { categoryApi } from "@/feature/apiSlice/categoryApiSlice";
 import { profileApi } from "@/feature/profileSlice/profileSlice";
 import { papersApi } from "@/feature/paperSlice/papers";
+import starSlice from "@/feature/star/StarSlice";
+import { categoriesApi } from "@/feature/categoriesSlice/categoriesSlices";
+import { mediaApi } from "@/feature/media/mediaSlice";
 
 export const store = configureStore({
   reducer: {
@@ -23,7 +26,10 @@ export const store = configureStore({
     [apiSlide.reducerPath]: apiSlide.reducer,
     [authApi.reducerPath]: authApi.reducer,
     [categoryApi.reducerPath]: categoryApi.reducer,
+    [categoriesApi.reducerPath]: categoriesApi.reducer,
     [papersApi.reducerPath]: papersApi.reducer,
+    [starSlice.reducerPath]: starSlice.reducer,
+    [mediaApi.reducerPath]: mediaApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -51,18 +57,18 @@ export const store = configureStore({
           "authApi/executeQuery/pending",
           "authApi/executeQuery/fulfilled",
           "authApi/executeQuery/rejected",
-          "categoryApi/executeMutation/pending",
-          "categoryApi/executeMutation/fulfilled",
-          "categoryApi/executeMutation/rejected",
-          "categoryApi/executeQuery/pending",
-          "categoryApi/executeQuery/fulfilled",
-          "categoryApi/executeQuery/rejected",
           "papersApi/executeMutation/pending",
           "papersApi/executeMutation/fulfilled",
           "papersApi/executeMutation/rejected",
           "papersApi/executeQuery/pending",
           "papersApi/executeQuery/fulfilled",
           "papersApi/executeQuery/rejected",
+          "starSlice/executeMutation/pending",
+          "starSlice/executeMutation/fulfilled",
+          "starSlice/executeMutation/rejected",
+          "starSlice/executeQuery/pending",
+          "starSlice/executeQuery/fulfilled",
+          "starSlice/executeQuery/rejected",
         ],
       },
     }).concat(
@@ -70,7 +76,10 @@ export const store = configureStore({
       authApi.middleware,
       categoryApi.middleware,
       profileApi.middleware,
-      papersApi.middleware
+      papersApi.middleware,
+      starSlice.middleware,
+      categoriesApi.middleware,
+      mediaApi.middleware
     ),
   devTools: process.env.NODE_ENV !== "production",
 });
