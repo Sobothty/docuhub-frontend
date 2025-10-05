@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { url } from "inspector";
 import { getSession } from "next-auth/react";
 
 // Define interfaces
@@ -84,6 +85,14 @@ const customBaseQuery = async (args: any, api: any, extraOptions: any) => {
   return result;
 };
 
+const publicBaseQuery = fetchBaseQuery({
+  baseUrl: process.env.NEXT_PUBLIC_BASE_URL,
+  prepareHeaders: (headers) => {
+    headers.set("Content-Type", "application/json");
+    return headers;
+  },
+});
+
 // Create API slice
 export const papersApi = createApi({
   reducerPath: "papersApi",
@@ -108,6 +117,16 @@ export const papersApi = createApi({
       }),
       invalidatesTags: ["Papers"],
     }),
+    getAllPublishedPapers: builder.query<ApiResponse, PaginationParams>({
+      query: ({
+        page = 0,
+        size = 10,
+        sortBy = "publishedAt",
+        direction = "desc",
+      }) => ({
+        url: "/papers"
+      })
+    })
   }),
 });
 

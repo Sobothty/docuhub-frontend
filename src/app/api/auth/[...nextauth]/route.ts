@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Keycloak from "next-auth/providers/keycloak";
 import { Buffer } from "buffer";
+import { JWT } from "next-auth/jwt";
 
 declare module "next-auth" {
   interface Session {
@@ -38,7 +39,15 @@ declare module "next-auth/jwt" {
   }
 }
 
-async function refreshAccessToken(token: any): Promise<any> {
+interface RefreshTokenResponse {
+  access_token: string;
+  refresh_token?: string;
+  expires_in: number;
+  error?: string;
+  error_description?: string;
+}
+
+async function refreshAccessToken(token: JWT): Promise<JWT> {
   console.log("=== REFRESH TOKEN FUNCTION CALLED ===");
   console.log(
     "Current token expiry:",
@@ -61,7 +70,7 @@ async function refreshAccessToken(token: any): Promise<any> {
       }),
     });
 
-    const refreshedTokens = await response.json();
+    const refreshedTokens : RefreshTokenResponse = await response.json();
     console.log("Refresh response status:", response.status);
     console.log("Refresh response:", response.ok ? "Success" : refreshedTokens);
 
