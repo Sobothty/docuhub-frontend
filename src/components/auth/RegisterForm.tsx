@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
 import { Eye, EyeOff, User, Mail, Lock } from "lucide-react";
 import Link from "next/link";
 
@@ -25,7 +24,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   onSwitchToLogin,
 }) => {
   const router = useRouter();
-  const { login } = useAuth();
 
   const [formData, setFormData] = useState<RegisterFormData>({
     username: "",
@@ -161,7 +159,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     setApiError("");
 
     try {
-      const response = await fetch("/api/v1/auth/register", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -184,17 +182,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 
       // Registration successful
       console.log("✅ Registration successful:", data);
-
-      // Auto-login the user
-      if (data.token && data.user) {
-        login(data.token, data.user);
-      }
-
       // Call success callback or redirect
       if (onSuccess) {
         onSuccess();
       } else {
-        router.push("/dashboard");
+        router.push("/login");
       }
     } catch (error) {
       console.error("❌ Registration error:", error);

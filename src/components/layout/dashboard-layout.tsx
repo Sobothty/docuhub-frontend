@@ -56,7 +56,7 @@ function DashboardLayoutContent({
     <div className="min-h-screen bg-background">
       <Sidebar
         userRole={userRole}
-        userName={userName || user?.userName || user?.fullName || 'User'}
+        userName={userName || 'User'} // Fallback to session user name
         userAvatar={userAvatar || '/placeholder.svg'} // Remove user.avatar reference
       />
 

@@ -6,7 +6,6 @@ import ContactFooter from "@/components/footer/ContactFooter";
 import { Providers } from "./providers";
 import { Poppins } from "next/font/google";
 import localFont from "next/font/local";
-import { AuthProvider } from "@/contexts/AuthContext";
 
 // English: Poppins
 const poppins = Poppins({
@@ -157,10 +156,7 @@ export default function RootLayout({
         <Providers>
           <StickyBanner />
           <NavbarWrapper />
-          <AuthProvider>
-            <main className="mt-20">{children}</main>
-          </AuthProvider>
-
+          <main className="mt-20">{children}</main>
           <ContactFooter />
         </Providers>
       </body>

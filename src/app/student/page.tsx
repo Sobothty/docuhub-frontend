@@ -29,10 +29,16 @@ import HorizontalCard from "@/components/card/HorizontalCard";
 import { useState } from "react";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetPapersByAuthorQuery } from "@/feature/paperSlice/papers";
+import { useGetAllStarOfPapersQuery } from "@/feature/star/StarSlice";
 
 export default function StudentOverviewPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: user, error, isLoading } = useGetUserProfileQuery();
+  const {
+    data: starData,
+    error: starError,
+    isLoading: starLoading,
+  } = useGetAllStarOfPapersQuery();
 
   if (user?.user.isStudent === false) {
     window.location.href = "/";
@@ -144,30 +150,28 @@ export default function StudentOverviewPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Downloads
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">Downloads</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {/* <div className="text-2xl font-bold">
-                {savedDocuments.reduce((sum, doc) => sum + doc.downloads, 0)}
-              </div> */}
+              <div className="text-2xl font-bold">
+                {authorPapers.reduce((sum, p) => sum + (p.downloads || 0), 0)}
+              </div>
               <p className="text-xs text-muted-foreground">
-                <span className="text-green-600">+10</span> this week
+                All time downloads of documents
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Citations</CardTitle>
+              <CardTitle className="text-sm font-medium">Star</CardTitle>
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {/* <div className="text-2xl font-bold">
-                {savedDocuments.reduce((sum, doc) => sum + doc.citations, 0)}
-              </div> */}
+              <div className="text-2xl font-bold">
+                {starLoading ? "..." : starData?.length || 0}
+              </div>
               <p className="text-xs text-muted-foreground">Academic impact</p>
             </CardContent>
           </Card>
