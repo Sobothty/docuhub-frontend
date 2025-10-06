@@ -12,7 +12,7 @@ import {
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  userRole: 'admin' | 'mentor' | 'student' | 'public';
+  userRole: 'admin' | 'adviser' | 'student' | 'public';
   userName?: string;
   userAvatar?: string;
 }

@@ -24,7 +24,7 @@ export default function DashboardPage() {
         if (roles.includes("ADMIN")) {
           router.push("/admin")
         } else if (roles.includes("ADVISER")) {
-          router.push("/mentor")
+          router.push("/adviser")
         } else if (roles.includes("STUDENT")) {
           router.push("/student")
         } else {

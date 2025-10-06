@@ -14,6 +14,7 @@ import LanguageTest from "@/components/test/LanguageTest";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
 import { useGetPapersQuery, useGetUserByIdQuery } from "@/feature/apiSlice/paperApi";
+import { useGetAllPublishedPapersQuery } from "@/feature/paperSlice/papers";
 
 // Sample research paper data
 const researchPapers = [
@@ -168,12 +169,9 @@ export default function Home() {
     console.log("Toggle bookmark:", paperId);
 
   // Fetch papers using RTK Query
-  const { data: papersData, isLoading, error } = useGetPapersQuery();
+  const { data: papersData, isLoading, error } = useGetAllPublishedPapersQuery({});
 
   const papers = papersData?.papers?.content ?? [];
-  console.log("Fetched papers:", papers);
-  console.log("Loading:", isLoading);
-  console.log("Error:", error);
 
   type PaperType = {
     uuid: string;
@@ -214,11 +212,6 @@ export default function Home() {
       
       {/* Hero Section */}
       <HeroSection />
-
-      {/* Language Test - Remove this after testing */}
-      <section className="py-8">
-        <LanguageTest />
-      </section>
 
       <DevelopmentServicesBanner />
 

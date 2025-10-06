@@ -21,14 +21,14 @@ const ROUTES_WITHOUT_NAVBAR = {
   // Route prefixes (anything starting with these will exclude navbar)
   prefixes: [
     // '/student/', // allow navbar on student pages
-    '/mentor/',
+    '/adviser/',
     '/admin/',
     '/profile/'
   ],
   // Base routes (for backward compatibility)
   base: [
     // '/student', // allow navbar on student base route
-    '/mentor',
+    '/adviser',
     '/admin'
   ]
 };

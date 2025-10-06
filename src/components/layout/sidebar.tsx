@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   BookOpen,
   Users,
@@ -30,53 +30,53 @@ import {
   ClipboardList,
   PanelLeftClose,
   PanelLeftOpen,
-} from 'lucide-react';
-import { signOut } from 'next-auth/react';
-import { NotificationSystem } from '@/components/ui/notification-system';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { LanguageSwitcher } from '@/components/ui/language-switcher';
-import { useSidebar } from '@/components/contexts/sidebar-context';
+} from "lucide-react";
+import { signOut } from "next-auth/react";
+import { NotificationSystem } from "@/components/ui/notification-system";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { useSidebar } from "@/components/contexts/sidebar-context";
 
 interface SidebarProps {
-  userRole: 'admin' | 'mentor' | 'student' | 'public';
+  userRole: "admin" | "adviser" | "student" | "public";
   userName: string;
   userAvatar?: string;
 }
 
 const roleNavigation = {
   admin: [
-    { name: 'Overview', href: '/admin', icon: Home },
-    { name: 'Users', href: '/admin/users', icon: Users },
-    { name: 'Proposals', href: '/admin/proposals', icon: ClipboardList },
-    { name: 'Submissions', href: '/admin/submissions', icon: FileText },
-    { name: 'Reports', href: '/admin/reports', icon: BarChart3 },
-    { name: 'Settings', href: '/admin/settings', icon: Settings },
+    { name: "Overview", href: "/admin", icon: Home },
+    { name: "Users", href: "/admin/users", icon: Users },
+    { name: "Proposals", href: "/admin/proposals", icon: ClipboardList },
+    { name: "Submissions", href: "/admin/submissions", icon: FileText },
+    { name: "Reports", href: "/admin/reports", icon: BarChart3 },
+    { name: "Settings", href: "/admin/settings", icon: Settings },
   ],
-  mentor: [
-    { name: 'Overview', href: '/mentor', icon: Home },
-    { name: 'Assigned Students', href: '/mentor/students', icon: Users },
-    { name: 'Documents', href: '/mentor/proposals', icon: ClipboardList },
-    { name: 'Notifications', href: '/mentor/notifications', icon: Bell },
-    { name: 'Resources', href: '/mentor/resources', icon: BookOpen },
-    { name: 'Settings', href: '/mentor/settings', icon: Settings },
+  adviser: [
+    { name: "Overview", href: "/adviser", icon: Home },
+    { name: "Assigned Students", href: "/adviser/students", icon: Users },
+    { name: "Documents", href: "/adviser/proposals", icon: ClipboardList },
+    { name: "Notifications", href: "/adviser/notifications", icon: Bell },
+    { name: "Resources", href: "/adviser/resources", icon: BookOpen },
+    { name: "Settings", href: "/adviser/settings", icon: Settings },
   ],
   student: [
-    { name: 'Overview', href: '/student', icon: Home },
-    { name: 'Documents', href: '/student/proposals', icon: ClipboardList },
-    { name: 'My Submissions', href: '/student/submissions', icon: Upload },
-    { name: 'Feedback', href: '/student/feedback', icon: MessageSquare },
-    { name: 'Mentorship', href: '/student/mentorship', icon: Users },
-    { name: 'Settings', href: '/student/settings', icon: Settings },
+    { name: "Overview", href: "/student", icon: Home },
+    { name: "Documents", href: "/student/proposals", icon: ClipboardList },
+    { name: "My Submissions", href: "/student/submissions", icon: Upload },
+    { name: "Feedback", href: "/student/feedback", icon: MessageSquare },
+    { name: "Mentorship", href: "/student/mentorship", icon: Users },
+    { name: "Settings", href: "/student/settings", icon: Settings },
   ],
   public: [
-    { name: 'Overview', href: '/profile', icon: Home },
-    { name: 'My Downloads', href: '/profile/downloads', icon: Download },
+    { name: "Overview", href: "/profile", icon: Home },
+    { name: "My Downloads", href: "/profile/downloads", icon: Download },
     {
-      name: 'My Discussions',
-      href: '/profile/discussions',
+      name: "My Discussions",
+      href: "/profile/discussions",
       icon: MessageSquare,
     },
-    { name: 'Settings', href: '/profile/settings', icon: Settings },
+    { name: "Settings", href: "/profile/settings", icon: Settings },
   ],
 };
 
@@ -88,9 +88,9 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
 
   const handleLogout = async () => {
     try {
-      await signOut({ callbackUrl: '/' });
+      await signOut({ callbackUrl: "/" });
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
     }
   };
 
@@ -101,9 +101,9 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
         variant="ghost"
         size="icon"
         className={cn(
-          'fixed z-50 transition-all duration-300 ease-in-out bg-background/90 backdrop-blur-sm',
-          isOpen ? 'left-64 top-4' : 'left-16 top-4 md:left-16',
-          'rounded-full shadow-lg hover:bg-accent/20 hover:text-accent-foreground border border-border'
+          "fixed z-50 transition-all duration-300 ease-in-out bg-background/90 backdrop-blur-sm",
+          isOpen ? "left-64 top-4" : "left-16 top-4 md:left-16",
+          "rounded-full shadow-lg hover:bg-accent/20 hover:text-accent-foreground border border-border"
         )}
         onClick={toggleSidebar}
       >
@@ -117,10 +117,10 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
       {/* Sidebar */}
       <div
         className={cn(
-          'fixed inset-y-0 left-0 z-40 bg-background border-r border-border transform transition-all duration-300 ease-in-out',
+          "fixed inset-y-0 left-0 z-40 bg-background border-r border-border transform transition-all duration-300 ease-in-out",
           isOpen
-            ? 'w-64 translate-x-0'
-            : 'w-16 md:w-16 -translate-x-full md:translate-x-0'
+            ? "w-64 translate-x-0"
+            : "w-16 md:w-16 -translate-x-full md:translate-x-0"
         )}
       >
         <div className="flex flex-col h-full">
@@ -132,12 +132,12 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                 <div>
                   <Link href="/" className="inline-block">
                     <Image
-                        src="/logo/Docohub.png"
-                        alt="DocuHub Logo"
-                        width={120}
-                        height={40}
-                        className="transition-all"
-                        priority
+                      src="/logo/Docohub.png"
+                      alt="DocuHub Logo"
+                      width={120}
+                      height={40}
+                      className="transition-all"
+                      priority
                     />
                   </Link>
                   <p className="text-xs text-muted-foreground capitalize">
@@ -146,7 +146,7 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                 </div>
               )}
             </div>
-            {isOpen && userRole !== 'public' && (
+            {isOpen && userRole !== "public" && (
               <div className="flex items-center gap-2">
                 <NotificationSystem />
               </div>
@@ -164,14 +164,14 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                   <div className="flex items-center gap-2 w-full">
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={userAvatar || '/placeholder.svg'}
+                        src={userAvatar || "/placeholder.svg"}
                         alt={userName}
                       />
                       <AvatarFallback className="bg-primary text-primary-foreground">
                         {userName
-                          .split(' ')
+                          .split(" ")
                           .map((n) => n[0])
-                          .join('')
+                          .join("")
                           .toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -198,7 +198,7 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                 <DropdownMenuItem asChild>
                   <Link
                     href={`/${
-                      userRole === 'public' ? 'profile' : userRole
+                      userRole === "public" ? "profile" : userRole
                     }/settings`}
                     className="flex items-center gap-2"
                   >
@@ -244,26 +244,26 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200',
+                    "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200",
                     isActive
-                      ? 'bg-primary text-foreground'
-                      : 'text-foreground hover:bg-gray-300 hover:text-accent-foreground'
+                      ? "bg-primary text-foreground"
+                      : "text-foreground hover:bg-gray-300 hover:text-accent-foreground"
                   )}
                   title={!isOpen ? item.name : undefined}
                 >
                   <item.icon
                     className={cn(
-                      'h-5 w-5 transition-colors duration-200',
+                      "h-5 w-5 transition-colors duration-200",
                       isActive
-                        ? 'text-primary-foreground'
-                        : 'text-muted-foreground hover:text-accent-foreground'
+                        ? "text-primary-foreground"
+                        : "text-muted-foreground hover:text-accent-foreground"
                     )}
                   />
                   {isOpen && (
                     <span
                       className={cn(
-                        'text-sm font-medium truncate',
-                        isActive ? 'text-gray-100' : 'text-foreground'
+                        "text-sm font-medium truncate",
+                        isActive ? "text-gray-100" : "text-foreground"
                       )}
                     >
                       {item.name}
@@ -282,10 +282,10 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                   variant="outline"
                   size="sm"
                   className={cn(
-                    'w-full justify-start text-sm font-medium transition-all duration-200 border-border',
-                    pathname === '/browse'
-                      ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
-                      : 'bg-background text-foreground hover:bg-accent/20 hover:border-accent'
+                    "w-full justify-start text-sm font-medium transition-all duration-200 border-border",
+                    pathname === "/browse"
+                      ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                      : "bg-background text-foreground hover:bg-accent/20 hover:border-accent"
                   )}
                   asChild
                 >
@@ -298,10 +298,10 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                   variant="outline"
                   size="sm"
                   className={cn(
-                    'w-full justify-start text-sm font-medium transition-all duration-200 border-border',
-                    pathname === '/directory'
-                      ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
-                      : 'bg-background text-foreground hover:bg-accent/20 hover:border-accent'
+                    "w-full justify-start text-sm font-medium transition-all duration-200 border-border",
+                    pathname === "/directory"
+                      ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                      : "bg-background text-foreground hover:bg-accent/20 hover:border-accent"
                   )}
                   asChild
                 >
@@ -310,41 +310,41 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                     Directory
                   </Link>
                 </Button>
-                {userRole !== 'public' && (
+                {userRole !== "public" && (
                   <Button
                     variant="outline"
                     size="sm"
                     className={cn(
-                      'w-full justify-start text-sm font-medium transition-all duration-200 border-border',
+                      "w-full justify-start text-sm font-medium transition-all duration-200 border-border",
                       pathname.startsWith(
                         `/${
-                          userRole === 'admin'
-                            ? 'admin/users'
-                            : userRole === 'mentor'
-                            ? 'mentor/students'
-                            : 'student/mentorship'
+                          userRole === "admin"
+                            ? "admin/users"
+                            : userRole === "adviser"
+                            ? "adviser/students"
+                            : "student/mentorship"
                         }`
                       )
-                        ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
-                        : 'bg-background text-foreground hover:bg-accent/20 hover:border-accent'
+                        ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                        : "bg-background text-foreground hover:bg-accent/20 hover:border-accent"
                     )}
                     asChild
                   >
                     <Link
                       href={`/${
-                        userRole === 'admin'
-                          ? 'admin/users'
-                          : userRole === 'mentor'
-                          ? 'mentor/students'
-                          : 'student/mentorship'
+                        userRole === "admin"
+                          ? "admin/users"
+                          : userRole === "adviser"
+                          ? "adviser/students"
+                          : "student/mentorship"
                       }`}
                     >
                       <Users className="h-4 w-4 mr-2 text-foreground" />
-                      {userRole === 'admin'
-                        ? 'Manage Users'
-                        : userRole === 'mentor'
-                        ? 'My Students'
-                        : 'Find Mentors'}
+                      {userRole === "admin"
+                        ? "Manage Users"
+                        : userRole === "adviser"
+                        ? "My Students"
+                        : "Find Mentors"}
                     </Link>
                   </Button>
                 )}

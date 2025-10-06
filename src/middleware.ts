@@ -4,13 +4,13 @@ import type { NextRequest } from "next/server";
 // (Optional) role-based route permissions (currently unused)
 const roleRoutes = {
   ADMIN: ["/admin"],
-  ADVISER: ["/mentor"],
+  ADVISER: ["/adviser"],
   STUDENT: ["/student"],
   PUBLIC: ["/profile"],
 };
 
 // Protected routes that require authentication
-const protectedRoutes = ["/admin", "/mentor", "/student", "/profile", "/dashboard"];
+const protectedRoutes = ["/admin", "/adviser", "/student", "/profile", "/dashboard"];
 
 // Public routes that don't require authentication
 const publicRoutes = [
@@ -19,8 +19,6 @@ const publicRoutes = [
   "/directory",
   "/login",
   "/register",
-  "/auth/signin",
-  "/auth/signup",
 ];
 
 export async function middleware(req: NextRequest) {
@@ -40,8 +38,8 @@ export async function middleware(req: NextRequest) {
     const hasAccessToken = Boolean(req.cookies.get('access_token')?.value);
     // 2) NextAuth session cookies (no import required in middleware)
     const hasNextAuthCookie = Boolean(
-      req.cookies.get('__Secure-next-auth.session-token')?.value ||
-      req.cookies.get('next-auth.session-token')?.value
+      req.cookies.get(`next-auth.session-token`)?.value ||
+      req.cookies.get(`__Secure-next-auth.session-token`)?.value
     );
 
     if (!hasAccessToken && !hasNextAuthCookie) {
@@ -56,11 +54,4 @@ export async function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
-// function getRoleBasedRedirect(role: string[] | undefined): string {
-//   if (!role || role.length === 0) return "/";
-//   if (role.includes("ADMIN")) return "/admin";
-//   if (role.includes("ADVISER")) return "/mentor";
-//   if (role.includes("STUDENT")) return "/student";
-//   if (role.includes("PUBLIC")) return "/profile";
-//   return "/";
-// }
+

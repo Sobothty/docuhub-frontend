@@ -27,13 +27,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 
 export default function NavbarUser() {
   const pathname = usePathname();
   const router = useRouter();
   const { t, i18n } = useTranslation("common");
   const { data: user, error, isLoading } = useGetUserProfileQuery();
+  const tokens = useSession();
+  const userRoles = tokens.data?.user.roles || [];
 
   console.log("Profile data:", user);
   console.log("Profile error:", error);
@@ -121,26 +123,11 @@ export default function NavbarUser() {
   };
 
   const handleProfileClick = () => {
-    if (
-      user?.user.isUser &&
-      !user?.user.isAdvisor &&
-      !user.user.isStudent &&
-      !user?.user.isAdmin
-    ) {
+    if (userRoles.includes("USER")) {
       router.push(`/profile`);
-    } else if (
-      user?.user.isUser &&
-      user?.user.isAdvisor &&
-      !user.user.isStudent &&
-      !user?.user.isAdmin
-    ) {
-      router.push("/mentor");
-    } else if (
-      user?.user.isUser &&
-      !user?.user.isAdvisor &&
-      user.user.isStudent &&
-      !user?.user.isAdmin
-    ) {
+    } else if (userRoles.includes("ADVISER")) {
+      router.push("/adviser");
+    } else if (userRoles.includes("STUDENT")) {
       router.push("/student");
     }
   };

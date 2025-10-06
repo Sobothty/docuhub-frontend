@@ -186,7 +186,7 @@ const upcomingDeadlines = [
 export default function MentorOverviewPage() {
   return (
     <DashboardLayout
-      userRole="mentor"
+      userRole="adviser"
       userName="Dr. Sarah Johnson"
       userAvatar="/placeholder.svg?height=40&width=40"
     >
