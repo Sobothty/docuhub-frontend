@@ -1,4 +1,4 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { BaseQueryApi, createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { url } from "inspector";
 import { getSession } from "next-auth/react";
 
@@ -124,14 +124,32 @@ export const papersApi = createApi({
         sortBy = "publishedAt",
         direction = "desc",
       }) => ({
-        url: "/papers"
-      })
-    })
+        url: `/papers/published?page=${page}&size=${size}$sortBy=${sortBy}&direction=${direction}`,
+        params: { page, size, sortBy, direction },
+        queryFn: async (arg: { page?: 0 | undefined; size?: 10 | undefined; sortBy?: "publishedAt" | undefined; direction?: "desc" | undefined; }, api: BaseQueryApi, extraOptions: {}) => {
+          const {
+            page = 0,
+            size = 10,
+            sortBy = "publishedAt",
+            direction = "desc",
+          } = arg;
+          const result = await publicBaseQuery(
+            `/papers?page=${page}&size=${size}&sortBy=${sortBy}&direction=${direction}`,
+            api,
+            extraOptions
+          );
+          return result.data
+            ? { data: result.data as ApiResponse }
+            : { error: result.error };
+        },
+        providesTags: ["Papers"],
+      }),
+    }),
   }),
 });
 
 // Export hooks
-export const { useGetPapersByAuthorQuery, useCreatePaperMutation } = papersApi;
+export const { useGetPapersByAuthorQuery, useCreatePaperMutation, useGetAllPublishedPapersQuery } = papersApi;
 
 // Export reducer
 export default papersApi.reducer;

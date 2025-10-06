@@ -10,10 +10,10 @@ export default function NavbarWrapper() {
   const pathname = usePathname();
 
   if (
-    pathname.startsWith("/mentor") ||
+    pathname.startsWith("/adviser") ||
     pathname.startsWith("/student") ||
     pathname.startsWith("/register") ||
-    pathname.startsWith("/login")
+    pathname.startsWith("/login") 
   ) {
     return null;
   }

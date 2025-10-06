@@ -6,5 +6,5 @@ export default function MentorLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <ProtectedRoute requiredRole="mentor">{children}</ProtectedRoute>
+  return <ProtectedRoute requiredRole="adviser">{children}</ProtectedRoute>
 }
