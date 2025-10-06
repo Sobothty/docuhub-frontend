@@ -127,7 +127,7 @@ export default function NavbarUser() {
       !user.user.isStudent &&
       !user?.user.isAdmin
     ) {
-      router.push(`/users/${user.user.uuid}`);
+      router.push(`/profile`);
     } else if (
       user?.user.isUser &&
       user?.user.isAdvisor &&
