@@ -92,7 +92,7 @@ const categories = ['All', 'Guide', 'Template', 'Reference', 'Tutorial'];
 
 export default function MentorResourcesPage() {
   return (
-    <DashboardLayout userRole="mentor">
+    <DashboardLayout userRole="adviser">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

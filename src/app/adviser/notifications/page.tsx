@@ -42,7 +42,7 @@ const notifications = [
 
 export default function MentorNotificationsPage() {
   return (
-    <DashboardLayout userRole="mentor">
+    <DashboardLayout userRole="adviser">
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <Bell className="h-5 w-5" />

@@ -18,7 +18,7 @@ export default function MentorStudentProfilePage() {
   const id = params?.id as string;
 
   return (
-    <DashboardLayout userRole="mentor">
+    <DashboardLayout userRole="adviser">
       <div className="space-y-6">
         <Button variant="ghost" onClick={() => router.push('/mentor/students')}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to Assigned Students
