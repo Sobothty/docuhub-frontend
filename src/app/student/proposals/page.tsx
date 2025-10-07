@@ -115,7 +115,7 @@ export default function StudentProposalsPage() {
             Pending Admin Review
           </Badge>
         );
-      case "pending_mentor":
+      case "UNDER_REVIEW":
         return (
           <Badge variant="outline">
             <Clock className="w-3 h-3 mr-1" />
@@ -132,6 +132,7 @@ export default function StudentProposalsPage() {
         );
       case "rejected":
       case "REJECTED":
+      case "ADMIN_REJECTED":
         return (
           <Badge variant="destructive" className="bg-red-500">
             <XCircle className="w-3 h-3 mr-1" />
@@ -141,10 +142,6 @@ export default function StudentProposalsPage() {
       default:
         return <Badge variant="secondary">Unknown</Badge>;
     }
-  };
-
-  const handleSubmitDocument = (id: string) => {
-    console.log(`Document submitted for mentor review: ${id}`);
   };
 
   const handleAddSubject = (value: string) => {

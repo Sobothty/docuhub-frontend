@@ -8,6 +8,7 @@ interface Feedback {
   paperUuid: string;
   fileUrl: string;
   deadline: string | null;
+  adviserImageUrl: string | null;
   advisorName: string;
   receiverName: string;
   createdAt: string;
@@ -19,6 +20,9 @@ interface FeedbackResponse {
   message: string;
   status: string;
 }
+
+// For the /feedback/author endpoint which returns an array directly
+type AllFeedbackResponse = Feedback[];
 
 export const feedbackApi = createApi({
   reducerPath: "feedbackApi",
@@ -40,8 +44,15 @@ export const feedbackApi = createApi({
         { type: "Feedback", id: paperUuid },
       ],
     }),
+    getAllFeedbackByAuthor: builder.query<AllFeedbackResponse, void>({
+      query: () => `/feedback/author`,
+      providesTags: ["Feedback"],
+    }),
   }),
 });
 
-export const { useGetFeedbackByPaperUuidQuery } = feedbackApi;
+export const {
+  useGetFeedbackByPaperUuidQuery,
+  useGetAllFeedbackByAuthorQuery,
+} = feedbackApi;
 export default feedbackApi.reducerPath;

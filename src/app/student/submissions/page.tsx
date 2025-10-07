@@ -1,16 +1,16 @@
-'use client';
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+"use client";
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import Link from 'next/link';
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -18,13 +18,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -33,9 +33,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Search,
   Upload,
@@ -47,81 +47,90 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-} from 'lucide-react';
-
-// Mock submission data
-const submissions = [
-  {
-    id: 1,
-    title: 'Machine Learning Applications in Healthcare Diagnostics',
-    status: 'approved',
-    submittedDate: '2024-03-10',
-    lastUpdated: '2024-03-12',
-    mentor: 'Dr. Sarah Johnson',
-    category: 'Computer Science',
-    abstract:
-      'This paper explores the application of machine learning algorithms in medical diagnostics...',
-  },
-  {
-    id: 2,
-    title: 'Climate Change Impact on Agricultural Productivity',
-    status: 'pending',
-    submittedDate: '2024-03-15',
-    lastUpdated: '2024-03-15',
-    mentor: 'Dr. Sarah Johnson',
-    category: 'Environmental Science',
-    abstract:
-      'An analysis of how climate change affects crop yields and farming practices...',
-  },
-  {
-    id: 3,
-    title: 'Economic Recovery Patterns Post-Pandemic',
-    status: 'revision',
-    submittedDate: '2024-03-08',
-    lastUpdated: '2024-03-14',
-    mentor: 'Dr. Sarah Johnson',
-    category: 'Economics',
-    abstract:
-      'This study examines economic recovery patterns following the global pandemic...',
-  },
-  {
-    id: 4,
-    title: 'Social Media Impact on Mental Health',
-    status: 'rejected',
-    submittedDate: '2024-02-28',
-    lastUpdated: '2024-03-05',
-    mentor: 'Dr. Sarah Johnson',
-    category: 'Psychology',
-    abstract:
-      'Research into the correlation between social media usage and mental health outcomes...',
-  },
-];
+} from "lucide-react";
+import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
+import {
+  useGetPapersByAuthorQuery,
+  useGetAllAssignmentsQuery,
+} from "@/feature/paperSlice/papers";
+import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
+import { useState, useMemo } from "react";
 
 export default function StudentSubmissionsPage() {
-  // Keeping dialog handlers in case we reintroduce modal view later
-  // const openDetails = (submission: (typeof submissions)[number]) => {
-  //   setSelected(submission);
-  //   setIsDetailsOpen(true);
-  // };
+  const { data: userProfile } = useGetUserProfileQuery();
+  const { data: authorPapers, isLoading: papersLoading } =
+    useGetPapersByAuthorQuery({});
+  const { data: assignmentData } = useGetAllAssignmentsQuery();
 
-  const handleDownload = (submission: (typeof submissions)[number]) => {
-    // Mock download: create a text file with basic submission info
-    const content = `Title: ${submission.title}\nCategory: ${submission.category}\nMentor: ${submission.mentor}\nAbstract: ${submission.abstract}`;
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${submission.title
-      .replace(/[^a-z0-9\-\s]/gi, '')
-      .replace(/\s+/g, '-')}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+  const papers = authorPapers?.papers.content || [];
+  const assignments = assignmentData || [];
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Create a mapping of paper UUID to assignment data
+  const paperDataMap = useMemo(() => {
+    return papers.reduce((acc, paper) => {
+      const assignment = assignments.find(
+        (assign) => assign.paperUuid === paper.uuid
+      );
+      acc[paper.uuid] = {
+        assignment,
+        adviserUuid: assignment?.adviserUuid || null,
+      };
+      return acc;
+    }, {} as Record<string, { assignment: any; adviserUuid: string | null }>);
+  }, [papers, assignments]);
+
+  // Filter papers based on search query
+  const filteredPapers = papers.filter(
+    (paper) =>
+      paper.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      paper.abstractText?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      paper.categoryNames
+        .join(" ")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+  );
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return (
+          <Badge variant="secondary" className="capitalize">
+            <Clock className="h-3 w-3 mr-1" />
+            Pending
+          </Badge>
+        );
+      case "APPROVED":
+        return (
+          <Badge variant="default" className="capitalize bg-green-500">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Approved
+          </Badge>
+        );
+      case "REJECTED":
+      case "ADMIN_REJECTED":
+        return (
+          <Badge variant="destructive" className="capitalize">
+            <XCircle className="h-3 w-3 mr-1" />
+            Rejected
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="secondary" className="capitalize">
+            {status}
+          </Badge>
+        );
+    }
   };
 
   return (
-    <DashboardLayout userRole="student">
+    <DashboardLayout
+      userRole="student"
+      userAvatar={userProfile?.user.imageUrl}
+      userName={userProfile?.user.fullName}
+    >
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -187,6 +196,8 @@ export default function StudentSubmissionsPage() {
               <Input
                 placeholder="Search your submissions..."
                 className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
           </CardHeader>
@@ -201,12 +212,20 @@ export default function StudentSubmissionsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {submissions.length === 0 ? (
+            {papersLoading ? (
+              <div className="py-12 text-center">
+                <p className="text-muted-foreground">Loading submissions...</p>
+              </div>
+            ) : filteredPapers.length === 0 ? (
               <div className="py-12 text-center">
                 <div className="mx-auto max-w-md space-y-2">
-                  <h3 className="text-lg font-semibold">No submissions yet</h3>
+                  <h3 className="text-lg font-semibold">
+                    {searchQuery ? "No results found" : "No submissions yet"}
+                  </h3>
                   <p className="text-muted-foreground">
-                    Upload your first paper to get started.
+                    {searchQuery
+                      ? "Try adjusting your search query."
+                      : "Upload your first paper to get started."}
                   </p>
                 </div>
               </div>
@@ -223,95 +242,21 @@ export default function StudentSubmissionsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {submissions.map((submission) => (
-                    <TableRow key={submission.id}>
-                      <TableCell>
-                        <div className="max-w-xs">
-                          <div className="font-medium truncate">
-                            <Link
-                              href={`/student/submissions/${submission.id}`}
-                              className="hover:underline"
-                            >
-                              {submission.title}
-                            </Link>
-                          </div>
-                          <div className="text-sm text-muted-foreground truncate">
-                            {submission.abstract}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            submission.status === 'approved'
-                              ? 'default'
-                              : submission.status === 'rejected'
-                              ? 'destructive'
-                              : submission.status === 'revision'
-                              ? 'outline'
-                              : 'secondary'
-                          }
-                          className="capitalize"
-                        >
-                          {submission.status === 'pending' && (
-                            <Clock className="h-3 w-3 mr-1" />
-                          )}
-                          {submission.status === 'approved' && (
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                          )}
-                          {submission.status === 'rejected' && (
-                            <XCircle className="h-3 w-3 mr-1" />
-                          )}
-                          {submission.status === 'revision' && (
-                            <Edit className="h-3 w-3 mr-1" />
-                          )}
-                          {submission.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{submission.category}</TableCell>
-                      <TableCell>{submission.mentor}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {submission.submittedDate}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link
-                                href={`/student/submissions/${submission.id}`}
-                              >
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Details
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDownload(submission)}
-                            >
-                              <Download className="h-4 w-4 mr-2" />
-                              Download
-                            </DropdownMenuItem>
-                            {submission.status === 'revision' && (
-                              <DropdownMenuItem>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit & Resubmit
-                              </DropdownMenuItem>
-                            )}
-                            {submission.status === 'rejected' && (
-                              <DropdownMenuItem className="text-red-600">
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredPapers.map((paper) => {
+                    const paperData = paperDataMap[paper.uuid];
+                    const assignment = paperData?.assignment;
+                    const adviserUuid = paperData?.adviserUuid;
+
+                    return (
+                      <SubmissionRow
+                        key={paper.uuid}
+                        paper={paper}
+                        assignment={assignment}
+                        adviserUuid={adviserUuid}
+                        getStatusBadge={getStatusBadge}
+                      />
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}
@@ -319,5 +264,103 @@ export default function StudentSubmissionsPage() {
         </Card>
       </div>
     </DashboardLayout>
+  );
+}
+
+// Separate component for each row to use hooks properly
+function SubmissionRow({
+  paper,
+  assignment,
+  adviserUuid,
+  getStatusBadge,
+}: {
+  paper: any;
+  assignment: any;
+  adviserUuid: string | null;
+  getStatusBadge: (status: string) => React.ReactNode;
+}) {
+  const { data: adviserData } = useGetUserByIdQuery(adviserUuid || "", {
+    skip: !adviserUuid,
+  });
+
+  const handleDownload = () => {
+    // Create a download link for the paper file
+    if (paper.fileUrl) {
+      const a = document.createElement("a");
+      a.href = paper.fileUrl;
+      a.download = `${paper.title
+        .replace(/[^a-z0-9\-\s]/gi, "")
+        .replace(/\s+/g, "-")}.pdf`;
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+  };
+
+  return (
+    <TableRow>
+      <TableCell>
+        <div className="max-w-xs">
+          <div className="font-medium truncate p-2">
+            <Link
+              href={`/student/submissions/${paper.uuid}`}
+              className="hover:underline"
+            >
+              {paper.title}
+            </Link>
+          </div>
+        </div>
+      </TableCell>
+      <TableCell>{getStatusBadge(paper.status)}</TableCell>
+      <TableCell>
+        {Array.isArray(paper.categoryNames)
+          ? paper.categoryNames.join(", ")
+          : paper.categoryNames}
+      </TableCell>
+      <TableCell>
+        {adviserData
+          ? adviserData.fullName
+          : assignment
+          ? "Assigned"
+          : "Not assigned"}
+      </TableCell>
+      <TableCell className="text-sm text-muted-foreground">
+        {paper.submittedAt || paper.createdAt}
+      </TableCell>
+      <TableCell className="text-right">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link href={`/student/submissions/${paper.uuid}`}>
+                <Eye className="h-4 w-4 mr-2" />
+                View Details
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleDownload}>
+              <Download className="h-4 w-4 mr-2" />
+              Download
+            </DropdownMenuItem>
+            {paper.status === "REJECTED" && (
+              <>
+                <DropdownMenuItem>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit & Resubmit
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-red-600">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </TableCell>
+    </TableRow>
   );
 }

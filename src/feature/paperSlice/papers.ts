@@ -175,6 +175,10 @@ export const papersApi = createApi({
       }),
       providesTags: ["Papers"],
     }),
+    getPaperByUuid: builder.query<Paper, string>({
+      query: (uuid) => `/papers/${uuid}`,
+      providesTags: (result, error, uuid) => [{ type: "Papers", id: uuid }],
+    })
   }),
 });
 
@@ -183,7 +187,8 @@ export const {
   useGetPapersByAuthorQuery,
   useCreatePaperMutation,
   useGetAllPublishedPapersQuery,
-  useGetAllAssignmentsQuery
+  useGetAllAssignmentsQuery,
+  useGetPaperByUuidQuery,
 } = papersApi;
 
 // Export reducer
