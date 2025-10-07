@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,44 +33,15 @@ import {
 import { useGetAllCategoriesQuery } from "@/feature/categoriesSlice/categoriesSlices";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useCreateMediaMutation } from "@/feature/media/mediaSlice";
-import { useCreatePaperMutation } from "@/feature/paperSlice/papers";
-
-const mockProposals = [
-  {
-    id: 1,
-    title: "Machine Learning Applications in Healthcare",
-    subject: "Computer Science",
-    description: "Exploring the use of ML algorithms for medical diagnosis...",
-    status: "pending_admin",
-    submittedDate: "2024-01-15",
-    mentorFeedback: "",
-    assignedMentor: "",
-    pdfFile: null as File | null,
-  },
-  {
-    id: 2,
-    title: "Climate Change Impact on Marine Ecosystems",
-    subject: "Environmental Science",
-    description: "Analyzing the effects of rising temperatures on ocean life...",
-    status: "pending_mentor",
-    submittedDate: "2024-01-20",
-    mentorFeedback: "",
-    assignedMentor: "Dr. Michael Rodriguez",
-    pdfFile: null as File | null,
-  },
-  {
-    id: 3,
-    title: "Quantum Computing Fundamentals",
-    subject: "Physics",
-    description: "A comprehensive study of quantum computing principles...",
-    status: "rejected",
-    submittedDate: "2024-01-10",
-    mentorFeedback:
-      "The scope is too broad. Narrow focus to a specific aspect.",
-    assignedMentor: "",
-    pdfFile: null as File | null,
-  },
-];
+import {
+  Assignment,
+  useCreatePaperMutation,
+  useGetAllAssignmentsQuery,
+  useGetPapersByAuthorQuery,
+} from "@/feature/paperSlice/papers";
+import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
+import { useGetFeedbackByPaperUuidQuery } from "@/feature/feedbackSlice/feedbackSlice";
+import { Paper } from "@/types/paperType";
 
 export default function StudentProposalsPage() {
   const [showNewProposal, setShowNewProposal] = useState(false);
@@ -82,7 +53,6 @@ export default function StudentProposalsPage() {
     thumbnailUrl: "",
     category: [] as string[],
   });
-  const [proposals, setProposals] = useState(mockProposals);
 
   const { data: categories, isLoading: categoriesLoading } =
     useGetAllCategoriesQuery();
@@ -90,13 +60,41 @@ export default function StudentProposalsPage() {
   const { data: user } = useGetUserProfileQuery();
 
   const [uploadMedia, { isLoading: isUploading }] = useCreateMediaMutation();
-  const [createPaper, { isLoading: isCreatingPaper }] = useCreatePaperMutation();
+  const [createPaper, { isLoading: isCreatingPaper }] =
+    useCreatePaperMutation();
+
+  const { data: authorPapers } = useGetPapersByAuthorQuery({});
+
+  const papers = authorPapers?.papers.content || [];
+
+  const { data: assignmentData } = useGetAllAssignmentsQuery();
+
+  const assignments = assignmentData || [];
+
+  const [adviserId, setAdviserId] = useState<string>("");
+  const [feedback, setFeedback] = useState<string[]>([]);
+
+  const { data: adviserData } = useGetUserByIdQuery(adviserId);
 
   const [thumbnailFile, setThumbnailFile] = useState<string>("");
   const [pdfFile, setPdfFile] = useState<string>("");
 
   const thumbnailInputRef = useRef<HTMLInputElement | null>(null);
   const pdfInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Create a mapping of paper UUID to feedback and adviser data
+  const paperDataMap = useMemo(() => {
+    return papers.reduce((acc, paper) => {
+      const assignment = assignments.find(
+        (assign) => assign.paperUuid === paper.uuid
+      );
+      acc[paper.uuid] = {
+        assignment,
+        adviserUuid: assignment?.adviserUuid || null,
+      };
+      return acc;
+    }, {} as Record<string, { assignment: any; adviserUuid: string | null }>);
+  }, [papers, assignments]);
 
   // Helper to format filename
   const getFileName = (url: string) => {
@@ -110,6 +108,7 @@ export default function StudentProposalsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending_admin":
+      case "PENDING":
         return (
           <Badge variant="secondary">
             <Clock className="w-3 h-3 mr-1" />
@@ -124,6 +123,7 @@ export default function StudentProposalsPage() {
           </Badge>
         );
       case "approved":
+      case "APPROVED":
         return (
           <Badge variant="default" className="bg-green-500">
             <CheckCircle className="w-3 h-3 mr-1" />
@@ -131,6 +131,7 @@ export default function StudentProposalsPage() {
           </Badge>
         );
       case "rejected":
+      case "REJECTED":
         return (
           <Badge variant="destructive" className="bg-red-500">
             <XCircle className="w-3 h-3 mr-1" />
@@ -142,32 +143,7 @@ export default function StudentProposalsPage() {
     }
   };
 
-  const handleAdminReview = (id: number, status: string, feedback?: string) => {
-    setProposals((prev) =>
-      prev.map((proposal) =>
-        proposal.id === id
-          ? {
-              ...proposal,
-              status,
-              mentorFeedback: feedback || proposal.mentorFeedback,
-              assignedMentor:
-                status === "pending_mentor"
-                  ? "Dr. Assigned Mentor"
-                  : proposal.assignedMentor,
-            }
-          : proposal
-      )
-    );
-  };
-
-  const handleSubmitDocument = (id: number) => {
-    setProposals((prev) =>
-      prev.map((proposal) =>
-        proposal.id === id && proposal.status === "approved"
-          ? { ...proposal, status: "pending_mentor" }
-          : proposal
-      )
-    );
+  const handleSubmitDocument = (id: string) => {
     console.log(`Document submitted for mentor review: ${id}`);
   };
 
@@ -269,8 +245,8 @@ export default function StudentProposalsPage() {
 
       alert("Paper submitted successfully!");
     } catch (error) {
-    console.log("Failed to create paper - Full Error:", error);
-  }
+      console.log("Failed to create paper - Full Error:", error);
+    }
   };
 
   return (
@@ -489,83 +465,126 @@ export default function StudentProposalsPage() {
 
         {/* Existing Proposals */}
         <div className="space-y-4">
-          {proposals.map((proposal) => (
-            <Card key={proposal.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg sm:text-xl">
-                      {proposal.title}
-                    </CardTitle>
-                    <CardDescription>
-                      Subject: {proposal.subject}
-                    </CardDescription>
-                  </div>
-                  {getStatusBadge(proposal.status)}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm sm:text-base text-muted-foreground mb-4">
-                  {proposal.description}
+          {papers.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center">
+                <p className="text-muted-foreground">
+                  No documents submitted yet.
                 </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm sm:text-base">
-                  <div>
-                    <strong>Submitted:</strong> {proposal.submittedDate}
-                  </div>
-                  {proposal.assignedMentor && (
-                    <div>
-                      <strong>Mentor:</strong> {proposal.assignedMentor}
-                    </div>
-                  )}
-                </div>
-
-                {proposal.mentorFeedback && (
-                  <div className="mt-4 p-3 bg-muted rounded-lg">
-                    <strong className="text-sm sm:text-base">Feedback:</strong>
-                    <p className="text-sm sm:text-base mt-1">
-                      {proposal.mentorFeedback}
-                    </p>
-                  </div>
-                )}
-
-                {proposal.status === "approved" && (
-                  <div className="mt-4">
-                    <Button
-                      className="bg-green-500 hover:bg-green-600"
-                      onClick={() => handleSubmitDocument(proposal.id)}
-                    >
-                      <FileText className="w-4 h-4 mr-2" />
-                      Submit Final Document
-                    </Button>
-                  </div>
-                )}
-                {proposal.status === "pending_admin" && (
-                  <div className="mt-4 text-sm text-muted-foreground">
-                    Awaiting admin review. Check back soon!
-                  </div>
-                )}
-                {proposal.status === "pending_mentor" && (
-                  <div className="mt-4">
-                    <Button
-                      variant="outline"
-                      onClick={() => handleAdminReview(proposal.id, "approved")}
-                    >
-                      <UserCheck className="w-4 h-4 mr-2" />
-                      Track Progress with Mentor
-                    </Button>
-                  </div>
-                )}
-                {proposal.status === "rejected" && (
-                  <div className="mt-4 text-sm text-destructive">
-                    Rejected. Please revise and resubmit based on feedback.
-                  </div>
-                )}
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            papers.map((proposal) => {
+              const paperData = paperDataMap[proposal.uuid];
+              const assignment = paperData?.assignment;
+              const adviserUuid = paperData?.adviserUuid;
+
+              return (
+                <PaperCard
+                  key={proposal.uuid}
+                  proposal={proposal}
+                  assignment={assignment}
+                  adviserUuid={adviserUuid}
+                  getStatusBadge={getStatusBadge}
+                />
+              );
+            })
+          )}
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+// Create a separate component for each paper card to properly use hooks
+function PaperCard({
+  proposal,
+  assignment,
+  adviserUuid,
+  getStatusBadge,
+}: {
+  proposal: Paper;
+  assignment: Assignment;
+  adviserUuid: string | null;
+  getStatusBadge: (status: string) => React.ReactNode;
+}) {
+  // Now we can safely use hooks for each paper
+  const { data: adviserData } = useGetUserByIdQuery(adviserUuid || "", {
+    skip: !adviserUuid,
+  });
+
+  const { data: feedbackData } = useGetFeedbackByPaperUuidQuery(proposal.uuid);
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-lg sm:text-xl">
+              {proposal.title}
+            </CardTitle>
+            <CardDescription>Subject: {proposal.categoryNames}</CardDescription>
+          </div>
+          {getStatusBadge(proposal.status)}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm sm:text-base text-muted-foreground mb-4">
+          {proposal.abstractText || "No description available"}
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm sm:text-base">
+          <div>
+            <strong>Submitted:</strong> {proposal.submittedAt}
+          </div>
+          {adviserData && (
+            <div>
+              <strong>Mentor:</strong> {adviserData.fullName}
+            </div>
+          )}
+        </div>
+
+        {feedbackData?.data && (
+          <div className="mt-4 p-3 bg-muted rounded-lg">
+            <strong className="text-sm sm:text-base">Feedback:</strong>
+            <p className="text-sm sm:text-base mt-1">
+              {feedbackData.data.feedbackText}
+            </p>
+            {feedbackData.data.deadline && (
+              <p className="text-xs text-muted-foreground mt-2">
+                <strong>Deadline:</strong> {feedbackData.data.deadline}
+              </p>
+            )}
+          </div>
+        )}
+
+        {proposal.status === "APPROVED" && (
+          <div className="mt-4">
+            <Button
+              className="bg-green-500 hover:bg-green-600"
+              onClick={() =>
+                console.log(`Viewing progress for ${proposal.uuid}`)
+              }
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              View Document Details
+            </Button>
+          </div>
+        )}
+        {proposal.status === "PENDING" && (
+          <div className="mt-4 p-3 bg-yellow-300 rounded-lg w-fit">
+            <p className="text-sm font-semibold text-white flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              <span>Awaiting admin review. Check back soon!</span>
+            </p>
+          </div>
+        )}
+        {proposal.status === "REJECTED" && (
+          <div className="mt-4 text-sm text-destructive">
+            Rejected. Please revise and resubmit based on feedback.
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
