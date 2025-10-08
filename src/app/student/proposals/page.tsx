@@ -527,7 +527,7 @@ function PaperCard({
       </CardHeader>
       <CardContent>
         <p className="text-sm sm:text-base text-muted-foreground mb-4">
-          {proposal.abstractText || "No description available"}
+          {proposal.abstractText || "No description available"}k
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm sm:text-base">

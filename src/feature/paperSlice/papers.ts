@@ -56,6 +56,11 @@ interface ApiResponse {
   papers: PapersResponse;
 }
 
+interface SinglePaperResponse{
+  message: string;
+  paper: Paper;
+}
+
 interface PaperCreateResponse {
   message: string;
 }
@@ -175,7 +180,7 @@ export const papersApi = createApi({
       }),
       providesTags: ["Papers"],
     }),
-    getPaperByUuid: builder.query<Paper, string>({
+    getPaperByUuid: builder.query<SinglePaperResponse, string>({
       query: (uuid) => `/papers/${uuid}`,
       providesTags: (result, error, uuid) => [{ type: "Papers", id: uuid }],
     })

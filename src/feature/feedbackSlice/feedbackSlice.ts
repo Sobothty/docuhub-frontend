@@ -38,7 +38,7 @@ export const feedbackApi = createApi({
   }),
   tagTypes: ["Feedback"],
   endpoints: (builder) => ({
-    getFeedbackByPaperUuid: builder.query<FeedbackResponse, string>({
+    getFeedbackByPaperUuid: builder.query<Feedback, string>({
       query: (paperUuid) => `/feedback/${paperUuid}`,
       providesTags: (result, error, paperUuid) => [
         { type: "Feedback", id: paperUuid },

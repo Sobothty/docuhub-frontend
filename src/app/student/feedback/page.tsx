@@ -32,8 +32,14 @@ function FeedbackItem({ feedback, index, isLast }: any) {
   const router = useRouter();
   const { data: paper } = useGetPaperByUuidQuery(feedback.paperUuid);
 
+  const handleOnClick = (paperUuid : string) => {
+    router.push(`/student/feedback/${paperUuid}`);
+  }
+
   return (
-    <div key={feedback.paperUuid} className="flex gap-4">
+    <div key={feedback.paperUuid} className="flex gap-4" 
+      onClick={() => handleOnClick(feedback.paperUuid)}
+    > 
       <div className="flex flex-col items-center">
         <Avatar className="h-10 w-10">
           <AvatarImage
@@ -43,7 +49,7 @@ function FeedbackItem({ feedback, index, isLast }: any) {
           <AvatarFallback>
             {feedback.advisorName
               .split(" ")
-              .map((n) => n[0])
+              .map((n: string[]) => n[0])
               .join("")}
           </AvatarFallback>
         </Avatar>
@@ -80,7 +86,7 @@ function FeedbackItem({ feedback, index, isLast }: any) {
             {feedback.createdAt}
           </span>
         </div>
-        <h5 className="font-medium text-sm mb-2">{paper?.title}</h5>
+        <h5 className="font-medium text-sm mb-2">{paper?.paper.title}</h5>
         <p className="text-sm text-muted-foreground leading-relaxed">
           {feedback.feedbackText}
         </p>
