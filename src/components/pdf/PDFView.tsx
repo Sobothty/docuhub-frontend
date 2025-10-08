@@ -1,14 +1,13 @@
-import { AlertCircle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import { useRef, useState, useEffect } from 'react';
-import type { PDFDocumentProxy } from 'pdfjs-dist';
+import { AlertCircle, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
 
 const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
-  const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
+  const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [pdfjsLib, setPdfjsLib] = useState<typeof import('pdfjs-dist') | null>(null);
+  const [error, setError] = useState("");
+  const [pdfjsLib, setPdfjsLib] = useState<any>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -16,45 +15,35 @@ const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
   useEffect(() => {
     const loadPdfjs = async () => {
       try {
-        if (typeof window !== 'undefined') {
-          const pdfjs = await import('pdfjs-dist');
+        if (typeof window !== "undefined") {
+          const pdfjs = await import("pdfjs-dist");
           pdfjs.GlobalWorkerOptions.workerSrc =
-            '//unpkg.com/pdfjs-dist@' +
+            "//unpkg.com/pdfjs-dist@" +
             pdfjs.version +
-            '/build/pdf.worker.min.js';
+            "/build/pdf.worker.min.js";
           setPdfjsLib(pdfjs);
         }
       } catch (error) {
-        console.error('Failed to load PDF.js:', error);
-        setError('Failed to load PDF library');
+        console.error("Failed to load PDF.js:", error);
+        setError("Failed to load PDF library");
       }
     };
     loadPdfjs();
   }, []);
 
-  const renderPage = async ({
-    pdf,
-    pageNumber,
-  }: {
-    pdf: PDFDocumentProxy;
-    pageNumber: number;
-  }) => {
+  const renderPage = async ({ pdf, pageNumber }: any) => {
     if (!pdf || !canvasRef.current) return;
     try {
       const page = await pdf.getPage(pageNumber);
       const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
+      const context = canvas.getContext("2d");
       const viewport = page.getViewport({ scale: 1.5 });
 
       canvas.height = viewport.height;
       canvas.width = viewport.width;
 
-      // Render the PDF page (add 'canvas' property for RenderParameters)
-      await page.render({
-        canvasContext: context!,
-        canvas: canvas,
-        viewport: viewport,
-      }).promise;
+      // Render the PDF page
+      await page.render({ canvasContext: context, viewport: viewport }).promise;
 
       console.log(`Page ${pageNumber} rendered successfully`);
     } catch (error) {
@@ -66,7 +55,7 @@ const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
   const loadPdf = async (pdfUrl: string) => {
     if (!pdfjsLib) return;
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const loadingTask = pdfjsLib.getDocument(pdfUrl);
       const pdf = await loadingTask.promise;
@@ -75,8 +64,8 @@ const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
       setCurrentPage(1);
       await renderPage({ pdf, pageNumber: 1 });
     } catch (error) {
-      console.error('Error loading PDF:', error);
-      setError('Failed to load PDF.');
+      console.error("Error loading PDF:", error);
+      setError("Failed to load PDF.");
     } finally {
       setLoading(false);
     }
@@ -120,34 +109,8 @@ const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">PDF Viewer</h2>
-
-      {/* Navigation */}
-      {totalPages > 0 && (
-        <div className="flex items-center justify-center gap-4 mb-4 p-3 bg-gray-100 rounded-lg">
-          <button
-            onClick={prevPage}
-            disabled={currentPage <= 1 || loading}
-            className="flex items-center px-3 py-2 bg-blue-500 text-white rounded disabled:bg-gray-400"
-          >
-            <ChevronLeft size={16} />
-            Previous
-          </button>
-          <span className="font-medium">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={nextPage}
-            disabled={currentPage >= totalPages || loading}
-            className="flex items-center px-3 py-2 bg-blue-500 text-white rounded disabled:bg-gray-400"
-          >
-            Next
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      )}
-
+    <div className="w-full max-w-7xl">
+      
       {/* Error Display */}
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -173,12 +136,12 @@ const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
         className="border border-gray-300 rounded-lg bg-white overflow-hidden"
         ref={containerRef}
       >
-        <div className="flex justify-center p-4">
+        <div className="flex justify-center">
           <div className="relative inline-block">
             <canvas
               ref={canvasRef}
               className="block max-w-full h-auto shadow-lg"
-              style={{ display: pdfDoc ? 'block' : 'none' }}
+              style={{ display: pdfDoc ? "block" : "none" }}
             />
           </div>
 
@@ -190,11 +153,30 @@ const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
         </div>
       </div>
 
-      {/* Status */}
-      <div className="mt-4 text-sm text-gray-500">
-        {pdfUri && <div>PDF URI: {pdfUri}</div>}
-        {pdfDoc && <div>Status: PDF loaded successfully</div>}
-      </div>
+      {/* Navigation */}
+      {totalPages > 0 && (
+        <div className="flex items-center justify-center gap-4 mb-4 p-3 rounded-lg">
+          <button
+            onClick={prevPage}
+            disabled={currentPage <= 1 || loading}
+            className="flex items-center px-3 py-2 bg-blue-500 text-white rounded disabled:bg-gray-400"
+          >
+            <ChevronLeft size={16} />
+            Previous
+          </button>
+          <span className="font-medium">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={nextPage}
+            disabled={currentPage >= totalPages || loading}
+            className="flex items-center px-3 py-2 bg-blue-500 text-white rounded disabled:bg-gray-400"
+          >
+            Next
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

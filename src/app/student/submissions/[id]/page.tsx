@@ -28,7 +28,7 @@ import {
 type Submission = {
   id: number;
   title: string;
-  status: 'approved' | 'pending' | 'revision' | 'rejected';
+  status: 'APPROVED' | 'UNDER_REVIEW' | 'REJECTED' | 'REVISION';
   submittedDate: string;
   lastUpdated: string;
   mentor: string;
@@ -43,7 +43,7 @@ const demoSubmissions: Submission[] = [
   {
     id: 1,
     title: 'Machine Learning Applications in Healthcare Diagnostics',
-    status: 'approved',
+    status: 'APPROVED',
     submittedDate: '2024-03-10',
     lastUpdated: '2024-03-12',
     mentor: 'Dr. Sarah Johnson',
@@ -54,7 +54,7 @@ const demoSubmissions: Submission[] = [
   {
     id: 2,
     title: 'Climate Change Impact on Agricultural Productivity',
-    status: 'pending',
+    status: 'UNDER_REVIEW',
     submittedDate: '2024-03-15',
     lastUpdated: '2024-03-15',
     mentor: 'Dr. Sarah Johnson',
@@ -65,7 +65,7 @@ const demoSubmissions: Submission[] = [
   {
     id: 3,
     title: 'Economic Recovery Patterns Post-Pandemic',
-    status: 'revision',
+    status: 'REVISION',
     submittedDate: '2024-03-08',
     lastUpdated: '2024-03-14',
     mentor: 'Dr. Sarah Johnson',
@@ -76,7 +76,7 @@ const demoSubmissions: Submission[] = [
   {
     id: 4,
     title: 'Social Media Impact on Mental Health',
-    status: 'rejected',
+    status: 'REJECTED',
     submittedDate: '2024-02-28',
     lastUpdated: '2024-03-05',
     mentor: 'Dr. Sarah Johnson',
@@ -88,22 +88,22 @@ const demoSubmissions: Submission[] = [
 
 function StatusBadge({ status }: { status: Submission['status'] }) {
   const icon =
-    status === 'approved' ? (
+    status === 'APPROVED' ? (
       <CheckCircle className="h-3 w-3 mr-1" />
-    ) : status === 'rejected' ? (
+    ) : status === 'REJECTED' ? (
       <XCircle className="h-3 w-3 mr-1" />
-    ) : status === 'revision' ? (
+    ) : status === 'REVISION' ? (
       <Edit className="h-3 w-3 mr-1" />
     ) : (
       <Clock className="h-3 w-3 mr-1" />
     );
 
   const variant: BadgeVariant =
-    status === 'approved'
+    status === 'APPROVED'
       ? 'default'
-      : status === 'rejected'
+      : status === 'REJECTED'
       ? 'destructive'
-      : status === 'revision'
+      : status === 'REVISION'
       ? 'outline'
       : 'secondary';
 

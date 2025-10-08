@@ -1,3 +1,5 @@
+"use client";
+
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import {
   Card,
@@ -22,6 +24,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { MessageSquare, Calendar, Award, Search, UserPlus } from 'lucide-react';
+import { useGetUserProfileQuery } from '@/feature/profileSlice/profileSlice';
 
 // Mock current mentor data
 const currentMentor = {
@@ -88,11 +91,14 @@ const availableMentors = [
 ];
 
 export default function StudentMentorshipPage() {
+
+  const { data: user } = useGetUserProfileQuery();
+
   return (
     <DashboardLayout
       userRole="student"
-      userName="Sarah Chen"
-      userAvatar="/placeholder.svg?height=40&width=40"
+      userName={user?.user.fullName}
+      userAvatar={user?.user.imageUrl || "/placeholder.svg?height=40&width=40"}
     >
       <div className="space-y-6">
         {/* Header */}

@@ -1,12 +1,16 @@
-import { BaseQueryApi, createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import {
+  BaseQueryApi,
+  createApi,
+  fetchBaseQuery,
+} from "@reduxjs/toolkit/query/react";
 import { url } from "inspector";
 import { getSession } from "next-auth/react";
 
 // Define interfaces
-interface Paper {
+export interface Paper {
   uuid: string;
   title: string;
-  abstractText?: string;
+  abstractText: string;
   fileUrl: string;
   thumbnailUrl: string;
   authorUuid: string;
@@ -35,7 +39,7 @@ interface PaginationParams {
   direction?: string;
 }
 
-interface PapersResponse {
+export interface PapersResponse {
   content: Paper[];
   totalElements: number;
   totalPages: number;
@@ -52,8 +56,24 @@ interface ApiResponse {
   papers: PapersResponse;
 }
 
+interface SinglePaperResponse{
+  message: string;
+  paper: Paper;
+}
+
 interface PaperCreateResponse {
   message: string;
+}
+
+export interface Assignment {
+  uuid: string;
+  paperUuid: string;
+  adviserUuid: string;
+  adminUuid: string;
+  deadline: string;
+  status: string;
+  assignedDate: string;
+  updateDate: string | null;
 }
 
 // Custom base query to handle text responses
@@ -126,7 +146,16 @@ export const papersApi = createApi({
       }) => ({
         url: `/papers/published?page=${page}&size=${size}$sortBy=${sortBy}&direction=${direction}`,
         params: { page, size, sortBy, direction },
-        queryFn: async (arg: { page?: 0 | undefined; size?: 10 | undefined; sortBy?: "publishedAt" | undefined; direction?: "desc" | undefined; }, api: BaseQueryApi, extraOptions: {}) => {
+        queryFn: async (
+          arg: {
+            page?: 0 | undefined;
+            size?: 10 | undefined;
+            sortBy?: "publishedAt" | undefined;
+            direction?: "desc" | undefined;
+          },
+          api: BaseQueryApi,
+          extraOptions: {}
+        ) => {
           const {
             page = 0,
             size = 10,
@@ -145,11 +174,27 @@ export const papersApi = createApi({
         providesTags: ["Papers"],
       }),
     }),
+    getAllAssignments: builder.query<Assignment[], void>({
+      query: () => ({
+        url: "/paper/assignments/author",
+      }),
+      providesTags: ["Papers"],
+    }),
+    getPaperByUuid: builder.query<SinglePaperResponse, string>({
+      query: (uuid) => `/papers/${uuid}`,
+      providesTags: (result, error, uuid) => [{ type: "Papers", id: uuid }],
+    })
   }),
 });
 
 // Export hooks
-export const { useGetPapersByAuthorQuery, useCreatePaperMutation, useGetAllPublishedPapersQuery } = papersApi;
+export const {
+  useGetPapersByAuthorQuery,
+  useCreatePaperMutation,
+  useGetAllPublishedPapersQuery,
+  useGetAllAssignmentsQuery,
+  useGetPaperByUuidQuery,
+} = papersApi;
 
 // Export reducer
 export default papersApi.reducer;
