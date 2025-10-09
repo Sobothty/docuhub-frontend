@@ -13,7 +13,8 @@ export default function NavbarWrapper() {
     pathname.startsWith("/adviser") ||
     pathname.startsWith("/student") ||
     pathname.startsWith("/register") ||
-    pathname.startsWith("/login") 
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/profile")
   ) {
     return null;
   }

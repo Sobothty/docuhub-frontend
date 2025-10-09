@@ -5,14 +5,12 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { BookOpen, MessageSquare, Download, Calendar, User, GraduationCap, Briefcase } from "lucide-react"
 import DashboardLayout from "@/components/layout/dashboard-layout"
-import { useGetUserProfileQuery } from "@/feature/auth/authApi"
+import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useSession } from "next-auth/react"
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
-  const { data: profileData, isLoading, error } = useGetUserProfileQuery(undefined, {
-    skip: status !== "authenticated",
-  });
+  const { data: profileData, isLoading } = useGetUserProfileQuery();
 
   if (status === "loading" || isLoading) {
     return (
@@ -41,20 +39,6 @@ export default function ProfilePage() {
     );
   }
 
-  if (error) {
-    return (
-      <DashboardLayout userRole="public">
-        <div className="space-y-6">
-          <Card>
-            <CardContent className="p-6 text-center">
-              <h2 className="text-xl font-semibold mb-2">Error loading profile</h2>
-              <p className="text-muted-foreground">{error.toString()}</p>
-            </CardContent>
-          </Card>
-        </div>
-      </DashboardLayout>
-    );
-  }
 
   if (!profileData) {
     return (
@@ -81,7 +65,10 @@ export default function ProfilePage() {
     : user.userName.slice(0, 2).toUpperCase();
 
   return (
-    <DashboardLayout userRole="public">
+    <DashboardLayout userRole="public"
+      userAvatar={profileData.user.imageUrl}
+      userName={profileData.user.fullName}
+    >
       <div className="space-y-6">
         {/* Overview Section */}
         <div>
@@ -248,7 +235,7 @@ export default function ProfilePage() {
         )}
 
         {/* Adviser Information */}
-        {adviser && (
+        {/* {adviser && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -274,7 +261,7 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
-        )}
+        )} */}
       </div>
     </DashboardLayout>
   )
