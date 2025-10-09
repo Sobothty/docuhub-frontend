@@ -14,7 +14,8 @@ export default function NavbarWrapper() {
     pathname.startsWith("/student") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/login") ||
-    pathname.startsWith("/setting") 
+    pathname.startsWith("/profile") ||
+    pathname.startsWith("/setting")
   ) {
     return null;
   }
