@@ -430,20 +430,6 @@ export default function BrowsePage() {
                 </span>
               </div>
 
-              {/* API Debug Info */}
-              <div className="bg-muted p-4 rounded-lg mb-6 border border-border" suppressHydrationWarning>
-                <h3 className="font-semibold text-foreground mb-2">📊 API Status:</h3>
-                <div className="text-small-text text-foreground space-y-1">
-                  <div>Status: <span className={papersLoading ? "text-yellow-600" : papersSuccess ? "text-green-600" : "text-red-600"}>
-                    {papersLoading ? "Loading..." : papersSuccess ? "Success" : "Error"}
-                  </span></div>
-                  <div>Papers from API: {apiPapers.length}</div>
-                  <div>Total Available: {papersResponse?.papers?.totalElements || 0}</div>
-                  <div>Current Page: {currentPage + 1} of {papersResponse?.papers?.totalPages || 1}</div>
-                  {papersError && <div className="text-red-600">Error: {JSON.stringify(papersError)}</div>}
-                </div>
-              </div>
-
               {papersLoading ? (
                 <div className="space-y-6">
                   {[...Array(3)].map((_, index) => (

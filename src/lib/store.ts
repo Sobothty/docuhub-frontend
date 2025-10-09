@@ -15,6 +15,7 @@ import { categoriesApi } from "@/feature/categoriesSlice/categoriesSlices";
 import { mediaApi } from "@/feature/media/mediaSlice";
 import { feedbackApi } from "@/feature/feedbackSlice/feedbackSlice";
 import { usersApi } from "@/feature/users/usersSlice";
+import { studentApi } from "@/feature/users/studentSlice";
 
 export const store = configureStore({
   reducer: {
@@ -25,6 +26,7 @@ export const store = configureStore({
     paper: paperReducer,
     media: mediaReducer,
     feedback: feedbackApi.reducer,
+    student: studentApi.reducer,
     [profileApi.reducerPath]: profileApi.reducer,
     [apiSlide.reducerPath]: apiSlide.reducer,
     [authApi.reducerPath]: authApi.reducer,
@@ -35,6 +37,7 @@ export const store = configureStore({
     [mediaApi.reducerPath]: mediaApi.reducer,
     [feedbackApi.reducerPath]: feedbackApi.reducer,
     [usersApi.reducerPath]: usersApi.reducer,
+    [studentApi.reducerPath]: studentApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -85,8 +88,9 @@ export const store = configureStore({
       starSlice.middleware,
       categoriesApi.middleware,
       mediaApi.middleware,
-      feedbackApi.middleware, 
-      usersApi.middleware
+      feedbackApi.middleware,
+      usersApi.middleware,
+      studentApi.middleware,
     ),
   devTools: process.env.NODE_ENV !== "production",
 });

@@ -56,7 +56,7 @@ interface ApiResponse {
   papers: PapersResponse;
 }
 
-interface SinglePaperResponse{
+interface SinglePaperResponse {
   message: string;
   paper: Paper;
 }
@@ -180,10 +180,14 @@ export const papersApi = createApi({
       }),
       providesTags: ["Papers"],
     }),
+    getAllAdviserAssignments: builder.query<Assignment[], string>({
+      query: (adviserUuid) => `/paper/assignments/adviser/${adviserUuid}`,
+      providesTags: ["Papers"],
+    }),
     getPaperByUuid: builder.query<SinglePaperResponse, string>({
       query: (uuid) => `/papers/${uuid}`,
       providesTags: (result, error, uuid) => [{ type: "Papers", id: uuid }],
-    })
+    }),
   }),
 });
 
@@ -193,6 +197,7 @@ export const {
   useCreatePaperMutation,
   useGetAllPublishedPapersQuery,
   useGetAllAssignmentsQuery,
+  useGetAllAdviserAssignmentsQuery,
   useGetPaperByUuidQuery,
 } = papersApi;
 
