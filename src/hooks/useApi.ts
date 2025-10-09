@@ -4,11 +4,16 @@ import apiService from '@/services/api';
 import { 
   UserResponse, 
   UserProfileResponse,
-  PaginationParams,
   UserCreateDto,
   LoginDto,
   UpdateUserDto
 } from '@/types/userType';
+
+// Define PaginationParams interface locally if not available elsewhere
+interface PaginationParams {
+  page?: number;
+  size?: number;
+}
 import { 
   PaperResponse, 
   PaperRequest,
