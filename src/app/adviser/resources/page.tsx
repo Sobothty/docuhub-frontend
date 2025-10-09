@@ -1,3 +1,4 @@
+"use client"
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import {
   Card,
@@ -43,6 +44,7 @@ import {
   Eye,
   Trash2,
 } from 'lucide-react';
+import { useGetUserProfileQuery } from '@/feature/profileSlice/profileSlice';
 
 // Mock resource data
 const resources = [
@@ -91,8 +93,13 @@ const resources = [
 const categories = ['All', 'Guide', 'Template', 'Reference', 'Tutorial'];
 
 export default function MentorResourcesPage() {
+  const { data : adviserProfile, error, isLoading } = useGetUserProfileQuery();
   return (
-    <DashboardLayout userRole="adviser">
+    <DashboardLayout
+      userRole="adviser"
+      userName={adviserProfile?.user.fullName || 'Adviser Name'}
+      userAvatar={adviserProfile?.user.imageUrl || undefined}
+    >
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

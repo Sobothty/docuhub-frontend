@@ -1,48 +1,54 @@
-'use client';
+"use client";
 
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Bell, UserPlus, FileText, CheckCircle } from 'lucide-react';
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Bell, UserPlus, FileText, CheckCircle } from "lucide-react";
+import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 
 const notifications = [
   {
     id: 1,
-    type: 'assignment',
-    title: 'New student assigned',
-    message: 'Admin assigned John Smith to you for mentorship.',
-    time: '2h ago',
+    type: "assignment",
+    title: "New student assigned",
+    message: "Admin assigned John Smith to you for mentorship.",
+    time: "2h ago",
     icon: UserPlus,
   },
   {
     id: 2,
-    type: 'submission',
-    title: 'Document submitted',
-    message: 'Sarah Chen submitted a new document for review.',
-    time: '1d ago',
+    type: "submission",
+    title: "Document submitted",
+    message: "Sarah Chen submitted a new document for review.",
+    time: "1d ago",
     icon: FileText,
   },
   {
     id: 3,
-    type: 'status',
-    title: 'Document approved',
+    type: "status",
+    title: "Document approved",
     message:
-      'Your feedback was applied and the document was approved by Admin.',
-    time: '3d ago',
+      "Your feedback was applied and the document was approved by Admin.",
+    time: "3d ago",
     icon: CheckCircle,
   },
 ];
 
 export default function MentorNotificationsPage() {
+  const { data: adviserProfile, error, isLoading } = useGetUserProfileQuery();
   return (
-    <DashboardLayout userRole="adviser">
+    <DashboardLayout
+      userRole="adviser"
+      userName={adviserProfile?.user.fullName || "Adviser Name"}
+      userAvatar={adviserProfile?.user.imageUrl || undefined}
+    >
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <Bell className="h-5 w-5" />

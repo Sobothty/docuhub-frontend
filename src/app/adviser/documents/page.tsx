@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import PDFEdit from '@/components/pdf/PDFEdit';
+import { useGetUserProfileQuery } from '@/feature/profileSlice/profileSlice';
 
 // Define Proposal type for type safety
 type Proposal = {
@@ -216,9 +217,14 @@ export default function MentorProposalsPage() {
       proposal.student.toLowerCase().includes(searchTerm.toLowerCase()) ||
       proposal.subject.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
+  const { data : adviserProfile, error, isLoading } = useGetUserProfileQuery();
   return (
-    <DashboardLayout userRole="mentor">
+    <DashboardLayout
+      userRole="adviser"
+      userName={adviserProfile?.user.fullName || 'Adviser Name'}
+      userAvatar={adviserProfile?.user.imageUrl || undefined}
+     >
+
       <div className="space-y-6">
         <PageHeader
           title="Student Documents"
@@ -229,7 +235,7 @@ export default function MentorProposalsPage() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
-            placeholder="Search proposals..."
+            placeholder="Search documents..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -248,7 +254,7 @@ export default function MentorProposalsPage() {
                         variant="link"
                         className="p-0 h-auto font-semibold text-lg"
                         onClick={() =>
-                          router.push(`/mentor/proposals/${proposal.id}`)
+                          router.push(`/adviser/documents/${proposal.id}`)
                         }
                       >
                         {proposal.title}
@@ -362,7 +368,7 @@ export default function MentorProposalsPage() {
                       ) : (
                         <Button onClick={() => handleReviewProposal(proposal)}>
                           <MessageSquare className="w-4 h-4 mr-2" />
-                          Review Proposal
+                          Review Document
                         </Button>
                       )}
                     </div>

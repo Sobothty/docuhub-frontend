@@ -55,7 +55,7 @@ const roleNavigation = {
   adviser: [
     { name: "Overview", href: "/adviser", icon: Home },
     { name: "Assigned Students", href: "/adviser/students", icon: Users },
-    { name: "Documents", href: "/adviser/proposals", icon: ClipboardList },
+    { name: "Documents", href: "/adviser/documents", icon: ClipboardList },
     { name: "Notifications", href: "/adviser/notifications", icon: Bell },
     { name: "Resources", href: "/adviser/resources", icon: BookOpen },
     { name: "Settings", href: "/adviser/settings", icon: Settings },

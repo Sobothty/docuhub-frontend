@@ -1,3 +1,4 @@
+"use client"
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import {
   Card,
@@ -39,11 +40,12 @@ import {
   Download,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useGetUserProfileQuery } from '@/feature/profileSlice/profileSlice';
 
 const mentorStats = {
   assignedStudents: 8,
   pendingReviews: 3,
-  approvedPapers: 15,
+  approvedPapers: 5,
   totalFeedback: 42,
   averageReviewTime: 2.5,
   studentSatisfaction: 4.8,
@@ -57,7 +59,7 @@ const assignedStudents = [
     name: 'Sarah Chen',
     email: 'sarah.chen@university.edu',
     project: 'Machine Learning in Healthcare',
-    status: 'in-review',
+    status: 'under-review',
     progress: 75,
     lastInteraction: '2 days ago',
     submissionDate: '2024-03-10',
@@ -184,11 +186,12 @@ const upcomingDeadlines = [
 ];
 
 export default function MentorOverviewPage() {
+  const { data : adviserProfile, error, isLoading } = useGetUserProfileQuery();
   return (
     <DashboardLayout
-      userRole="adviser"
-      userName="Dr. Sarah Johnson"
-      userAvatar="/placeholder.svg?height=40&width=40"
+       userRole="adviser"
+      userName={adviserProfile?.user.fullName || 'Adviser Name'}
+      userAvatar={adviserProfile?.user.imageUrl || undefined}
     >
       <div className="space-y-6">
         <div>
@@ -201,15 +204,15 @@ export default function MentorOverviewPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" asChild>
-            <Link href="/mentor/proposals">
+            <Link href="/adviser/documents">
               <FileText className="h-4 w-4 mr-2" />
-              Review Proposals
+              Review Document
             </Link>
           </Button>
           <Button asChild>
-            <Link href="/mentor/students">
+            <Link href="/adviser/students">
               <Plus className="h-4 w-4 mr-2" />
-              Add Student
+              Review Student
             </Link>
           </Button>
         </div>
@@ -283,6 +286,7 @@ export default function MentorOverviewPage() {
               </p>
             </CardContent>
           </Card>
+
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
@@ -304,6 +308,7 @@ export default function MentorOverviewPage() {
                     Track your students&apos; progress and projects
                   </CardDescription>
                 </CardHeader>
+                
                 <CardContent>
                   <div className="space-y-4">
                     {assignedStudents.slice(0, 3).map((student) => (
@@ -364,7 +369,7 @@ export default function MentorOverviewPage() {
                     className="w-full mt-4 bg-transparent"
                     asChild
                   >
-                    <Link href="/mentor/students">View All Students</Link>
+                    <Link href="/adviser/students">View All Students</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -740,7 +745,7 @@ export default function MentorOverviewPage() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
-                    Total Proposals
+                    Total Documents
                   </CardTitle>
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
