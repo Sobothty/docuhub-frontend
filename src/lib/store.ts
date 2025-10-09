@@ -1,5 +1,4 @@
 import { configureStore } from "@reduxjs/toolkit";
-import counterReducer from "@/feature/counter/counterSlice";
 import { apiSlide } from "@/feature/apiSlice/apiSlice";
 import { authApi } from "@/feature/apiSlice/authApi";
 import adviserDetailReducer from "@/feature/adviserSlice/adviserDetailSlice";
@@ -19,7 +18,6 @@ import { studentApi } from "@/feature/users/studentSlice";
 
 export const store = configureStore({
   reducer: {
-    counter: counterReducer,
     adviserDetail: adviserDetailReducer,
     category: categoryReducer,
     user: userReducer,

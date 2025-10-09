@@ -1,3 +1,4 @@
+"use client"
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import {
   Card,
@@ -14,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Save, User, Bell, LinkIcon, Shield } from 'lucide-react';
+import { useGetUserProfileQuery } from '@/feature/profileSlice/profileSlice';
 
 const researchInterests = [
   'Machine Learning',
@@ -24,11 +26,13 @@ const researchInterests = [
 ];
 
 export default function MentorSettingsPage() {
-  return (
+
+  const { data : adviserProfile, error, isLoading } = useGetUserProfileQuery();
+    return (
     <DashboardLayout
-      userRole="mentor"
-      userName="Dr. Sarah Johnson"
-      userAvatar="/placeholder.svg?height=40&width=40"
+      userRole="adviser"
+      userName={adviserProfile?.user.fullName || 'Adviser Name'}
+      userAvatar={adviserProfile?.user.imageUrl || undefined}
     >
       <div className="space-y-6">
         {/* Header */}

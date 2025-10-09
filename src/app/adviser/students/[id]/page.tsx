@@ -16,11 +16,15 @@ export default function MentorStudentProfilePage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
-
+  const { data : adviserProfile, error, isLoading } = useGetUserProfileQuery();
   return (
-    <DashboardLayout userRole="mentor">
+    <DashboardLayout 
+     userRole="adviser"
+      userName={adviserProfile?.user.fullName || 'Adviser Name'}
+      userAvatar={adviserProfile?.user.imageUrl || undefined}
+    >
       <div className="space-y-6">
-        <Button variant="ghost" onClick={() => router.push('/mentor/students')}>
+        <Button variant="ghost" onClick={() => router.push('/adviser/students')}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to Assigned Students
         </Button>
 

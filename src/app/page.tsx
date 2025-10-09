@@ -10,9 +10,8 @@ import AdventureSection from "@/components/ctaBanner/CtaBanner";
 import WorksCardGrid from "@/components/cardGrid/WorksCardGrid";
 import DiscussionForumSection from "@/components/ctaBanner/DiscussionForumSection";
 import FeedbackCardCarousel from "@/components/carousel/FeedbackCarousel";
-import LanguageTest from "@/components/test/LanguageTest";
 import { useTranslation } from "react-i18next";
-import { useEffect } from "react";
+
 import { useGetPapersQuery, useGetUserByIdQuery } from "@/feature/apiSlice/paperApi";
 import { useGetAllPublishedPapersQuery } from "@/feature/paperSlice/papers";
 

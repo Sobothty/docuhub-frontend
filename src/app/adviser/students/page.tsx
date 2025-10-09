@@ -13,7 +13,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
 import {
   Table,
   TableBody,
@@ -36,6 +35,7 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
+import { useGetUserProfileQuery } from '@/feature/profileSlice/profileSlice';
 
 // Mock student data
 const initialStudents = [
@@ -86,6 +86,8 @@ const initialStudents = [
 ];
 
 export default function MentorStudentsPage() {
+  const { data : adviserProfile, error, isLoading } = useGetUserProfileQuery();
+
   const router = useRouter();
   const [studentList, setStudentList] = useState(initialStudents);
   const [isMessageOpen, setIsMessageOpen] = useState(false);
@@ -95,7 +97,7 @@ export default function MentorStudentsPage() {
   );
 
   const openProfile = (id: number) => {
-    router.push(`/mentor/students/${id}`);
+    router.push(`/adviser/students/${id}`);
   };
 
   const openMessage = (id: number) => {
@@ -118,8 +120,7 @@ export default function MentorStudentsPage() {
           ? {
               ...s,
               status: status === 'approved' ? 'approved' : 'revision',
-              lastInteraction: 'just now',
-              progress: status === 'approved' ? 100 : s.progress,
+              lastInteraction: 'just now'
             }
           : s
       )
@@ -127,7 +128,11 @@ export default function MentorStudentsPage() {
   };
 
   return (
-    <DashboardLayout userRole="mentor">
+    <DashboardLayout 
+      userRole="adviser"
+      userName={adviserProfile?.user.fullName || 'Adviser Name'}
+      userAvatar={adviserProfile?.user.imageUrl || undefined}
+    >
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -164,7 +169,6 @@ export default function MentorStudentsPage() {
                   <TableHead>Student</TableHead>
                   <TableHead>Project</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Progress</TableHead>
                   <TableHead>Last Interaction</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -205,14 +209,6 @@ export default function MentorStudentsPage() {
                       >
                         {student.status}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Progress value={student.progress} className="w-16" />
-                        <span className="text-sm text-muted-foreground">
-                          {student.progress}%
-                        </span>
-                      </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {student.lastInteraction}

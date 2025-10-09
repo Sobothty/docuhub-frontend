@@ -445,12 +445,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         <div className="text-center mt-6">
           <p className="text-gray-600 dark:text-gray-400">
             Already have an account?{" "}
-             <Link 
-      href="/login"
-      className="text-blue-600 hover:text-blue-700 font-medium dark:text-blue-400 dark:hover:text-blue-300"
-    >
-      Sign In
-    </Link>
+            <Link
+              href="/login"
+              className="text-blue-600 hover:text-blue-700 font-medium dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              Sign In
+            </Link>
           </p>
         </div>
       </div>

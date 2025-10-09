@@ -30,7 +30,6 @@ import {
 import {
   PaperRequest,
   PaperResponse,
-  AdminPaperRequest,
   GetPapersResponse,
   PaginationParams
 } from '@/types/paperType';

@@ -33,7 +33,7 @@ import { useGetAllStarOfPapersQuery } from "@/feature/star/StarSlice";
 
 export default function StudentOverviewPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: user, error, isLoading } = useGetUserProfileQuery();
+  const { data:user, error, isLoading } = useGetUserProfileQuery();
   const {
     data: starData,
     error: starError,
