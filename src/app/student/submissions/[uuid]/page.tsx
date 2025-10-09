@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { useMemo } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Download,
   ArrowLeft,
@@ -23,89 +23,35 @@ import {
   XCircle,
   Edit,
   FileText,
-} from 'lucide-react';
+} from "lucide-react";
+import { useGetPaperByUuidQuery } from "@/feature/paperSlice/papers";
+import { useGetAllAssignmentsQuery } from "@/feature/paperSlice/papers";
+import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
+import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
+import { useGetFeedbackByPaperUuidQuery } from "@/feature/feedbackSlice/feedbackSlice";
 
-type Submission = {
-  id: number;
-  title: string;
-  status: 'APPROVED' | 'UNDER_REVIEW' | 'REJECTED' | 'REVISION';
-  submittedDate: string;
-  lastUpdated: string;
-  mentor: string;
-  category: string;
-  abstract: string;
-};
+type BadgeVariant = "default" | "destructive" | "outline" | "secondary";
 
-type BadgeVariant = 'default' | 'destructive' | 'outline' | 'secondary';
-
-// Define demoSubmissions array
-const demoSubmissions: Submission[] = [
-  {
-    id: 1,
-    title: 'Machine Learning Applications in Healthcare Diagnostics',
-    status: 'APPROVED',
-    submittedDate: '2024-03-10',
-    lastUpdated: '2024-03-12',
-    mentor: 'Dr. Sarah Johnson',
-    category: 'Computer Science',
-    abstract:
-      'This paper explores the application of machine learning algorithms in medical diagnostics...',
-  },
-  {
-    id: 2,
-    title: 'Climate Change Impact on Agricultural Productivity',
-    status: 'UNDER_REVIEW',
-    submittedDate: '2024-03-15',
-    lastUpdated: '2024-03-15',
-    mentor: 'Dr. Sarah Johnson',
-    category: 'Environmental Science',
-    abstract:
-      'An analysis of how climate change affects crop yields and farming practices...',
-  },
-  {
-    id: 3,
-    title: 'Economic Recovery Patterns Post-Pandemic',
-    status: 'REVISION',
-    submittedDate: '2024-03-08',
-    lastUpdated: '2024-03-14',
-    mentor: 'Dr. Sarah Johnson',
-    category: 'Economics',
-    abstract:
-      'This study examines economic recovery patterns following the global pandemic...',
-  },
-  {
-    id: 4,
-    title: 'Social Media Impact on Mental Health',
-    status: 'REJECTED',
-    submittedDate: '2024-02-28',
-    lastUpdated: '2024-03-05',
-    mentor: 'Dr. Sarah Johnson',
-    category: 'Psychology',
-    abstract:
-      'Research into the correlation between social media usage and mental health outcomes...',
-  },
-];
-
-function StatusBadge({ status }: { status: Submission['status'] }) {
+function StatusBadge({ status }: { status: string }) {
   const icon =
-    status === 'APPROVED' ? (
+    status === "APPROVED" ? (
       <CheckCircle className="h-3 w-3 mr-1" />
-    ) : status === 'REJECTED' ? (
+    ) : status === "REJECTED" || status === "ADMIN_REJECTED" ? (
       <XCircle className="h-3 w-3 mr-1" />
-    ) : status === 'REVISION' ? (
+    ) : status === "REVISION" ? (
       <Edit className="h-3 w-3 mr-1" />
     ) : (
       <Clock className="h-3 w-3 mr-1" />
     );
 
   const variant: BadgeVariant =
-    status === 'APPROVED'
-      ? 'default'
-      : status === 'REJECTED'
-      ? 'destructive'
-      : status === 'REVISION'
-      ? 'outline'
-      : 'secondary';
+    status === "APPROVED"
+      ? "default"
+      : status === "REJECTED" || status === "ADMIN_REJECTED"
+      ? "destructive"
+      : status === "REVISION"
+      ? "outline"
+      : "secondary";
 
   return (
     <Badge variant={variant} className="capitalize">
@@ -118,19 +64,53 @@ function StatusBadge({ status }: { status: Submission['status'] }) {
 export default function SubmissionDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { data: userProfile } = useGetUserProfileQuery();
 
-  const submission = useMemo(() => {
-    const id = Number(params?.id);
-    return demoSubmissions.find((s) => s.id === id) || null;
-  }, [params?.id]);
+  const submissionId = (params?.uuid as string) || "";
 
-  if (!submission) {
+  // Fetch paper data
+  const {
+    data: paperData,
+    isLoading: paperLoading,
+    error: paperError,
+  } = useGetPaperByUuidQuery(submissionId, {
+    skip: !submissionId,
+  });
+
+  // Fetch assignments to get adviser info
+  const { data: assignmentData } = useGetAllAssignmentsQuery();
+
+  // Find the assignment for this paper
+  const assignment = useMemo(() => {
+    if (!assignmentData || !paperData) return null;
+    return assignmentData.find(
+      (assign: any) => assign.paperUuid === paperData.paper.uuid
+    );
+  }, [assignmentData, paperData]);
+
+  // Fetch adviser data
+  const { data: adviserData } = useGetUserByIdQuery(
+    assignment?.adviserUuid || "",
+    {
+      skip: !assignment?.adviserUuid,
+    }
+  );
+
+  const { data : feedbackData } = useGetFeedbackByPaperUuidQuery(submissionId, {
+    skip: !submissionId,
+  });
+
+  if (!submissionId) {
     return (
-      <DashboardLayout userRole="student">
+      <DashboardLayout
+        userRole="student"
+        userAvatar={userProfile?.user.imageUrl}
+        userName={userProfile?.user.fullName}
+      >
         <div className="space-y-4">
           <Button
             variant="ghost"
-            onClick={() => router.push('/student/submissions')}
+            onClick={() => router.push("/student/submissions")}
           >
             <ArrowLeft className="h-4 w-4 mr-2" /> Back to submissions
           </Button>
@@ -148,38 +128,107 @@ export default function SubmissionDetailPage() {
     );
   }
 
+  if (paperLoading) {
+    return (
+      <DashboardLayout
+        userRole="student"
+        userAvatar={userProfile?.user.imageUrl}
+        userName={userProfile?.user.fullName}
+      >
+        <div className="flex items-center justify-center h-96">
+          <p className="text-muted-foreground">Loading submission details...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (paperError || !paperData) {
+    return (
+      <DashboardLayout
+        userRole="student"
+        userAvatar={userProfile?.user.imageUrl}
+        userName={userProfile?.user.fullName}
+      >
+        <div className="space-y-4">
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/student/submissions")}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" /> Back to submissions
+          </Button>
+          <Card>
+            <CardHeader>
+              <CardTitle>Submission not found</CardTitle>
+              <CardDescription>
+                We couldn&apos;t find that document. It may have been moved or
+                deleted.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const submission = paperData;
+  const mentor = adviserData?.fullName || "Not assigned";
+  const categories = Array.isArray(submission.paper.categoryNames)
+    ? submission.paper.categoryNames.join(", ")
+    : submission.paper.categoryNames || "Uncategorized";
+
+  const handleDownload = () => {
+    if (submission.paper.fileUrl) {
+      const a = document.createElement("a");
+      a.href = submission.paper.fileUrl;
+      a.download = `${submission.paper.title
+        .replace(/[^a-z0-9\-\s]/gi, "")
+        .replace(/\s+/g, "-")}.pdf`;
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+  };
+
   return (
-    <DashboardLayout userRole="student">
+    <DashboardLayout
+      userRole="student"
+      userAvatar={userProfile?.user.imageUrl}
+      userName={userProfile?.user.fullName}
+    >
       <div className="space-y-6">
         <div className="rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-5 sm:p-6 border border-border">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-                {submission.title}
+                {submission.paper.title}
               </h1>
               <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                <StatusBadge status={submission.status} />
+                <StatusBadge status={submission.paper.status} />
                 <Separator orientation="vertical" className="h-4" />
                 <span>
-                  Category:{' '}
+                  Category:{" "}
                   <span className="font-medium text-foreground">
-                    {submission.category}
+                    {categories}
                   </span>
                 </span>
                 <Separator orientation="vertical" className="h-4" />
-                <span>Submitted: {submission.submittedDate}</span>
+                <span>
+                  Submitted:{" "}
+                  {submission.paper.submittedAt || submission.paper.createdAt}
+                </span>
                 <Separator orientation="vertical" className="h-4" />
-                <span>Updated: {submission.lastUpdated}</span>
+                <span>Updated: {submission.paper.createdAt}</span>
               </div>
             </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={() => router.push('/student/submissions')}
+                onClick={() => router.push("/student/submissions")}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" /> Back
               </Button>
-              <Button>
+              <Button onClick={handleDownload}>
                 <Download className="h-4 w-4 mr-2" /> Download
               </Button>
             </div>
@@ -206,7 +255,8 @@ export default function SubmissionDetailPage() {
                     <div className="space-y-2">
                       <h3 className="text-base font-semibold">Abstract</h3>
                       <p className="text-sm text-muted-foreground leading-6">
-                        {submission.abstract}
+                        {submission.paper.abstractText ||
+                          "No abstract provided."}
                       </p>
                     </div>
                     <div className="grid sm:grid-cols-2 gap-4">
@@ -217,16 +267,15 @@ export default function SubmissionDetailPage() {
                         <div className="mt-1 flex items-center gap-2">
                           <Avatar className="h-8 w-8">
                             <AvatarFallback>
-                              {submission.mentor
-                                .split(' ')
-                                .map((n: string) => n[0]) // Type n as string
-                                .join('')
-                                .slice(0, 2)}
+                              {mentor
+                                .split(" ")
+                                .map((n: string) => n[0])
+                                .join("")
+                                .slice(0, 2)
+                                .toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
-                          <div className="text-sm font-medium">
-                            {submission.mentor}
-                          </div>
+                          <div className="text-sm font-medium">{mentor}</div>
                         </div>
                       </div>
                       <div className="rounded-lg border border-border p-4">
@@ -234,7 +283,7 @@ export default function SubmissionDetailPage() {
                           Status
                         </div>
                         <div className="mt-1">
-                          <StatusBadge status={submission.status} />
+                          <StatusBadge status={submission.paper.status} />
                         </div>
                       </div>
                     </div>
@@ -245,23 +294,29 @@ export default function SubmissionDetailPage() {
                         <FileText className="h-5 w-5" />
                         <div>
                           <div className="text-sm font-medium">
-                            Main Document.pdf
+                            {submission.paper.title}.pdf
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            Uploaded {submission.submittedDate}
+                            Uploaded {submission.paper.createdAt}
                           </div>
                         </div>
                       </div>
-                      <Button size="sm">
+                      <Button size="sm" onClick={handleDownload}>
                         <Download className="h-4 w-4 mr-2" /> Download
                       </Button>
                     </div>
                   </TabsContent>
                   <TabsContent value="feedback" className="space-y-3">
                     <div className="rounded-lg border border-border p-4">
-                      <div className="text-sm text-muted-foreground">
-                        No mentor feedback yet.
-                      </div>
+                      {feedbackData?.feedbackText ? (
+                        <div className="text-sm text-muted-foreground">
+                          {feedbackData.feedbackText}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-muted-foreground">
+                          No mentor feedback yet.
+                        </div>
+                      )}
                     </div>
                   </TabsContent>
                 </Tabs>
@@ -285,7 +340,7 @@ export default function SubmissionDetailPage() {
                         document
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {submission.submittedDate}
+                        {submission.paper.createdAt}
                       </div>
                     </div>
                   </div>
@@ -296,7 +351,7 @@ export default function SubmissionDetailPage() {
                     <div>
                       <div className="text-sm">Document last updated</div>
                       <div className="text-xs text-muted-foreground">
-                        {submission.lastUpdated}
+                        {submission.paper.createdAt}
                       </div>
                     </div>
                   </div>
@@ -314,18 +369,16 @@ export default function SubmissionDetailPage() {
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-muted-foreground">Category</div>
-                  <div className="text-sm font-medium">
-                    {submission.category}
-                  </div>
+                  <div className="text-sm font-medium">{categories}</div>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-muted-foreground">Mentor</div>
-                  <div className="text-sm font-medium">{submission.mentor}</div>
+                  <div className="text-sm font-medium">{mentor}</div>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-muted-foreground">Submitted</div>
                   <div className="text-sm font-medium">
-                    {submission.submittedDate}
+                    {submission.paper.createdAt}
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
@@ -333,7 +386,7 @@ export default function SubmissionDetailPage() {
                     Last updated
                   </div>
                   <div className="text-sm font-medium">
-                    {submission.lastUpdated}
+                    {submission.paper.createdAt}
                   </div>
                 </div>
               </CardContent>
@@ -346,11 +399,11 @@ export default function SubmissionDetailPage() {
               <CardContent className="flex flex-col gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => router.push('/student/submissions')}
+                  onClick={() => router.push("/student/submissions")}
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" /> Back to list
                 </Button>
-                <Button>
+                <Button onClick={handleDownload}>
                   <Download className="h-4 w-4 mr-2" /> Download PDF
                 </Button>
               </CardContent>

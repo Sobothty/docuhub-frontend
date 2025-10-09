@@ -21,15 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import {
-  Clock,
-  CheckCircle,
-  XCircle,
-  FileText,
-  Send,
-  UserCheck,
-  X,
-} from "lucide-react";
+import { Clock, CheckCircle, XCircle, FileText, Send, X } from "lucide-react";
 import { useGetAllCategoriesQuery } from "@/feature/categoriesSlice/categoriesSlices";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useCreateMediaMutation } from "@/feature/media/mediaSlice";
@@ -42,6 +34,7 @@ import {
 import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
 import { useGetFeedbackByPaperUuidQuery } from "@/feature/feedbackSlice/feedbackSlice";
 import { Paper } from "@/types/paperType";
+import { PaperCardSkeleton } from "./PaperSkeleton";
 
 export default function StudentProposalsPage() {
   const [showNewProposal, setShowNewProposal] = useState(false);
@@ -63,7 +56,8 @@ export default function StudentProposalsPage() {
   const [createPaper, { isLoading: isCreatingPaper }] =
     useCreatePaperMutation();
 
-  const { data: authorPapers } = useGetPapersByAuthorQuery({});
+  const { data: authorPapers, isLoading: papersLoading } =
+    useGetPapersByAuthorQuery({});
 
   const papers = authorPapers?.papers.content || [];
 
@@ -462,7 +456,9 @@ export default function StudentProposalsPage() {
 
         {/* Existing Proposals */}
         <div className="space-y-4">
-          {papers.length === 0 ? (
+          {papersLoading ? (
+            <PaperCardSkeleton count={4} />
+          ) : papers.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center">
                 <p className="text-muted-foreground">
@@ -541,15 +537,15 @@ function PaperCard({
           )}
         </div>
 
-        {feedbackData?.data && (
+        {feedbackData && (
           <div className="mt-4 p-3 bg-muted rounded-lg">
             <strong className="text-sm sm:text-base">Feedback:</strong>
             <p className="text-sm sm:text-base mt-1">
-              {feedbackData.data.feedbackText}
+              {feedbackData.feedbackText}
             </p>
-            {feedbackData.data.deadline && (
+            {feedbackData.deadline && (
               <p className="text-xs text-muted-foreground mt-2">
-                <strong>Deadline:</strong> {feedbackData.data.deadline}
+                <strong>Deadline:</strong> {feedbackData.deadline}
               </p>
             )}
           </div>

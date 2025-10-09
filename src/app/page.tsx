@@ -224,23 +224,23 @@ export default function Home() {
         </div>
 
         {/* Loading State */}
-        {isLoading && (
+        {/* {isLoading && (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             <span className="ml-2 text-gray-600">Loading papers...</span>
           </div>
-        )}
+        )} */}
 
         {/* Error State */}
-        {error && (
+        {/* {error && (
           <div className="text-center py-8">
             <p className="text-red-500 mb-2">Failed to load papers from API</p>
             <p className="text-sm text-gray-500">Showing sample data instead</p>
           </div>
-        )}
+        )} */}
 
         {/* Papers Grid */}
-        {!isLoading && (
+        {/* {!isLoading && (
           <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
             {papersToShow.map((paper) => (
               <PaperCardWithAuthor
@@ -251,7 +251,7 @@ export default function Home() {
               />
             ))}
           </div>
-        )}
+        )} */}
       </section>
 
       {/* Most Popular Documents */}

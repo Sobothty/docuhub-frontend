@@ -32,14 +32,58 @@ function FeedbackItem({ feedback, index, isLast }: any) {
   const router = useRouter();
   const { data: paper } = useGetPaperByUuidQuery(feedback.paperUuid);
 
-  const handleOnClick = (paperUuid : string) => {
+  const handleOnClick = (paperUuid: string) => {
     router.push(`/student/feedback/${paperUuid}`);
-  }
+  };
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering parent div onClick
+
+    if (!feedback.fileUrl) {
+      console.error("No file URL available");
+      alert("No feedback file available to download");
+      return;
+    }
+
+    try {
+      // Create filename from paper title or use default
+      const filename = paper?.paper.title
+        ? `${paper.paper.title.replace(/[^a-z0-9]/gi, "_")}_feedback.pdf`
+        : `feedback_${feedback.paperUuid}.pdf`;
+
+      // Fetch the file as blob to force download
+      const response = await fetch(feedback.fileUrl);
+      const blob = await response.blob();
+
+      // Create blob URL
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      // Create a temporary anchor element and trigger download
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+
+      // Append to body, trigger click, then remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up blob URL
+      window.URL.revokeObjectURL(blobUrl);
+
+      console.log(`Downloaded: ${filename}`);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      alert("Failed to download file. Please try again.");
+    }
+  };
 
   return (
-    <div key={feedback.paperUuid} className="flex gap-4" 
+    <div
+      key={feedback.paperUuid}
+      className="flex gap-4"
       onClick={() => handleOnClick(feedback.paperUuid)}
-    > 
+    >
       <div className="flex flex-col items-center">
         <Avatar className="h-10 w-10">
           <AvatarImage
@@ -109,6 +153,7 @@ function FeedbackItem({ feedback, index, isLast }: any) {
               size="sm"
               variant="outline"
               className="flex items-center gap-1"
+              onClick={handleDownload}
             >
               <Download className="h-3 w-3" />
               Download Feedback
