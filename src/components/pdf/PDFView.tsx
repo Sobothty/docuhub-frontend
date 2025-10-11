@@ -133,7 +133,7 @@ const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
 
       {/* PDF Display */}
       <div
-        className="border border-gray-300 rounded-lg bg-white overflow-hidden"
+        className="border border-gray-300 rounded-lg bg-white overflow-hidden mb-4"
         ref={containerRef}
       >
         <div className="flex justify-center">
@@ -159,7 +159,7 @@ const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
           <button
             onClick={prevPage}
             disabled={currentPage <= 1 || loading}
-            className="flex items-center px-3 py-2 bg-blue-500 text-white rounded disabled:bg-gray-400"
+            className="flex items-center px-3 py-1 border bg-accent hover:bg-accent-hover text-white rounded-lg disabled:bg-transparent text-md"
           >
             <ChevronLeft size={16} />
             Previous
@@ -170,7 +170,7 @@ const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
           <button
             onClick={nextPage}
             disabled={currentPage >= totalPages || loading}
-            className="flex items-center px-3 py-2 bg-blue-500 text-white rounded disabled:bg-gray-400"
+            className="flex items-center px-3 py-1 border bg-accent hover:bg-accent-hover text-white rounded-lg disabled:bg-transparent text-md"
           >
             Next
             <ChevronRight size={16} />
