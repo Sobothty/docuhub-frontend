@@ -137,41 +137,32 @@ export const papersApi = createApi({
       invalidatesTags: ["Papers"],
     }),
     getAllPublishedPapers: builder.query<ApiResponse, PaginationParams>({
-      query: ({
-        page = 0,
-        size = 10,
-        sortBy = "publishedAt",
-        direction = "desc",
-      }) => ({
-        url: `/papers/published?page=${page}&size=${size}$sortBy=${sortBy}&direction=${direction}`,
-        params: { page, size, sortBy, direction },
-        queryFn: async (
-          arg: {
-            page?: 0 | undefined;
-            size?: 10 | undefined;
-            sortBy?: "publishedAt" | undefined;
-            direction?: "desc" | undefined;
-          },
-          api: BaseQueryApi,
-          extraOptions: {}
-        ) => {
-          const {
-            page = 0,
-            size = 10,
-            sortBy = "publishedAt",
-            direction = "desc",
-          } = arg;
-          const result = await publicBaseQuery(
-            `/papers?page=${page}&size=${size}&sortBy=${sortBy}&direction=${direction}`,
-            api,
-            extraOptions
-          );
-          return result.data
-            ? { data: result.data as ApiResponse }
-            : { error: result.error };
-        },
-        providesTags: ["Papers"],
-      }),
+      queryFn: async (arg, api, extraOptions) => {
+        const {
+          page = 0,
+          size = 10,
+          sortBy = "publishedAt",
+          direction = "desc",
+        } = arg;
+
+        const result = await publicBaseQuery(
+          `/papers/published?page=${page}&size=${size}&sortBy=${sortBy}&direction=${direction}`,
+          api,
+          extraOptions
+        );
+
+        if (result.data) {
+          return { data: result.data as ApiResponse };
+        } else {
+          return { 
+            error: result.error || { 
+              status: 'FETCH_ERROR', 
+              error: 'Unknown error occurred' 
+            } 
+          };
+        }
+      },
+      providesTags: ["Papers"],
     }),
     getAllAssignments: builder.query<Assignment[], void>({
       query: () => ({
