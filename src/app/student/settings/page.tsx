@@ -1,3 +1,5 @@
+"use client";
+
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import {
   Card,
@@ -21,6 +23,7 @@ import {
   Shield,
   GraduationCap,
 } from 'lucide-react';
+import { useGetUserProfileQuery } from '@/feature/profileSlice/profileSlice';
 
 const researchInterests = [
   'Machine Learning',
@@ -30,11 +33,14 @@ const researchInterests = [
 ];
 
 export default function StudentSettingsPage() {
+
+  const { data : user } = useGetUserProfileQuery();
+
   return (
     <DashboardLayout
       userRole="student"
-      userName="Sarah Chen"
-      userAvatar="/placeholder.svg?height=40&width=40"
+      userName={user?.user.fullName}
+      userAvatar={user?.user.imageUrl || "/placeholder.svg?height=40&width=40"}
     >
       <div className="space-y-6">
         {/* Header */}
@@ -60,25 +66,21 @@ export default function StudentSettingsPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
-                <Input id="name" defaultValue="Sarah Chen" />
+                <Input id="name" defaultValue={user?.user.fullName} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="school">School/University</Label>
-                <Input id="school" defaultValue="Stanford University" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="year">Academic Year</Label>
-                <Input id="year" defaultValue="Graduate Student - 2nd Year" />
+                <Input id="school" defaultValue={user?.student?.university}  />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="major">Major/Field of Study</Label>
-                <Input id="major" defaultValue="Computer Science" />
+                <Input id="major" defaultValue={user?.student?.major} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="bio">Bio</Label>
-                <Textarea
+                <Input
                   id="bio"
-                  defaultValue="Graduate student passionate about machine learning applications in healthcare. Currently working on research projects involving AI-driven diagnostic tools."
+                  defaultValue={user?.user.bio}
                 />
               </div>
               <Button>
