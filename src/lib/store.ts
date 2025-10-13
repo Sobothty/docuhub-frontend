@@ -16,6 +16,7 @@ import { feedbackApi } from "@/feature/feedbackSlice/feedbackSlice";
 import { usersApi } from "@/feature/users/usersSlice";
 import { studentApi } from "@/feature/users/studentSlice";
 import assignmentApi from "@/feature/adviserAssignment/AdviserAssignmentSlice";
+import { commentsApi } from "@/feature/commentSlice/commentSlice";
 
 export const store = configureStore({
   reducer: {
@@ -40,6 +41,7 @@ export const store = configureStore({
 
     // by thong
     [assignmentApi.reducerPath]: assignmentApi.reducer,
+    [commentsApi.reducerPath]: commentsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -94,6 +96,7 @@ export const store = configureStore({
       usersApi.middleware,
       studentApi.middleware,
       assignmentApi.middleware,
+      commentsApi.middleware
     ),
   devTools: process.env.NODE_ENV !== "production",
 });

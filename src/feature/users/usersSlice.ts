@@ -1,10 +1,11 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { UserProfile } from "@/types/userType";
 
+
 export const usersApi = createApi({
   reducerPath: "usersApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: process.env.NEXT_PUBLIC_BASE_URL
+    baseUrl: process.env.NEXT_PUBLIC_BASE_URL,
   }),
   tagTypes: ["User"],
   endpoints: (builder) => ({
@@ -16,7 +17,11 @@ export const usersApi = createApi({
       query: (id) => `/auth/user/${id}`,
       providesTags: (result, error, id) => [{ type: "User", id }],
     }),
+  
   }),
 });
 
-export const { useGetAllUsersQuery, useGetUserByIdQuery } = usersApi;
+export const {
+  useGetAllUsersQuery,
+  useGetUserByIdQuery,
+} = usersApi;

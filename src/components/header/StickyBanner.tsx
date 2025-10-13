@@ -16,7 +16,8 @@ export default function StickyBanner() {
     '/dashboard',
     '/student',
     '/adviser',
-    '/profile' 
+    '/profile',
+    "/student-verification"
   ];
   const shouldHide = hiddenPaths.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`)

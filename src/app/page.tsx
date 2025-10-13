@@ -12,8 +12,10 @@ import DiscussionForumSection from "@/components/ctaBanner/DiscussionForumSectio
 import FeedbackCardCarousel from "@/components/carousel/FeedbackCarousel";
 import { useTranslation } from "react-i18next";
 
-import { useGetPapersQuery, useGetUserByIdQuery } from "@/feature/apiSlice/paperApi";
+import { useGetPapersQuery } from "@/feature/apiSlice/paperApi";
 import { useGetAllPublishedPapersQuery } from "@/feature/paperSlice/papers";
+
+import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
 
 // Sample research paper data
 const researchPapers = [
@@ -170,7 +172,8 @@ export default function Home() {
   // Fetch papers using RTK Query
   const { data: papersData, isLoading, error } = useGetAllPublishedPapersQuery({});
 
-  const papers = papersData?.papers?.content ?? [];
+  const papers = papersData?.papers.content ?? [];
+  console.log("Papers : ", papersData)
 
   type PaperType = {
     uuid: string;
@@ -224,23 +227,23 @@ export default function Home() {
         </div>
 
         {/* Loading State */}
-        {/* {isLoading && (
+        {isLoading && (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             <span className="ml-2 text-gray-600">Loading papers...</span>
           </div>
-        )} */}
+        )}
 
         {/* Error State */}
-        {/* {error && (
+        {error && (
           <div className="text-center py-8">
             <p className="text-red-500 mb-2">Failed to load papers from API</p>
             <p className="text-sm text-gray-500">Showing sample data instead</p>
           </div>
-        )} */}
+        )}
 
         {/* Papers Grid */}
-        {/* {!isLoading && (
+        {!isLoading && (
           <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
             {papersToShow.map((paper) => (
               <PaperCardWithAuthor
@@ -251,7 +254,7 @@ export default function Home() {
               />
             ))}
           </div>
-        )} */}
+        )}
       </section>
 
       {/* Most Popular Documents */}
@@ -342,10 +345,10 @@ function PaperCardWithAuthor({ paper, onDownloadPDF, onToggleBookmark }: PaperCa
       key={paper.id}
       paperId={paper.id} // always string
       title={paper.title}
-      authors={authorLoading ? ["Loading..."] : author ? [author.name || "Unknown Author"] : ["Unknown Author"]}
+      authors={authorLoading ? ["Loading..."] : author ? [author.fullName || "Unknown Author"] : ["Unknown Author"]}
       authorImage={
-        author?.avatar ??
-        "https://s3.docuhub.me/docuhub/35d2eb6e-01e2-449e-b4d7-1f3ad4450b09.png"
+        author?.imageUrl ||
+        "./placeholder.svg"
       }
       journal={paper.journal}
       year={paper.year} // pass year, not publishedAt

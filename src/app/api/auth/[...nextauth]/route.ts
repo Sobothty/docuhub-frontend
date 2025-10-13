@@ -150,7 +150,7 @@ const handler = NextAuth({
 
         token.accessToken = account.access_token!;
         token.refreshToken = account.refresh_token!;
-        token.expiresAt = account.expires_at!; // Don't add Date.now(), it's already a timestamp
+        token.expiresAt = account.expires_at!;
 
         const payload = JSON.parse(
           Buffer.from(account.access_token!.split(".")[1], "base64").toString()
@@ -189,10 +189,9 @@ const handler = NextAuth({
       console.log("Time until expiry (seconds):", timeUntilExpiry);
       console.log("Token has accessToken:", !!token.accessToken);
       console.log("Token has refreshToken:", !!token.refreshToken);
-
-      // Refresh if token will expire in less than 60 seconds
-      if (timeUntilExpiry < 60) {
-        console.log("🔄 Token expired or about to expire, refreshing...");
+      
+      if (timeUntilExpiry < 300) {
+        console.log("🔄 Token expired or about to expire (< 5 min), refreshing...");
         return await refreshAccessToken(token);
       }
 
@@ -201,9 +200,6 @@ const handler = NextAuth({
     },
 
     async session({ session, token }) {
-      console.log("=== Session Callback ===");
-      console.log("Token has accessToken:", !!token.accessToken);
-      console.log("Token has error:", token.error);
 
       if (token.error) {
         session.error = token.error;

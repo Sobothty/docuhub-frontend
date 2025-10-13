@@ -66,7 +66,6 @@ export default function StudentProposalsPage() {
   const assignments = assignmentData || [];
 
   const [adviserId, setAdviserId] = useState<string>("");
-  const [feedback, setFeedback] = useState<string[]>([]);
 
   const { data: adviserData } = useGetUserByIdQuery(adviserId);
 

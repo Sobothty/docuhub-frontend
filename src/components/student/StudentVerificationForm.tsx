@@ -1,33 +1,42 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { useCreateStudentDetailMutation } from '@/feature/apiSlice/studentApi';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Upload, 
-  GraduationCap, 
-  Building, 
-  BookOpen, 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import {
+  CreateStudentDetailRequest,
+  useCreateStudentDetailMutation,
+} from "@/feature/users/studentSlice";
+import {
+  useCreateMediaMutation,
+  useDeleteMediaMutation,
+} from "@/feature/media/mediaSlice";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Upload,
+  GraduationCap,
+  Building,
+  BookOpen,
   Calendar,
   CheckCircle,
-  AlertCircle
-} from 'lucide-react';
-import { StudentFormData, StudentFormErrors } from '@/types/studentType';
+  AlertCircle,
+  X,
+  Trash2,
+} from "lucide-react";
+import { StudentFormData, StudentFormErrors } from "@/types/studentType";
+import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 
 interface StudentVerificationFormProps {
   userUuid?: string;
@@ -35,54 +44,65 @@ interface StudentVerificationFormProps {
 }
 
 const UNIVERSITIES = [
-  'Royal University of Phnom Penh',
-  'University of Cambodia',
-  'Cambodia University of Technology',
-  'Institute of Technology of Cambodia',
-  'American University of Cambodia',
-  'University of Management and Economics',
-  'Build Bright University',
-  'Other'
+  "Institute of Technology Science and Advanced Development",
+  "Royal University of Phnom Penh",
+  "University of Cambodia",
+  "Cambodia University of Technology",
+  "Institute of Technology of Cambodia",
+  "American University of Cambodia",
+  "University of Management and Economics",
+  "Build Bright University",
+  "Other",
 ];
 
-const YEARS_OF_STUDY = ['1', '2', '3', '4', '5', '6'];
+const YEARS_OF_STUDY = ["1", "2", "3", "4", "5", "6"];
 
-export default function StudentVerificationForm({ 
-  userUuid, 
-  onSuccess 
+export default function StudentVerificationForm({
+  userUuid,
+  onSuccess,
 }: StudentVerificationFormProps) {
   const router = useRouter();
   const { data: session } = useSession();
-  const [createStudentDetail, { isLoading, error }] = useCreateStudentDetailMutation();
+  const [createStudentDetail, { isLoading, error }] =
+    useCreateStudentDetailMutation();
+  const [createMedia, { isLoading: isUploadingMedia }] =
+    useCreateMediaMutation();
+  const [deleteMedia, { isLoading: isDeletingMedia }] =
+    useDeleteMediaMutation();
 
-  const [formData, setFormData] = useState<StudentFormData>({
-    studentCardUrl: '',
-    university: '',
-    major: '',
-    yearsOfStudy: ''
+  const useruuid = useSession();
+
+  const [formData, setFormData] = useState<CreateStudentDetailRequest>({
+    studentCardUrl: "",
+    university: "",
+    major: "",
+    yearsOfStudy: "",
+    userUuid: useruuid.data?.user.id || "",
   });
 
   const [formErrors, setFormErrors] = useState<StudentFormErrors>({});
   const [isUploading, setIsUploading] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [uploadedMediaName, setUploadedMediaName] = useState<string>("");
+  const [previewUrl, setPreviewUrl] = useState<string>("");
 
   const validateForm = (): boolean => {
     const errors: StudentFormErrors = {};
 
     if (!formData.studentCardUrl.trim()) {
-      errors.studentCardUrl = 'Student card image is required';
+      errors.studentCardUrl = "Student card image is required";
     }
 
     if (!formData.university.trim()) {
-      errors.university = 'University is required';
+      errors.university = "University is required";
     }
 
     if (!formData.major.trim()) {
-      errors.major = 'Major is required';
+      errors.major = "Major is required";
     }
 
     if (!formData.yearsOfStudy) {
-      errors.yearsOfStudy = 'Years of study is required';
+      errors.yearsOfStudy = "Years of study is required";
     }
 
     setFormErrors(errors);
@@ -90,24 +110,26 @@ export default function StudentVerificationForm({
   };
 
   const handleInputChange = (field: keyof StudentFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
     // Clear error when user starts typing
     if (formErrors[field]) {
-      setFormErrors(prev => ({ ...prev, [field]: undefined }));
+      setFormErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
     if (!allowedTypes.includes(file.type)) {
-      setFormErrors(prev => ({ 
-        ...prev, 
-        studentCardUrl: 'Please upload a valid image file (JPEG, JPG, or PNG)' 
+      setFormErrors((prev) => ({
+        ...prev,
+        studentCardUrl: "Please upload a valid image file (JPEG, JPG, or PNG)",
       }));
       return;
     }
@@ -115,32 +137,54 @@ export default function StudentVerificationForm({
     // Validate file size (max 5MB)
     const maxSize = 5 * 1024 * 1024; // 5MB in bytes
     if (file.size > maxSize) {
-      setFormErrors(prev => ({ 
-        ...prev, 
-        studentCardUrl: 'File size must be less than 5MB' 
+      setFormErrors((prev) => ({
+        ...prev,
+        studentCardUrl: "File size must be less than 5MB",
       }));
       return;
     }
 
     setIsUploading(true);
     try {
-      // Here you would implement your file upload logic
-      // For now, we'll simulate an upload with a timeout
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock uploaded URL - replace with actual upload implementation
-      const mockUrl = `https://s3.docuhub.me/student-cards/${Date.now()}-${file.name}`;
-      handleInputChange('studentCardUrl', mockUrl);
-      
-      console.log('File uploaded successfully:', mockUrl);
+      // Create FormData and append the file
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Upload the file using the media API
+      const response = await createMedia(formData).unwrap();
+
+      // Set the uploaded URL from the response
+      handleInputChange("studentCardUrl", response.data.uri);
+      setUploadedMediaName(response.data.name);
+      setPreviewUrl(response.data.uri);
+
+      console.log("File uploaded successfully:", response.data.uri);
     } catch (error) {
-      console.error('Upload failed:', error);
-      setFormErrors(prev => ({ 
-        ...prev, 
-        studentCardUrl: 'Failed to upload file. Please try again.' 
+      console.log("Upload failed:", error);
+      setFormErrors((prev) => ({
+        ...prev,
+        studentCardUrl: "Failed to upload file. Please try again.",
       }));
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleDeleteUploadedFile = async () => {
+    if (!uploadedMediaName) return;
+
+    try {
+      await deleteMedia(uploadedMediaName).unwrap();
+      handleInputChange("studentCardUrl", "");
+      setUploadedMediaName("");
+      setPreviewUrl("");
+      console.log("File deleted successfully");
+    } catch (error) {
+      console.log("Delete failed:", error);
+      setFormErrors((prev) => ({
+        ...prev,
+        studentCardUrl: "Failed to delete file. Please try again.",
+      }));
     }
   };
 
@@ -151,31 +195,52 @@ export default function StudentVerificationForm({
       return;
     }
 
-    const currentUserUuid = userUuid || session?.user?.uuid;
+    const currentUserUuid = userUuid || session?.user?.id;
     if (!currentUserUuid) {
-      console.error('User UUID not found');
+      console.log("User UUID not found");
       return;
     }
 
     try {
-      await createStudentDetail({
-        ...formData,
-        userUuid: currentUserUuid
+      const result = await createStudentDetail({
+        studentCardUrl: formData.studentCardUrl,
+        university: formData.university,
+        major: formData.major,
+        yearsOfStudy: formData.yearsOfStudy,
+        userUuid: currentUserUuid,
       }).unwrap();
 
       setSubmitSuccess(true);
-      console.log('Student verification submitted successfully');
-      
+      console.log("Student verification submitted successfully:", result);
+
       setTimeout(() => {
         if (onSuccess) {
           onSuccess();
         } else {
-          router.push('/profile?tab=verification');
+          router.push("/profile");
         }
       }, 2000);
-
     } catch (error) {
-      console.error('Failed to submit student verification:', error);
+      console.log("Failed to submit student verification:", error);
+      
+      // Handle the case where the request was successful but parsing failed
+      const err = error as FetchBaseQueryError & { 
+        originalStatus?: number; 
+        status?: string | number;
+      };
+      
+      if (err.originalStatus === 201 || err.status === "PARSING_ERROR") {
+        setSubmitSuccess(true);
+        console.log("Student verification submitted successfully (parsing error ignored)");
+        
+        setTimeout(() => {
+          if (onSuccess) {
+            onSuccess();
+          } else {
+            router.push("/profile");
+          }
+        }, 2000);
+      }
     }
   };
 
@@ -188,8 +253,8 @@ export default function StudentVerificationForm({
             Verification Submitted Successfully!
           </h2>
           <p className="text-muted-foreground mb-4">
-            Your student verification request has been submitted. 
-            Our admin team will review your documents and notify you of the result.
+            Your student verification request has been submitted. Our admin team
+            will review your documents and notify you of the result.
           </p>
           <Badge variant="outline" className="text-yellow-600">
             Status: Pending Review
@@ -207,7 +272,8 @@ export default function StudentVerificationForm({
           Student Verification
         </CardTitle>
         <p className="text-muted-foreground">
-          Submit your student information to get verified and access student features.
+          Submit your student information to get verified and access student
+          features.
         </p>
       </CardHeader>
 
@@ -217,9 +283,12 @@ export default function StudentVerificationForm({
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                {'data' in error && error.data && typeof error.data === 'object' && 'details' in error.data
+                {"data" in error &&
+                error.data &&
+                typeof error.data === "object" &&
+                "details" in error.data
                   ? String(error.data.details)
-                  : 'Failed to submit student verification. Please try again.'}
+                  : "Failed to submit student verification. Please try again."}
               </AlertDescription>
             </Alert>
           )}
@@ -230,37 +299,61 @@ export default function StudentVerificationForm({
               <Upload className="h-4 w-4" />
               Student Card Image *
             </Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-              <input
-                id="studentCard"
-                type="file"
-                accept="image/jpeg,image/jpg,image/png"
-                onChange={handleFileUpload}
-                className="hidden"
-                disabled={isUploading}
-              />
-              <Label
-                htmlFor="studentCard"
-                className="cursor-pointer flex flex-col items-center gap-2"
-              >
-                <Upload className="h-8 w-8 text-gray-400" />
-                <span className="text-sm text-gray-600">
-                  {isUploading 
-                    ? 'Uploading...' 
-                    : 'Click to upload your student card (JPEG, PNG, max 5MB)'
-                  }
-                </span>
-              </Label>
-              {formData.studentCardUrl && (
-                <div className="mt-2">
-                  <Badge variant="success" className="text-green-600">
-                    ✓ File uploaded successfully
-                  </Badge>
-                </div>
-              )}
-            </div>
+
+            {/* Preview Image */}
+            {previewUrl && (
+              <div className="relative w-full max-w-md mx-auto mb-4">
+                <img
+                  src={previewUrl}
+                  alt="Student card preview"
+                  className="w-full h-auto rounded-lg border-2 border-gray-200 shadow-sm"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteUploadedFile}
+                  disabled={isDeletingMedia}
+                  className="absolute top-2 right-2 h-8 w-8 p-0 bg-accent/70 hover:bg-accent/90 flex items-center justify-center rounded-full"
+                >
+                  {isDeletingMedia ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  ) : (
+                    <X className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            )}
+
+            {/* Upload Area */}
+            {!previewUrl && (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                <input
+                  id="studentCard"
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  disabled={isUploading || isUploadingMedia}
+                />
+                <Label
+                  htmlFor="studentCard"
+                  className="cursor-pointer flex flex-col items-center gap-2"
+                >
+                  <Upload className="h-8 w-8 text-gray-400" />
+                  <span className="text-sm text-gray-600">
+                    {isUploading || isUploadingMedia
+                      ? "Uploading..."
+                      : "Click to upload your student card (JPEG, PNG, max 5MB)"}
+                  </span>
+                </Label>
+              </div>
+            )}
+
             {formErrors.studentCardUrl && (
-              <p className="text-sm text-red-500">{formErrors.studentCardUrl}</p>
+              <p className="text-sm text-red-500">
+                {formErrors.studentCardUrl}
+              </p>
             )}
           </div>
 
@@ -272,7 +365,7 @@ export default function StudentVerificationForm({
             </Label>
             <Select
               value={formData.university}
-              onValueChange={(value) => handleInputChange('university', value)}
+              onValueChange={(value) => handleInputChange("university", value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select your university" />
@@ -301,7 +394,7 @@ export default function StudentVerificationForm({
               type="text"
               placeholder="e.g., Computer Science, Engineering, Business"
               value={formData.major}
-              onChange={(e) => handleInputChange('major', e.target.value)}
+              onChange={(e) => handleInputChange("major", e.target.value)}
             />
             {formErrors.major && (
               <p className="text-sm text-red-500">{formErrors.major}</p>
@@ -316,7 +409,9 @@ export default function StudentVerificationForm({
             </Label>
             <Select
               value={formData.yearsOfStudy}
-              onValueChange={(value) => handleInputChange('yearsOfStudy', value)}
+              onValueChange={(value) =>
+                handleInputChange("yearsOfStudy", value)
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select year" />
@@ -338,7 +433,7 @@ export default function StudentVerificationForm({
           <div className="flex gap-4">
             <Button
               type="submit"
-              disabled={isLoading || isUploading}
+              disabled={isLoading || isUploading || isUploadingMedia}
               className="flex-1"
             >
               {isLoading ? (
@@ -353,7 +448,7 @@ export default function StudentVerificationForm({
                 </>
               )}
             </Button>
-            
+
             <Button
               type="button"
               variant="outline"
