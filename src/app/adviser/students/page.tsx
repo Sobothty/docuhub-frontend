@@ -36,102 +36,78 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useGetUserProfileQuery } from '@/feature/profileSlice/profileSlice';
-
-// Mock student data
-const initialStudents = [
-  {
-    id: 1,
-    name: 'Sarah Chen',
-    email: 'sarah.chen@university.edu',
-    project: 'Machine Learning Applications in Healthcare Diagnostics',
-    status: 'in-review',
-    progress: 75,
-    lastInteraction: '2 days ago',
-    joinDate: '2024-01-15',
-    submissions: 2,
-  },
-  {
-    id: 2,
-    name: 'Mike Rodriguez',
-    email: 'mike.r@student.edu',
-    project: 'Climate Change Impact on Agricultural Productivity',
-    status: 'approved',
-    progress: 100,
-    lastInteraction: '1 week ago',
-    joinDate: '2024-02-01',
-    submissions: 1,
-  },
-  {
-    id: 3,
-    name: 'Emma Thompson',
-    email: 'emma.t@student.edu',
-    project: 'Economic Trends in Post-Pandemic Recovery',
-    status: 'draft',
-    progress: 45,
-    lastInteraction: '3 days ago',
-    joinDate: '2024-02-15',
-    submissions: 0,
-  },
-  {
-    id: 4,
-    name: 'Alex Kim',
-    email: 'alex.kim@student.edu',
-    project: 'Quantum Computing Algorithms for Optimization',
-    status: 'revision',
-    progress: 60,
-    lastInteraction: '1 day ago',
-    joinDate: '2024-01-30',
-    submissions: 3,
-  },
-];
+import { useGetAssignmentByAdviserQuery } from '@/feature/adviserAssignment/AdviserAssignmentSlice';
 
 export default function MentorStudentsPage() {
-  const { data : adviserProfile, error, isLoading } = useGetUserProfileQuery();
-
   const router = useRouter();
-  const [studentList, setStudentList] = useState(initialStudents);
+
+  // ✅ Adviser info
+  const { data: adviserProfile } = useGetUserProfileQuery();
+
+  // ✅ Fetch adviser’s assigned students
+  const { data, error, isLoading } = useGetAssignmentByAdviserQuery();
+
   const [isMessageOpen, setIsMessageOpen] = useState(false);
   const [messageText, setMessageText] = useState('');
-  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(
-    null
-  );
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
 
-  const openProfile = (id: number) => {
-    router.push(`/adviser/students/${id}`);
+  if (isLoading)
+    return (
+      <div className="flex justify-center items-center h-screen text-lg font-semibold">
+        Loading...
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="flex justify-center items-center h-screen text-red-600 font-semibold">
+        Failed to load student assignments.
+      </div>
+    );
+
+  const assignments = data?.data?.content || [];
+
+  // ✅ Group by student
+  const studentMap = new Map();
+  assignments.forEach((assignment: any) => {
+    const student = assignment.student;
+    if (!studentMap.has(student.uuid)) {
+      studentMap.set(student.uuid, {
+        ...student,
+        papers: [],
+      });
+    }
+    const studentObj = studentMap.get(student.uuid);
+    studentObj.papers.push({
+      ...assignment.paper,
+      status: assignment.status,
+      deadline: assignment.deadline,
+    });
+  });
+
+  const students = Array.from(studentMap.values());
+
+  const openProfile = (uuid: string) => {
+    router.push(`/adviser/students/${uuid}`);
   };
 
-  const openMessage = (id: number) => {
-    setSelectedStudentId(id);
+  const openMessage = (uuid: string) => {
+    setSelectedStudentId(uuid);
     setIsMessageOpen(true);
   };
 
   const sendMessage = () => {
     if (!selectedStudentId) return;
-    // Here you would call your API to send a message
-    // For now, just close dialog and clear input
+    // Here you can send message via API call later
     setIsMessageOpen(false);
     setMessageText('');
   };
 
-  const updateStatus = (id: number, status: 'approved' | 'revision') => {
-    setStudentList((prev) =>
-      prev.map((s) =>
-        s.id === id
-          ? {
-              ...s,
-              status: status === 'approved' ? 'approved' : 'revision',
-              lastInteraction: 'just now'
-            }
-          : s
-      )
-    );
-  };
-
   return (
-    <DashboardLayout 
+    <DashboardLayout
       userRole="adviser"
-      userName={adviserProfile?.user.fullName || 'Adviser Name'}
-      userAvatar={adviserProfile?.user.imageUrl || undefined}
+      userName={adviserProfile?.user?.fullName || 'Adviser'}
+      userAvatar={adviserProfile?.user?.imageUrl || '/placeholder.svg'}
     >
       <div className="space-y-6">
         {/* Header */}
@@ -140,7 +116,7 @@ export default function MentorStudentsPage() {
             Assigned Students
           </h1>
           <p className="text-muted-foreground">
-            Students assigned to you by Admin to track and mentor
+            Students assigned to you by Admin to mentor and review papers.
           </p>
         </div>
 
@@ -159,7 +135,7 @@ export default function MentorStudentsPage() {
           <CardHeader>
             <CardTitle>Student Overview</CardTitle>
             <CardDescription>
-              Monitor progress and provide guidance to your students
+              Review progress and access their submitted papers
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -167,111 +143,100 @@ export default function MentorStudentsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Student</TableHead>
-                  <TableHead>Project</TableHead>
+                  <TableHead>Paper Title</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Last Interaction</TableHead>
+                  <TableHead>Deadline</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
+
               <TableBody>
-                {studentList.map((student) => (
-                  <TableRow key={student.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{student.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {student.email}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="max-w-xs">
-                        <div className="font-medium truncate">
-                          {student.project}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {student.submissions} submissions
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          student.status === 'approved'
-                            ? 'default'
-                            : student.status === 'in-review'
-                            ? 'secondary'
-                            : student.status === 'revision'
-                            ? 'outline'
-                            : 'secondary'
-                        }
-                        className="capitalize"
-                      >
-                        {student.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {student.lastInteraction}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => openProfile(student.id)}
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => openMessage(student.id)}
-                          >
-                            <MessageSquare className="h-4 w-4 mr-2" />
-                            Send Message
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => updateStatus(student.id, 'approved')}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Approve Work
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => updateStatus(student.id, 'revision')}
-                          >
-                            <XCircle className="h-4 w-4 mr-2" />
-                            Request Revision
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                {students.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      No assigned students found.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  students.map((student: any) => (
+                    student.papers.map((paper: any, index: number) => (
+                      <TableRow key={`${student.uuid}-${index}`}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{student.fullName}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {student.email}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="max-w-xs">
+                          <div className="truncate font-medium">
+                            {paper.title || "Untitled Paper"}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              paper.status === 'APPROVED'
+                                ? 'default'
+                                : paper.status === 'REJECTED'
+                                ? 'destructive'
+                                : 'secondary'
+                            }
+                          >
+                            {paper.status?.toLowerCase()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {paper.deadline ? new Date(paper.deadline).toLocaleDateString() : '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => router.push(`/adviser/papers/${paper.uuid}`)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Paper
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openProfile(student.uuid)}>
+                                <MessageSquare className="h-4 w-4 mr-2" />
+                                View Profile
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openMessage(student.uuid)}>
+                                <MessageSquare className="h-4 w-4 mr-2" />
+                                Send Message
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
 
-        {/* Send Message Dialog */}
-        <div className={isMessageOpen ? '' : 'hidden'}>
+        {/* Message Dialog */}
+        {isMessageOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
             <div className="bg-background border border-border rounded-lg w-full max-w-lg p-4 sm:p-6 shadow-lg">
               <div className="mb-4">
                 <h2 className="text-lg font-semibold">Send Message</h2>
                 <p className="text-sm text-muted-foreground">
                   To:{' '}
-                  {studentList.find((s) => s.id === selectedStudentId)?.name}
+                  {students.find((s: any) => s.uuid === selectedStudentId)?.fullName}
                 </p>
               </div>
               <div>
                 <Input
                   value={messageText}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setMessageText(e.target.value)
-                  }
+                  onChange={(e) => setMessageText(e.target.value)}
                   placeholder="Type your message..."
                 />
               </div>
@@ -291,7 +256,7 @@ export default function MentorStudentsPage() {
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </DashboardLayout>
   );

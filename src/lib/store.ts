@@ -15,6 +15,7 @@ import { mediaApi } from "@/feature/media/mediaSlice";
 import { feedbackApi } from "@/feature/feedbackSlice/feedbackSlice";
 import { usersApi } from "@/feature/users/usersSlice";
 import { studentApi } from "@/feature/users/studentSlice";
+import assignmentApi from "@/feature/adviserAssignment/AdviserAssignmentSlice";
 
 export const store = configureStore({
   reducer: {
@@ -36,6 +37,9 @@ export const store = configureStore({
     [feedbackApi.reducerPath]: feedbackApi.reducer,
     [usersApi.reducerPath]: usersApi.reducer,
     [studentApi.reducerPath]: studentApi.reducer,
+
+    // by thong
+    [assignmentApi.reducerPath]: assignmentApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -89,6 +93,7 @@ export const store = configureStore({
       feedbackApi.middleware,
       usersApi.middleware,
       studentApi.middleware,
+      assignmentApi.middleware,
     ),
   devTools: process.env.NODE_ENV !== "production",
 });
