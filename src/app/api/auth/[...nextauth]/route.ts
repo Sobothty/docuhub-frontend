@@ -48,13 +48,6 @@ interface RefreshTokenResponse {
 }
 
 async function refreshAccessToken(token: JWT): Promise<JWT> {
-  console.log("=== REFRESH TOKEN FUNCTION CALLED ===");
-  console.log(
-    "Current token expiry:",
-    new Date(token.expiresAt * 1000).toISOString()
-  );
-  console.log("Current time:", new Date().toISOString());
-  console.log("Has refresh token:", !!token.refreshToken);
 
   try {
     const url = `${process.env.KEYCLOAK_TOKEN_ENDPOINT}`;
@@ -70,9 +63,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       }),
     });
 
-    const refreshedTokens : RefreshTokenResponse = await response.json();
-    console.log("Refresh response status:", response.status);
-    console.log("Refresh response:", response.ok ? "Success" : refreshedTokens);
+    const refreshedTokens: RefreshTokenResponse = await response.json();
 
     if (!response.ok) {
       console.error("Token refresh failed:", refreshedTokens);
@@ -89,10 +80,6 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     const newExpiresAt = Math.floor(
       Date.now() / 1000 + refreshedTokens.expires_in
     );
-    console.log(
-      "New token expiry:",
-      new Date(newExpiresAt * 1000).toISOString()
-    );
 
     return {
       ...token,
@@ -108,10 +95,9 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
           ...(payload.resource_access?.[process.env.KEYCLOAK_ID!]?.roles || []),
         ],
       },
-      error: undefined,
     };
   } catch (error) {
-    console.error("Error refreshing access token:", error);
+    console.log("Error refreshing access token:", error);
 
     return {
       ...token,
@@ -136,18 +122,9 @@ const handler = NextAuth({
 
   callbacks: {
     async jwt({ token, account, trigger }) {
-      console.log("=== JWT Callback ===");
-      console.log("Trigger:", trigger);
-      console.log("Account exists:", !!account);
-      console.log("Token exists:", !!token);
 
       // Initial sign in
       if (account) {
-        console.log("Initial sign in - setting tokens");
-        console.log("Access token exists:", !!account.access_token);
-        console.log("Refresh token exists:", !!account.refresh_token);
-        console.log("Expires at:", account.expires_at);
-
         token.accessToken = account.access_token!;
         token.refreshToken = account.refresh_token!;
         token.expiresAt = account.expires_at!;
@@ -167,10 +144,6 @@ const handler = NextAuth({
           ],
         };
 
-        console.log(
-          "Token will expire at:",
-          new Date(token.expiresAt * 1000).toISOString()
-        );
         return token;
       }
 
@@ -184,23 +157,15 @@ const handler = NextAuth({
       const currentTime = Math.floor(Date.now() / 1000);
       const timeUntilExpiry = token.expiresAt - currentTime;
 
-      console.log("Current time (unix):", currentTime);
-      console.log("Token expires at (unix):", token.expiresAt);
-      console.log("Time until expiry (seconds):", timeUntilExpiry);
-      console.log("Token has accessToken:", !!token.accessToken);
-      console.log("Token has refreshToken:", !!token.refreshToken);
-      
       if (timeUntilExpiry < 300) {
-        console.log("🔄 Token expired or about to expire (< 5 min), refreshing...");
+        
         return await refreshAccessToken(token);
       }
 
-      console.log("✅ Access token still valid");
       return token;
     },
 
     async session({ session, token }) {
-
       if (token.error) {
         session.error = token.error;
       }
@@ -214,12 +179,6 @@ const handler = NextAuth({
       session.accessToken = token.accessToken as string;
       session.refreshToken = token.refreshToken as string;
       session.accessTokenExpires = token.expiresAt as number;
-
-      console.log("Session has accessToken:", !!session.accessToken);
-      console.log(
-        "Session expires at:",
-        new Date(session.accessTokenExpires * 1000).toISOString()
-      );
 
       return session;
     },
