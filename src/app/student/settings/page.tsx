@@ -24,10 +24,11 @@ import {
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+// Import the new mutations from your updated slice
 import {
-  useUpdateUserImageMutation,
-  useUpdateUserMutation,
-} from "@/feature/apiSlice/authApi";
+  useUpdateProfileMutation,
+  useUploadMediaMutation,
+} from "@/feature/apiSlice/studentApi"; // Update the import path
 import Image from "next/image";
 
 interface UserProfileForm {
@@ -49,9 +50,11 @@ export default function StudentSettingsPage() {
     refetch,
     isLoading: isLoadingUser,
   } = useGetUserProfileQuery();
-  const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
-  const [updateUserImage, { isLoading: isUpdatingImage }] =
-    useUpdateUserImageMutation();
+
+  // Use the new mutations from studentApi
+  const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
+  const [uploadMedia, { isLoading: isUploadingMedia }] =
+    useUploadMediaMutation();
 
   const [isEditing, setIsEditing] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -153,7 +156,8 @@ export default function StudentSettingsPage() {
 
       console.log("Sending update data:", updateData);
 
-      await updateUser({
+      // Use the new updateProfile mutation
+      await updateProfile({
         uuid: user.user.uuid,
         data: updateData,
       }).unwrap();
@@ -184,35 +188,32 @@ export default function StudentSettingsPage() {
 
       console.log("Starting image upload...");
 
-      // Convert image to base64
-      const base64Image = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          if (reader.result) {
-            resolve(reader.result as string);
-          } else {
-            reject(new Error("Failed to read image file"));
-          }
-        };
-        reader.onerror = () => reject(new Error("Failed to read image file"));
-        reader.readAsDataURL(selectedImage);
-      });
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append("file", selectedImage);
 
-      console.log("Image converted to base64, sending to API...");
+      // Upload the image using the new uploadMedia mutation
+      const uploadResponse = await uploadMedia(formData).unwrap();
 
-      // Try using PUT method for image update
-      await updateUserImage({
-        uuid: user.user.uuid,
-        data: { imageUrl: base64Image },
-      }).unwrap();
+      console.log("Image uploaded successfully:", uploadResponse);
 
-      await refetch();
-      setSelectedImage(null);
-      if (imagePreview) {
-        URL.revokeObjectURL(imagePreview);
+      // If upload was successful, update the user's profile with the new image URL
+      if (uploadResponse.url) {
+        await updateProfile({
+          uuid: user.user.uuid,
+          data: { imageUrl: uploadResponse.url },
+        }).unwrap();
+
+        await refetch();
+        setSelectedImage(null);
+        if (imagePreview) {
+          URL.revokeObjectURL(imagePreview);
+        }
+        setImagePreview(null);
+        toast.success("Profile image updated successfully!");
+      } else {
+        throw new Error("No URL returned from upload");
       }
-      setImagePreview(null);
-      toast.success("Profile image updated successfully!");
     } catch (error: any) {
       console.error("Failed to update image:", error);
       if (error.data?.message) {
@@ -326,10 +327,10 @@ export default function StudentSettingsPage() {
                       </Label>
                       <Button
                         onClick={handleImageUpload}
-                        disabled={!selectedImage || isUpdatingImage}
+                        disabled={!selectedImage || isUploadingMedia}
                         className="bg-green-600 hover:bg-green-700 text-white px-6 py-3"
                       >
-                        {isUpdatingImage ? (
+                        {isUploadingMedia ? (
                           <Loader2 className="h-5 w-5 animate-spin" />
                         ) : (
                           <Save className="h-5 w-5" />

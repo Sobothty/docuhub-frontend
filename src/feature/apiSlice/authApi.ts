@@ -11,6 +11,7 @@ import {
   AuthTokenResponse
 } from '@/types/userType';
 import { User, Student, Mentor, UserQueryParams } from '@/types/authTypes';
+import { useSession } from 'next-auth/react';
 
 // Create the auth API slice
 export const authApi = createApi({
@@ -91,7 +92,7 @@ export const authApi = createApi({
       providesTags: ['User'],
     }),
     
-    getAllUsersByPage: builder.query<UsersPageResponse, { page?: number; size?: number }>({
+    getAllUsersByPage: builder.query<UserResponse, { page?: number; size?: number }>({
       query: ({ page = 0, size = 10 }) => `users/page?page=${page}&size=${size}`,
       providesTags: ['User'],
     }),
@@ -123,19 +124,19 @@ export const authApi = createApi({
     }),
 
     // Get all public users
-    getPublicUsers: builder.query<UsersPageResponse, { page?: number; size?: number }>({
+    getPublicUsers: builder.query<UserResponse, { page?: number; size?: number }>({
       query: ({ page = 0, size = 10 }) => `user?page=${page}&size=${size}`,
       providesTags: ['User'],
     }),
 
     // Get all students
-    getAllStudents: builder.query<UsersPageResponse, { page?: number; size?: number }>({
+    getAllStudents: builder.query<UserResponse, { page?: number; size?: number }>({
       query: ({ page = 0, size = 10 }) => `user/student?page=${page}&size=${size}`,
       providesTags: ['Student'],
     }),
 
     // Get all mentors/advisors
-    getAllMentors: builder.query<UsersPageResponse, { page?: number; size?: number }>({
+    getAllMentors: builder.query<UserResponse, { page?: number; size?: number }>({
       query: ({ page = 0, size = 10 }) => `user/mentor?page=${page}&size=${size}`,
       providesTags: ['Mentor'],
     }),
