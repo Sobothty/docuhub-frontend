@@ -120,33 +120,71 @@ export default function AdviserDocumentDetailPage({
       return;
     }
 
+    // Verify paper exists before submitting
+    if (!paper || !paper.uuid) {
+      alert("Paper information is missing. Please refresh the page and try again.");
+      return;
+    }
+
+    // Debug logging with exact UUIDs
+    console.log("=== DEBUGGING FEEDBACK SUBMISSION ===");
+    console.log("URL Parameter paperUuid:", paperUuid);
+    console.log("Paper object UUID:", paper.uuid);
+    console.log("Paper object:", paper);
+    console.log("Adviser UUID:", adviserProfile.user.uuid);
+    console.log("Decision:", decision);
+    console.log("Status to send:", decision === "approved" ? "APPROVED" : "REVISION");
+
     setIsSubmitting(true);
     try {
-      // Create feedback with the uploaded file URL
-      const result = await createFeedback({
-        paperUuid: paperUuid,
-        feedbackText: feedback,
+      // Create feedback with the uploaded file URL - using exact UUID from paper object
+      const feedbackData = {
+        paperUuid: paper.uuid, // This should be "b34f8df2-cbf9-42c4-b4f9-582b5110fd95"
+        feedbackText: feedback.trim(),
         fileUrl: uploadedFileUrl,
         status: decision === "approved" ? "APPROVED" : "REVISION",
         advisorUuid: adviserProfile.user.uuid,
-        deadline: undefined, // Optional: you can add a deadline picker if needed
-      }).unwrap();
+        deadline: decision === "approved" ? "" : "2025-12-31", // Empty string for approved, future date for revision
+      };
 
-      console.log("Feedback created:", result);
+      console.log("=== EXACT PAYLOAD BEING SENT ===");
+      console.log(JSON.stringify(feedbackData, null, 2));
+
+      const result = await createFeedback(feedbackData).unwrap();
+
+      console.log("=== FEEDBACK CREATED SUCCESSFULLY ===");
+      console.log("Result:", result);
 
       alert(
         `Document ${
-          decision === "approved" ? "approved" : "REVISION"
+          decision === "approved" ? "approved" : "sent for revision"
         } successfully!`
       );
       router.push("/adviser/documents");
     } catch (error: any) {
-      console.log("Failed to submit review:", error);
-      alert(
-        `Failed to submit review: ${
-          error?.data?.message || error.message || "Unknown error"
-        }`
-      );
+      console.error("=== FEEDBACK CREATION FAILED ===");
+      console.error("Full error object:", error);
+      console.error("Error status:", error?.status);
+      console.error("Error data:", error?.data);
+      console.error("Request that failed:", {
+        paperUuid: paper.uuid,
+        feedbackText: feedback.trim(),
+        fileUrl: uploadedFileUrl,
+        status: decision === "approved" ? "APPROVED" : "REVISION",
+        advisorUuid: adviserProfile.user.uuid,
+        deadline: decision === "approved" ? "" : "2025-12-31",
+      });
+      
+      let errorMessage = "Unknown error";
+      if (error?.data?.detail) {
+        errorMessage = error.data.detail;
+      } else if (error?.data?.message) {
+        errorMessage = error.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      alert(`Failed to submit review: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -222,6 +260,17 @@ export default function AdviserDocumentDetailPage({
       userAvatar={adviserProfile?.user.imageUrl || undefined}
     >
       <div className="space-y-6">
+        {/* Debug info - remove this after fixing */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="p-4 bg-gray-100 rounded-lg text-sm">
+            <p><strong>Debug Info:</strong></p>
+            <p>URL paperUuid: {paperUuid}</p>
+            <p>Paper UUID: {paper?.uuid}</p>
+            <p>Paper Title: {paper?.title}</p>
+            <p>Adviser UUID: {adviserProfile?.user?.uuid}</p>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

@@ -1,116 +1,113 @@
-import { apiSlide } from './apiSlice';
-import {
-  StudentRequest,
-  StudentResponse,
-  UpdateStudentRequest,
-  RejectStudentRequest,
-  StudentApproveRequest,
-  GetPendingStudentsResponse,
-  PaginationParams,
-  StudentDetailApiResponse
-} from '@/types/studentType';
+// features/users/studentSlice.ts
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { getSession } from "next-auth/react";
 
-export const studentApi = apiSlide.injectEndpoints({
+export interface Adviser {
+  slug: string;
+  uuid: string;
+  gender: string | null;
+  fullName: string;
+  imageUrl: string | null;
+  status: string | null;
+  createDate: string;
+  updateDate: string;
+  bio: string | null;
+  isUser: boolean;
+  isAdmin: boolean;
+  isStudent: boolean;
+  isAdvisor: boolean;
+}
+
+export interface CreateStudentDetailRequest {
+  studentCardUrl: string;
+  university: string;
+  major: string;
+  yearsOfStudy: string;
+  userUuid: string;
+}
+
+export interface UpdateProfileRequest {
+  userName?: string;
+  gender?: string;
+  email?: string;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  status?: boolean;
+  bio?: string;
+  address?: string;
+  contactNumber?: string;
+  telegramId?: string;
+  imageUrl?: string;
+}
+
+export interface ApiResponse {
+  message: string;
+}
+
+export interface MediaUploadResponse {
+  url: string;
+  message: string;
+}
+
+export const studentApi = createApi({
+  reducerPath: "studentApi", // This must match what's in your store
+  baseQuery: fetchBaseQuery({
+    baseUrl: process.env.NEXT_PUBLIC_BASE_URL,
+    prepareHeaders: async (headers) => {
+      const session = await getSession();
+      if (session?.accessToken) {
+        headers.set("Authorization", `Bearer ${session.accessToken}`);
+      }
+      return headers;
+    },
+  }),
+  tagTypes: ["Advisers", "Profile"],
   endpoints: (builder) => ({
-    // Create student detail (for user promotion to student)
-    createStudentDetail: builder.mutation<{ message: string }, StudentRequest>({
-      query: (studentData) => ({
-        url: 'user-promote/create-student-detail',
-        method: 'POST',
-        body: studentData,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      }),
-      invalidatesTags: ['StudentDetail'],
+    getAllAdvisers: builder.query<Adviser[], void>({
+      query: () => "/auth/user/adviser",
+      providesTags: ["Advisers"],
     }),
-
-    // Get student detail by user UUID
-    getStudentDetailByUserUuid: builder.query<StudentDetailApiResponse, string>({
-      query: (userUuid) => ({
-        url: `user-promote/student-detail/${userUuid}`,
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      }),
-      providesTags: (result, error, userUuid) => [
-        { type: 'StudentDetail', id: userUuid }
-      ],
-    }),
-
-    // Update student detail by user UUID
-    updateStudentDetailByUserUuid: builder.mutation<
-      StudentDetailApiResponse,
-      { userUuid: string; data: UpdateStudentRequest }
+    createStudentDetail: builder.mutation<
+      ApiResponse,
+      CreateStudentDetailRequest
     >({
-      query: ({ userUuid, data }) => ({
-        url: `user-promote/student-detail/${userUuid}`,
-        method: 'PUT',
+      query: (body) => ({
+        url: "/user-promote/create-student-detail",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Advisers"],
+    }),
+    
+    updateProfile: builder.mutation<
+      ApiResponse,
+      { uuid: string; data: UpdateProfileRequest }
+    >({
+      query: ({ uuid, data }) => ({
+        url: `/auth/user/${uuid}`,
+        method: "PATCH",
         body: data,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
       }),
-      invalidatesTags: (result, error, { userUuid }) => [
-        { type: 'StudentDetail', id: userUuid }
-      ],
+      invalidatesTags: ["Profile"],
     }),
 
-    // Get pending students (for admin)
-    getPendingStudents: builder.query<
-      GetPendingStudentsResponse,
-      PaginationParams
+    uploadMedia: builder.mutation<
+      MediaUploadResponse,
+      FormData
     >({
-      query: ({ page = 0, size = 10 }) => ({
-        url: `admin/user-promote/pending-students?page=${page}&size=${size}`,
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+      query: (formData) => ({
+        url: "/media",
+        method: "POST",
+        body: formData,
       }),
-      providesTags: ['StudentDetail'],
-    }),
-
-    // Approve student (admin only)
-    approveStudent: builder.mutation<{ message: string }, StudentApproveRequest>({
-      query: (approveData) => ({
-        url: 'admin/user-promote/approve-student',
-        method: 'POST',
-        body: approveData,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      }),
-      invalidatesTags: ['StudentDetail'],
-    }),
-
-    // Reject student (admin only)
-    rejectStudent: builder.mutation<{ message: string }, RejectStudentRequest>({
-      query: (rejectData) => ({
-        url: 'admin/user-promote/reject-student',
-        method: 'POST',
-        body: rejectData,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      }),
-      invalidatesTags: ['StudentDetail'],
     }),
   }),
 });
 
-export const {
+export const { 
+  useGetAllAdvisersQuery, 
   useCreateStudentDetailMutation,
-  useGetStudentDetailByUserUuidQuery,
-  useUpdateStudentDetailByUserUuidMutation,
-  useGetPendingStudentsQuery,
-  useApproveStudentMutation,
-  useRejectStudentMutation,
+  useUpdateProfileMutation,
+  useUploadMediaMutation
 } = studentApi;

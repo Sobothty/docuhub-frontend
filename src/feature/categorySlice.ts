@@ -1,5 +1,6 @@
+// slices/categorySlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Category } from '@/types/categoryType';
+import { Category } from './categoriesSlice/categoriesSlices';
 
 interface CategoryState {
   selectedCategory: Category | null;

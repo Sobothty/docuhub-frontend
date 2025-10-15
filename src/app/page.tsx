@@ -12,7 +12,6 @@ import DiscussionForumSection from "@/components/ctaBanner/DiscussionForumSectio
 import FeedbackCardCarousel from "@/components/carousel/FeedbackCarousel";
 import { useTranslation } from "react-i18next";
 
-import { useGetPapersQuery } from "@/feature/apiSlice/paperApi";
 import { useGetAllPublishedPapersQuery } from "@/feature/paperSlice/papers";
 
 import { useGetUserByIdQuery } from "@/feature/users/usersSlice";

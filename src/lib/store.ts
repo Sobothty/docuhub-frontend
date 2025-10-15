@@ -20,13 +20,14 @@ import { commentsApi } from "@/feature/commentSlice/commentSlice";
 
 export const store = configureStore({
   reducer: {
+    // Regular reducers
     adviserDetail: adviserDetailReducer,
     category: categoryReducer,
     user: userReducer,
     paper: paperReducer,
     media: mediaReducer,
-    feedback: feedbackApi.reducer,
-    student: studentApi.reducer,
+    
+    // RTK Query API reducers - ONLY ONCE each
     [profileApi.reducerPath]: profileApi.reducer,
     [apiSlide.reducerPath]: apiSlide.reducer,
     [authApi.reducerPath]: authApi.reducer,
@@ -35,9 +36,9 @@ export const store = configureStore({
     [papersApi.reducerPath]: papersApi.reducer,
     [starSlice.reducerPath]: starSlice.reducer,
     [mediaApi.reducerPath]: mediaApi.reducer,
-    [feedbackApi.reducerPath]: feedbackApi.reducer,
+    [feedbackApi.reducerPath]: feedbackApi.reducer, // REMOVED DUPLICATE
     [usersApi.reducerPath]: usersApi.reducer,
-    [studentApi.reducerPath]: studentApi.reducer,
+    [studentApi.reducerPath]: studentApi.reducer, // REMOVED DUPLICATE
 
     // by thong
     [assignmentApi.reducerPath]: assignmentApi.reducer,
@@ -92,9 +93,9 @@ export const store = configureStore({
       starSlice.middleware,
       categoriesApi.middleware,
       mediaApi.middleware,
-      feedbackApi.middleware,
+      feedbackApi.middleware, // ONLY ONCE
       usersApi.middleware,
-      studentApi.middleware,
+      studentApi.middleware, // ONLY ONCE
       assignmentApi.middleware,
       commentsApi.middleware
     ),
