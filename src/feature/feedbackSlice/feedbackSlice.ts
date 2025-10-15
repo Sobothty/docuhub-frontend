@@ -24,6 +24,16 @@ interface FeedbackResponse {
 // For the /feedback/author endpoint which returns an array directly
 type AllFeedbackResponse = Feedback[];
 
+// Request type for creating feedback
+interface CreateFeedbackRequest {
+  paperUuid: string;
+  feedbackText: string;
+  fileUrl: string;
+  status: "REVISION" | "APPROVED";
+  advisorUuid: string;
+  deadline?: string;
+}
+
 export const feedbackApi = createApi({
   reducerPath: "feedbackApi",
   baseQuery: fetchBaseQuery({
@@ -48,11 +58,23 @@ export const feedbackApi = createApi({
       query: () => `/feedback/author`,
       providesTags: ["Feedback"],
     }),
+    createFeedback: builder.mutation<FeedbackResponse, CreateFeedbackRequest>({
+      query: (body) => ({
+        url: "/feedback",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (result, error, arg) => [
+        { type: "Feedback", id: arg.paperUuid },
+        "Feedback",
+      ],
+    }),
   }),
 });
 
 export const {
   useGetFeedbackByPaperUuidQuery,
   useGetAllFeedbackByAuthorQuery,
+  useCreateFeedbackMutation,
 } = feedbackApi;
 export default feedbackApi.reducerPath;

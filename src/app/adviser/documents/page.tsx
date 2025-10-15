@@ -28,156 +28,45 @@ import {
 import { PageHeader } from '@/components/ui/page-header';
 import PDFEdit from '@/components/pdf/PDFEdit';
 import { useGetUserProfileQuery } from '@/feature/profileSlice/profileSlice';
+import {
+  useGetAssignmentByAdviserWithPaginationQuery
+} from '@/feature/adviserAssignment/AdviserAssignmentSlice';
+import { useGetUserByIdQuery } from '@/feature/users/usersSlice';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// Define Proposal type for type safety
-type Proposal = {
-  id: number;
-  title: string;
-  student: string;
-  studentEmail: string;
-  subject: string;
-  description: string;
-  objectives: string;
-  methodology: string;
-  submittedDate: string;
-  status: string;
-  pdfUrl: string;
-  feedback?: string;
-};
-
-const mockProposals: Proposal[] = [
-  {
-    id: 1,
-    title: 'Machine Learning Applications in Healthcare',
-    student: 'John Smith',
-    studentEmail: 'john.smith@university.edu',
-    subject: 'Computer Science',
-    description:
-      'Exploring the use of ML algorithms for medical diagnosis and treatment optimization. This research focuses on implementing deep learning models for early disease detection and personalized treatment recommendations.',
-    objectives:
-      '1. Analyze current ML applications in healthcare\n2. Develop new diagnostic algorithms\n3. Evaluate effectiveness and accuracy\n4. Implement real-time monitoring systems',
-    methodology:
-      'Literature review, algorithm development, clinical data analysis, validation studies',
-    submittedDate: '2024-01-15',
-    status: 'pending_mentor',
-    pdfUrl:
-      'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-  },
-  {
-    id: 2,
-    title: 'Advanced Neural Network Architectures',
-    student: 'Emily Davis',
-    studentEmail: 'emily.davis@university.edu',
-    subject: 'Computer Science',
-    description:
-      'Research on transformer architectures and their applications in natural language processing. Investigating novel attention mechanisms and their impact on model performance.',
-    objectives:
-      'Study transformer models, implement custom architectures, evaluate performance, optimize for efficiency',
-    methodology:
-      'Literature review, model implementation, benchmark testing, performance analysis',
-    submittedDate: '2024-01-18',
-    status: 'approved',
-    pdfUrl: 'https://www.africau.edu/images/default/sample.pdf',
-  },
-  {
-    id: 3,
-    title: 'Blockchain in Supply Chain Management',
-    student: 'Michael Brown',
-    studentEmail: 'michael.brown@university.edu',
-    subject: 'Computer Science',
-    description:
-      'Investigating blockchain technology for supply chain transparency and traceability. Focus on implementing smart contracts for automated verification processes.',
-    objectives:
-      'Analyze current supply chain issues, design blockchain solution, test implementation, measure efficiency gains',
-    methodology:
-      'Case study analysis, prototype development, performance evaluation, stakeholder interviews',
-    submittedDate: '2024-01-12',
-    status: 'rejected',
-    feedback:
-      'The scope is too broad for an undergraduate thesis. Please focus on a specific industry or use case for blockchain implementation.',
-    pdfUrl:
-      'https://www.learningcontainer.com/wp-content/uploads/2019/09/sample-pdf-file.pdf',
-  },
-  {
-    id: 4,
-    title: 'Cybersecurity in IoT Devices',
-    student: 'Sarah Wilson',
-    studentEmail: 'sarah.wilson@university.edu',
-    subject: 'Computer Science',
-    description:
-      'Comprehensive analysis of security vulnerabilities in Internet of Things devices and development of robust security protocols for smart home environments.',
-    objectives:
-      'Identify common IoT vulnerabilities, develop security frameworks, test penetration resistance, create user guidelines',
-    methodology:
-      'Vulnerability assessment, penetration testing, framework development, user testing',
-    submittedDate: '2024-01-20',
-    status: 'pending_mentor',
-    pdfUrl:
-      'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-  },
-  {
-    id: 5,
-    title: 'Data Privacy in Social Media Platforms',
-    student: 'Alex Chen',
-    studentEmail: 'alex.chen@university.edu',
-    subject: 'Computer Science',
-    description:
-      'Analysis of data collection practices in social media platforms and development of privacy-preserving algorithms for user data protection.',
-    objectives:
-      'Audit data collection methods, design privacy algorithms, implement encryption protocols, evaluate user awareness',
-    methodology:
-      'Data audit, algorithm design, implementation testing, user survey analysis',
-    submittedDate: '2024-01-22',
-    status: 'pending_mentor',
-    pdfUrl: 'https://www.africau.edu/images/default/sample.pdf',
-  },
-  {
-    id: 6,
-    title: 'Quantum Computing Applications',
-    student: 'Maria Garcia',
-    studentEmail: 'maria.garcia@university.edu',
-    subject: 'Computer Science',
-    description:
-      'Exploration of quantum computing principles and their potential applications in cryptography, optimization, and machine learning.',
-    objectives:
-      'Study quantum algorithms, implement quantum simulations, analyze computational advantages, explore practical applications',
-    methodology:
-      'Theoretical study, simulation development, performance comparison, application analysis',
-    submittedDate: '2024-01-25',
-    status: 'approved',
-    pdfUrl:
-      'https://www.learningcontainer.com/wp-content/uploads/2019/09/sample-pdf-file.pdf',
-  },
-];
-
-export default function MentorProposalsPage() {
+// Assignment Card Component with user fetching
+function AssignmentCard({ assignment }: { assignment: any }) {
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [reviewingProposal, setReviewingProposal] = useState<number | null>(
-    null
-  );
+  const [reviewingProposal, setReviewingProposal] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [decision, setDecision] = useState<'approve' | 'reject' | null>(null);
   const [showPdfEditor, setShowPdfEditor] = useState(false);
-  const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
+
+  // Fetch student data
+  const { data: studentData, isLoading: studentLoading } = useGetUserByIdQuery(
+    assignment.student.uuid,
+    {
+      skip: !assignment.student.uuid,
+    }
+  );
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending_mentor':
+      case 'ASSIGNED':
         return (
           <Badge variant="secondary">
             <Clock className="w-3 h-3 mr-1" />
             Pending Review
           </Badge>
         );
-      case 'approved':
+      case 'APPROVED':
         return (
           <Badge variant="default" className="bg-green-500">
             <CheckCircle className="w-3 h-3 mr-1" />
             Approved
           </Badge>
         );
-      case 'rejected':
+      case 'REJECTED':
         return (
           <Badge variant="destructive">
             <XCircle className="w-3 h-3 mr-1" />
@@ -185,46 +74,265 @@ export default function MentorProposalsPage() {
           </Badge>
         );
       default:
-        return <Badge variant="secondary">Unknown</Badge>;
+        return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
-  const handleSubmitReview = (proposalId: number) => {
+  const handleSubmitReview = () => {
     if (decision && feedback.trim()) {
       console.log(
-        `${decision} proposal ${proposalId} with feedback: ${feedback}`
+        `${decision} assignment ${assignment.assignmentUuid} with feedback: ${feedback}`
       );
-      // Handle review submission logic
-      setReviewingProposal(null);
+      // TODO: Implement review submission API
+      setReviewingProposal(false);
       setFeedback('');
       setDecision(null);
     }
   };
 
-  const handleReviewProposal = (proposal: Proposal) => {
-    setSelectedProposal(proposal);
+  const handleReviewDocument = () => {
     setShowPdfEditor(true);
   };
 
   const handleClosePdfEditor = () => {
     setShowPdfEditor(false);
-    setSelectedProposal(null);
   };
 
-  const filteredProposals = mockProposals.filter(
-    (proposal) =>
-      proposal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      proposal.student.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      proposal.subject.toLowerCase().includes(searchTerm.toLowerCase())
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-lg truncate max-w-3xl">
+                <Button
+                  variant="link"
+                  className="p-0 h-auto font-semibold text-lg"
+                  onClick={() =>
+                    router.push(`/adviser/documents/${assignment.paper.uuid}`)
+                  }
+                >
+                  {assignment.paper.title}
+                </Button>
+              </CardTitle>
+              <CardDescription>
+                <div className="flex items-center gap-4 mt-1">
+                  <span className="flex items-center gap-1">
+                    <User className="w-3 h-3" />
+                    {studentLoading
+                      ? 'Loading...'
+                      : studentData?.fullName || assignment.student.fullName}
+                  </span>
+                  <span>Assigned: {assignment.assignedDate}</span>
+                  <span>Deadline: {assignment.deadline}</span>
+                </div>
+              </CardDescription>
+            </div>
+            {getStatusBadge(assignment.status)}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Student Info */}
+            <div className="flex items-center gap-3">
+              <img
+                src={
+                  studentData?.imageUrl ||
+                  assignment.student.imageUrl ||
+                  '/placeholder.svg'
+                }
+                alt={assignment.student.fullName}
+                className="w-10 h-10 rounded-full object-cover"
+              />
+              <div>
+                <p className="font-medium">
+                  {studentData?.fullName || assignment.student.fullName}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {studentData?.email || 'Student'}
+                </p>
+              </div>
+            </div>
+
+            {/* Thumbnail Preview */}
+            {assignment.paper.thumbnailUrl && (
+              <div>
+                <img
+                  src={assignment.paper.thumbnailUrl}
+                  alt={assignment.paper.title}
+                  className="w-full h-48 lg:h-72 object-cover rounded-lg"
+                />
+              </div>
+            )}
+
+            {/* Review Actions */}
+            {assignment.status === 'ASSIGNED' && (
+              <div className="border-t pt-4">
+                {reviewingProposal ? (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="feedback">Feedback</Label>
+                      <Textarea
+                        id="feedback"
+                        value={feedback}
+                        onChange={(e) => setFeedback(e.target.value)}
+                        placeholder="Provide detailed feedback on the document..."
+                        rows={4}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => {
+                          setDecision('approve');
+                          handleSubmitReview();
+                        }}
+                        className="bg-green-500 hover:bg-green-600"
+                        disabled={!feedback.trim()}
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Approve
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setDecision('reject');
+                          handleSubmitReview();
+                        }}
+                        variant="destructive"
+                        disabled={!feedback.trim()}
+                      >
+                        <XCircle className="w-4 h-4 mr-2" />
+                        Reject
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setReviewingProposal(false);
+                          setFeedback('');
+                          setDecision(null);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button onClick={handleReviewDocument}>
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Review Document
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* PDF Editor Modal */}
+      {showPdfEditor && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg w-full h-full max-w-7xl max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <div>
+                <h2 className="text-xl font-semibold">
+                  {assignment.paper.title}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Student: {assignment.student.fullName}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClosePdfEditor}
+                className="h-8 w-8 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <PDFEdit pdfUri={assignment.paper.fileUrl} />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
-  const { data : adviserProfile, error, isLoading } = useGetUserProfileQuery();
+}
+
+// Loading Skeleton Component
+function AssignmentCardSkeleton({ count = 3 }: { count?: number }) {
+  return (
+    <>
+      {Array.from({ length: count }).map((_, index) => (
+        <Card key={index}>
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+              <Skeleton className="h-6 w-24" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Skeleton className="w-10 h-10 rounded-full" />
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-32 mb-1" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+              </div>
+              <Skeleton className="h-48 w-full rounded-lg" />
+              <Skeleton className="h-10 w-32" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </>
+  );
+}
+
+export default function MentorProposalsPage() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(0);
+  const [size] = useState(10);
+
+  const { data: adviserProfile, isLoading: profileLoading } =
+    useGetUserProfileQuery();
+
+  // Fetch assignments with pagination
+  const {
+    data: assignmentsData,
+    isLoading: assignmentsLoading,
+    error: assignmentsError,
+  } = useGetAssignmentByAdviserWithPaginationQuery({
+    page,
+    size,
+    sortBy: 'assignedDate',
+    direction: 'desc',
+  });
+
+  const assignments = assignmentsData?.data?.content || [];
+  const totalPages = assignmentsData?.data?.totalPages || 0;
+  const totalElements = assignmentsData?.data?.totalElements || 0;
+
+  // Filter assignments based on search
+  const filteredAssignments = assignments.filter(
+    (assignment) =>
+      assignment.paper.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      assignment.student.fullName
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+  );
+
   return (
     <DashboardLayout
       userRole="adviser"
       userName={adviserProfile?.user.fullName || 'Adviser Name'}
       userAvatar={adviserProfile?.user.imageUrl || undefined}
-     >
-
+    >
       <div className="space-y-6">
         <PageHeader
           title="Student Documents"
@@ -242,173 +350,78 @@ export default function MentorProposalsPage() {
           />
         </div>
 
-        {/* Proposals List */}
+        {/* Assignments List */}
         <div className="space-y-4">
-          {filteredProposals.map((proposal) => (
-            <Card key={proposal.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">
-                      <Button
-                        variant="link"
-                        className="p-0 h-auto font-semibold text-lg"
-                        onClick={() =>
-                          router.push(`/adviser/documents/${proposal.id}`)
-                        }
-                      >
-                        {proposal.title}
-                      </Button>
-                    </CardTitle>
-                    <CardDescription>
-                      <div className="flex items-center gap-4 mt-1">
-                        <span className="flex items-center gap-1">
-                          <User className="w-3 h-3" />
-                          {proposal.student}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <BookOpen className="w-3 h-3" />
-                          {proposal.subject}
-                        </span>
-                        <span>Submitted: {proposal.submittedDate}</span>
-                      </div>
-                    </CardDescription>
-                  </div>
-                  {getStatusBadge(proposal.status)}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-2">Description</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {proposal.description}
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-medium mb-2">Research Objectives</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {proposal.objectives}
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-2">Methodology</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {proposal.methodology}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Existing Feedback */}
-                  {proposal.feedback && (
-                    <div className="bg-muted p-3 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <MessageSquare className="w-4 h-4" />
-                        <span className="font-medium text-sm">
-                          Your Feedback
-                        </span>
-                      </div>
-                      <p className="text-sm">{proposal.feedback}</p>
-                    </div>
-                  )}
-
-                  {/* Review Actions */}
-                  {proposal.status === 'pending_mentor' && (
-                    <div className="border-t pt-4">
-                      {reviewingProposal === proposal.id ? (
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="feedback">Feedback</Label>
-                            <Textarea
-                              id="feedback"
-                              value={feedback}
-                              onChange={(e) => setFeedback(e.target.value)}
-                              placeholder="Provide detailed feedback on the proposal..."
-                              rows={4}
-                              className="mt-1"
-                            />
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              onClick={() => {
-                                setDecision('approve');
-                                handleSubmitReview(proposal.id);
-                              }}
-                              className="bg-green-500 hover:bg-green-600"
-                              disabled={!feedback.trim()}
-                            >
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                              Approve
-                            </Button>
-                            <Button
-                              onClick={() => {
-                                setDecision('reject');
-                                handleSubmitReview(proposal.id);
-                              }}
-                              variant="destructive"
-                              disabled={!feedback.trim()}
-                            >
-                              <XCircle className="w-4 h-4 mr-2" />
-                              Reject
-                            </Button>
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                setReviewingProposal(null);
-                                setFeedback('');
-                                setDecision(null);
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <Button onClick={() => handleReviewProposal(proposal)}>
-                          <MessageSquare className="w-4 h-4 mr-2" />
-                          Review Document
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
+          {assignmentsLoading ? (
+            <AssignmentCardSkeleton count={3} />
+          ) : assignmentsError ? (
+            <Card>
+              <CardContent className="py-8 text-center">
+                <p className="text-red-500">Failed to load assignments</p>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* PDF Editor Modal */}
-      {showPdfEditor && selectedProposal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg w-full h-full max-w-7xl max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b">
-              <div>
-                <h2 className="text-xl font-semibold">
-                  {selectedProposal.title}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Student: {selectedProposal.student} | Subject:{' '}
-                  {selectedProposal.subject}
+          ) : filteredAssignments.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center">
+                <p className="text-muted-foreground">
+                  {searchTerm
+                    ? 'No documents match your search'
+                    : 'No documents assigned yet'}
                 </p>
+              </CardContent>
+            </Card>
+          ) : (
+            filteredAssignments.map((assignment) => (
+              <AssignmentCard
+                key={assignment.assignmentUuid}
+                assignment={assignment}
+              />
+            ))
+          )}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Showing {page * size + 1} to{' '}
+              {Math.min((page + 1) * size, totalElements)} of {totalElements}{' '}
+              assignments
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0}
+              >
+                Previous
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <Button
+                    key={i}
+                    variant={page === i ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setPage(i)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {i + 1}
+                  </Button>
+                ))}
               </div>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                onClick={handleClosePdfEditor}
-                className="h-8 w-8 p-0"
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                disabled={page === totalPages - 1}
               >
-                <X className="h-4 w-4" />
+                Next
               </Button>
             </div>
-            <div className="flex-1 overflow-hidden">
-              <PDFEdit pdfUri={selectedProposal.pdfUrl} />
-            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </DashboardLayout>
   );
 }

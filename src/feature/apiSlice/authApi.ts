@@ -8,7 +8,6 @@ import {
   TokenResponseRecord,
   CurrentUser,
   UserProfileResponse,
-  UsersPageResponse,
   AuthTokenResponse
 } from '@/types/userType';
 import { User, Student, Mentor, UserQueryParams } from '@/types/authTypes';
