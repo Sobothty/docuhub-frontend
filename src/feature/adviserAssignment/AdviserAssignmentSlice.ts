@@ -35,7 +35,7 @@ export const assignmentApi = createApi({
                 ...item.paper,
                 // map thumbnailUr -> thumbnailUrl for easier use in UI
                 thumbnailUrl:
-                  item.paper?.thumbnailUr ?? item.paper?.thumbnailUrl ?? null,
+                  item.paper.thumbnailUr ?? item.paper?.thumbnailUrl ?? null,
               },
             }));
           }
@@ -75,7 +75,7 @@ export const assignmentApi = createApi({
               paper: {
                 ...item.paper,
                 thumbnailUrl:
-                  item.paper?.thumbnailUr ?? item.paper?.thumbnailUrl ?? null,
+                  item.paper.thumbnailUr ?? item.paper?.thumbnailUrl ?? null,
               },
             }));
           }

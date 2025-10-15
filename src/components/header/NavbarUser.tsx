@@ -37,10 +37,6 @@ export default function NavbarUser() {
   const tokens = useSession();
   const userRoles = tokens.data?.user.roles || [];
 
-  console.log("Profile data:", user);
-  console.log("Profile error:", error);
-  console.log("Profile loading:", isLoading);
-
   const [mounted, setMounted] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [currentLang, setCurrentLang] = useState<"en" | "kh">("en");
@@ -102,7 +98,7 @@ export default function NavbarUser() {
           Mentor
         </Badge>
       );
-    if (user.student)
+    if (user.student && user.student.isStudent)
       return (
         <Badge variant="outline" className="text-xs">
           Student
@@ -123,12 +119,12 @@ export default function NavbarUser() {
   };
 
   const handleProfileClick = () => {
-    if (userRoles.includes("USER")) {
-      router.push(`/profile`);
-    } else if (userRoles.includes("ADVISER")) {
+    if (userRoles.includes("STUDENT") && user?.student && user?.student.isStudent) {
+      router.push(`/student`);
+    } else if (userRoles.includes("ADVISER") && user?.adviser) {
       router.push("/adviser");
-    } else if (userRoles.includes("STUDENT")) {
-      router.push("/student");
+    } else {
+      router.push("/profile");
     }
   };
 

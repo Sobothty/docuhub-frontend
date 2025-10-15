@@ -29,6 +29,7 @@ export interface PaperDto {
   thumbnailUr?: string | null;
   // optional normalized field (we may add it in transformResponse)
   thumbnailUrl?: string | null;
+  Status: string;
 }
 
 export interface StudentDto {

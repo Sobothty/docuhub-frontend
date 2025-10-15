@@ -7,6 +7,7 @@ import { BookOpen, MessageSquare, Download, Calendar, User, GraduationCap, Brief
 import DashboardLayout from "@/components/layout/dashboard-layout"
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useSession } from "next-auth/react"
+import Link from "next/link"
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -39,15 +40,26 @@ export default function ProfilePage() {
     );
   }
 
-
   if (!profileData) {
     return (
       <DashboardLayout userRole="public">
         <div className="space-y-6">
           <Card>
-            <CardContent className="p-6 text-center">
-              <h2 className="text-xl font-semibold mb-2">Unable to load profile</h2>
-              <p className="text-muted-foreground">Please try again later.</p>
+            <CardContent className="p-6 text-center space-y-4">
+              <div>
+                <h2 className="text-xl font-semibold mb-2">Unable to load profile</h2>
+                <p className="text-muted-foreground">Please try again later.</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  You can still proceed with verification.
+                </p>
+                <Link href="/profile/verification">
+                  <Button size="sm">
+                    Promote to Student
+                  </Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -121,6 +133,27 @@ export default function ProfilePage() {
               <p className="text-xs text-muted-foreground">Active member</p>
             </CardContent>
           </Card>
+
+          {/* Promote to Student CTA */}
+          {!user.isStudent && (
+            <Card className="lg:col-span-2">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Unlock Student Features</CardTitle>
+                <GraduationCap className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Get verified as a student to submit papers, access mentorship, and more.
+                </p>
+                <Link href="/profile/verification">
+                  <Button size="sm">
+                    <GraduationCap className="w-4 h-4 mr-2" />
+                    Promote to Student
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Profile Information */}
@@ -189,9 +222,62 @@ export default function ProfilePage() {
               </div>
             )}
 
-            <Button>Edit Profile</Button>
+            <div className="flex items-center gap-2">
+              <Button>Edit Profile</Button>
+              {!user.isStudent && (
+                <Link href="/profile/verification" className="inline-block">
+                  <Button variant="secondary">
+                    <GraduationCap className="w-4 h-4 mr-2" />
+                    Promote to Student
+                  </Button>
+                </Link>
+              )}
+            </div>
           </CardContent>
         </Card>
+
+        {/* Student Information */}
+        {student && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5" />
+                Student Information
+              </CardTitle>
+              <CardDescription>Your academic details</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <h4 className="font-medium mb-2">University</h4>
+                  <p className="text-muted-foreground">{student.university}</p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Major</h4>
+                  <p className="text-muted-foreground">{student.major}</p>
+                </div>
+                {student.yearsOfStudy && (
+                  <div>
+                    <h4 className="font-medium mb-2">Years of Study</h4>
+                    <p className="text-muted-foreground">{student.yearsOfStudy}</p>
+                  </div>
+                )}
+              </div>
+              {student.studentCardUrl && (
+                <div>
+                  <h4 className="font-medium mb-2">Student Card</h4>
+                  <img 
+                    src={student.studentCardUrl} 
+                    alt="Student Card" 
+                    className="w-full max-w-md rounded-lg border"
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+        
+        {/* End main content */}
       </div>
     </DashboardLayout>
   )

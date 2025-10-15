@@ -20,7 +20,6 @@ import {
   XCircle,
   Clock,
   User,
-  BookOpen,
   MessageSquare,
   Search,
   X,
@@ -33,9 +32,10 @@ import {
 } from '@/feature/adviserAssignment/AdviserAssignmentSlice';
 import { useGetUserByIdQuery } from '@/feature/users/usersSlice';
 import { Skeleton } from '@/components/ui/skeleton';
+import Image from 'next/image';
 
 // Assignment Card Component with user fetching
-function AssignmentCard({ assignment }: { assignment: any }) {
+function AssignmentCard({ assignment } : { assignment: any }) {
   const router = useRouter();
   const [reviewingProposal, setReviewingProposal] = useState(false);
   const [feedback, setFeedback] = useState('');
@@ -128,7 +128,7 @@ function AssignmentCard({ assignment }: { assignment: any }) {
                 </div>
               </CardDescription>
             </div>
-            {getStatusBadge(assignment.status)}
+            {getStatusBadge(assignment.paper.Status)}
           </div>
         </CardHeader>
         <CardContent>
@@ -157,105 +157,21 @@ function AssignmentCard({ assignment }: { assignment: any }) {
             {/* Thumbnail Preview */}
             {assignment.paper.thumbnailUrl && (
               <div>
-                <img
+                <Image
                   src={assignment.paper.thumbnailUrl}
                   alt={assignment.paper.title}
                   className="w-full h-48 lg:h-72 object-cover rounded-lg"
+                  width={800}
+                  height={600}
+                  unoptimized
                 />
-              </div>
-            )}
-
-            {/* Review Actions */}
-            {assignment.status === 'ASSIGNED' && (
-              <div className="border-t pt-4">
-                {reviewingProposal ? (
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="feedback">Feedback</Label>
-                      <Textarea
-                        id="feedback"
-                        value={feedback}
-                        onChange={(e) => setFeedback(e.target.value)}
-                        placeholder="Provide detailed feedback on the document..."
-                        rows={4}
-                        className="mt-1"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => {
-                          setDecision('approve');
-                          handleSubmitReview();
-                        }}
-                        className="bg-green-500 hover:bg-green-600"
-                        disabled={!feedback.trim()}
-                      >
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Approve
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setDecision('reject');
-                          handleSubmitReview();
-                        }}
-                        variant="destructive"
-                        disabled={!feedback.trim()}
-                      >
-                        <XCircle className="w-4 h-4 mr-2" />
-                        Reject
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setReviewingProposal(false);
-                          setFeedback('');
-                          setDecision(null);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <Button onClick={handleReviewDocument}>
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Review Document
-                  </Button>
-                )}
               </div>
             )}
           </div>
         </CardContent>
       </Card>
 
-      {/* PDF Editor Modal */}
-      {showPdfEditor && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg w-full h-full max-w-7xl max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b">
-              <div>
-                <h2 className="text-xl font-semibold">
-                  {assignment.paper.title}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Student: {assignment.student.fullName}
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClosePdfEditor}
-                className="h-8 w-8 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <PDFEdit pdfUri={assignment.paper.fileUrl} />
-            </div>
-          </div>
-        </div>
-      )}
+
     </>
   );
 }

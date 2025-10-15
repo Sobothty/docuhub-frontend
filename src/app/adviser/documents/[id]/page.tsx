@@ -31,6 +31,7 @@ import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useCreateFeedbackMutation } from "@/feature/feedbackSlice/feedbackSlice";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "react-toastify";
 
 export default function AdviserDocumentDetailPage({
   params,
@@ -41,7 +42,9 @@ export default function AdviserDocumentDetailPage({
   const router = useRouter();
 
   const [feedback, setFeedback] = useState("");
-  const [decision, setDecision] = useState<"approved" | "revision" | null>(null);
+  const [decision, setDecision] = useState<"approved" | "revision" | null>(
+    null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string>("");
 
@@ -122,7 +125,9 @@ export default function AdviserDocumentDetailPage({
 
     // Verify paper exists before submitting
     if (!paper || !paper.uuid) {
-      alert("Paper information is missing. Please refresh the page and try again.");
+      alert(
+        "Paper information is missing. Please refresh the page and try again."
+      );
       return;
     }
 
@@ -133,7 +138,10 @@ export default function AdviserDocumentDetailPage({
     console.log("Paper object:", paper);
     console.log("Adviser UUID:", adviserProfile.user.uuid);
     console.log("Decision:", decision);
-    console.log("Status to send:", decision === "approved" ? "APPROVED" : "REVISION");
+    console.log(
+      "Status to send:",
+      decision === "approved" ? "APPROVED" : "REVISION"
+    );
 
     setIsSubmitting(true);
     try {
@@ -147,44 +155,14 @@ export default function AdviserDocumentDetailPage({
         deadline: decision === "approved" ? "" : "2025-12-31", // Empty string for approved, future date for revision
       };
 
-      console.log("=== EXACT PAYLOAD BEING SENT ===");
-      console.log(JSON.stringify(feedbackData, null, 2));
-
       const result = await createFeedback(feedbackData).unwrap();
-
-      console.log("=== FEEDBACK CREATED SUCCESSFULLY ===");
-      console.log("Result:", result);
-
-      alert(
-        `Document ${
-          decision === "approved" ? "approved" : "sent for revision"
-        } successfully!`
-      );
-      router.push("/adviser/documents");
-    } catch (error: any) {
-      console.error("=== FEEDBACK CREATION FAILED ===");
-      console.error("Full error object:", error);
-      console.error("Error status:", error?.status);
-      console.error("Error data:", error?.data);
-      console.error("Request that failed:", {
-        paperUuid: paper.uuid,
-        feedbackText: feedback.trim(),
-        fileUrl: uploadedFileUrl,
-        status: decision === "approved" ? "APPROVED" : "REVISION",
-        advisorUuid: adviserProfile.user.uuid,
-        deadline: decision === "approved" ? "" : "2025-12-31",
-      });
-      
-      let errorMessage = "Unknown error";
-      if (error?.data?.detail) {
-        errorMessage = error.data.detail;
-      } else if (error?.data?.message) {
-        errorMessage = error.data.message;
-      } else if (error?.message) {
-        errorMessage = error.message;
+      if(result.status === 201){
+        toast.success("Feedback submitted successfully");
       }
 
-      alert(`Failed to submit review: ${errorMessage}`);
+      router.push("/adviser/documents");
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -260,16 +238,6 @@ export default function AdviserDocumentDetailPage({
       userAvatar={adviserProfile?.user.imageUrl || undefined}
     >
       <div className="space-y-6">
-        {/* Debug info - remove this after fixing */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="p-4 bg-gray-100 rounded-lg text-sm">
-            <p><strong>Debug Info:</strong></p>
-            <p>URL paperUuid: {paperUuid}</p>
-            <p>Paper UUID: {paper?.uuid}</p>
-            <p>Paper Title: {paper?.title}</p>
-            <p>Adviser UUID: {adviserProfile?.user?.uuid}</p>
-          </div>
-        )}
 
         {/* Header */}
         <div className="flex items-center justify-between">

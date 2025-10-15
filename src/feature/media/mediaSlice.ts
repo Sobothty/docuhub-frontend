@@ -1,5 +1,5 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { getSession } from 'next-auth/react';
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { getSession } from "next-auth/react";
 
 // Define types for media
 export interface Media {
@@ -14,50 +14,53 @@ export interface MediaResponse {
   message: string;
 }
 
-export interface CreateMediaRequest {
-  file: File;
-  name?: string;
+export interface DeleteMediaResponse {
+  message: string;
 }
 
 // Create the API slice
 export const mediaApi = createApi({
-  reducerPath: 'mediaApi',
+  reducerPath: "mediaApi",
   baseQuery: fetchBaseQuery({
     baseUrl: process.env.NEXT_PUBLIC_BASE_URL,
     prepareHeaders: async (headers) => {
-      // Get token from localStorage or your auth state
-      const token = await getSession();
-      if (token) {
-        headers.set('Authorization', `Bearer ${token.accessToken}`);
+      // Get token from session
+      const session = await getSession();
+      if (session?.accessToken) {
+        headers.set("Authorization", `Bearer ${session.accessToken}`);
       }
+      // Don't set Content-Type for FormData - let the browser set it with boundary
       return headers;
     },
   }),
-  tagTypes: ['Media'],
+  tagTypes: ["Media"],
   endpoints: (builder) => ({
     // GET single media by ID
     getMediaById: builder.query<MediaResponse, string>({
       query: (id) => `/media/${id}`,
-      providesTags: ['Media'],
+      providesTags: (result, error, id) => [{ type: "Media", id }],
     }),
-    
+
     // POST - Create/upload media
     createMedia: builder.mutation<MediaResponse, FormData>({
       query: (formData) => ({
-        url: '/media',
-        method: 'POST',
+        url: "/media",
+        method: "POST",
         body: formData,
+        // Let the browser set the Content-Type with multipart boundary
       }),
-      invalidatesTags: ['Media'],
+      invalidatesTags: ["Media"],
     }),
-    
+
     // DELETE media
-    deleteMedia: builder.mutation<{ message: string }, string>({
-      query: (id) => ({
-        url: `/media/${id}`,
-        method: 'DELETE',
+    deleteMedia: builder.mutation<DeleteMediaResponse, string>({
+      query: (mediaId) => ({
+        url: `/media/${mediaId}`,
+        method: "DELETE",
       }),
-      invalidatesTags: ['Media'],
+      invalidatesTags: (result, error, mediaId) => [
+        { type: "Media", id: mediaId },
+      ],
     }),
   }),
 });
@@ -68,3 +71,5 @@ export const {
   useCreateMediaMutation,
   useDeleteMediaMutation,
 } = mediaApi;
+
+export default mediaApi.reducer;
