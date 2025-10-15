@@ -69,221 +69,338 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
   // Add RTK Query mutation hook
   const [createMedia, { isLoading: isUploading }] = useCreateMediaMutation();
 
+  // Add performance optimization states
+  const [renderingCache, setRenderingCache] = useState<
+    Map<number, HTMLCanvasElement>
+  >(new Map());
+
   // Update only the createAndUploadPDF function to include progress
   const createAndUploadPDF = async (): Promise<string | null> => {
-    // Capture originalPage at the start of the function
     const originalPage = currentPage;
-    
+
     try {
       setIsDownloading(true);
       setDownloadProgress(0);
-      setDownloadType("Creating and Uploading PDF");
+      setDownloadType("Initializing PDF Creation");
       setError("");
+
+      // Clear rendering cache to free memory
+      setRenderingCache(new Map());
 
       // Dynamic import of jsPDF
       const jsPDFModule = await import("jspdf");
       const jsPDF = jsPDFModule.default;
 
       if (!pdfDoc) {
-        setError("No PDF document loaded");
-        return null;
+        throw new Error("No PDF document loaded");
       }
 
-      // Create a new PDF with optimized settings
+      // Create PDF with compression
       const pdf = new jsPDF({
         compress: true,
         format: "a4",
         unit: "mm",
       });
 
-      let isFirstPage = true;
+      setDownloadProgress(5);
+      setDownloadType("Processing PDF Pages");
 
-      // Process in smaller batches to prevent memory issues
-      const BATCH_SIZE = 10;
+      // Process pages in smaller batches for better performance
+      const BATCH_SIZE = 5; // Reduced batch size for faster processing
       const totalBatches = Math.ceil(totalPages / BATCH_SIZE);
+      let isFirstPage = true;
 
       for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
         const startPage = batchIndex * BATCH_SIZE + 1;
         const endPage = Math.min((batchIndex + 1) * BATCH_SIZE, totalPages);
 
-        console.log(
-          `Processing batch ${
-            batchIndex + 1
-          }/${totalBatches}: pages ${startPage}-${endPage}`
-        );
+        // Process batch concurrently for speed
+        const batchPromises: Promise<{
+          pageNum: number;
+          canvas: HTMLCanvasElement;
+        }>[] = [];
 
         for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
-          try {
-            console.log(`Processing page ${pageNum}/${totalPages}...`);
-
-            // Navigate to the page
-            await goToPage(pageNum);
-
-            // Wait for rendering with timeout
-            await Promise.race([
-              new Promise((resolve) => setTimeout(resolve, 1000)),
-              new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Page render timeout")), 5000)
-              ),
-            ]);
-
-            // Get the combined canvas with error handling
-            let combinedCanvas;
-            try {
-              combinedCanvas = combineCanvases();
-            } catch (canvasError) {
-              console.warn(
-                `Failed to combine canvas for page ${pageNum}, using PDF only`
-              );
-              // Fallback: use only PDF canvas if annotation overlay fails
-              if (!canvasRef.current)
-                throw new Error("PDF canvas not available");
-              combinedCanvas = canvasRef.current;
-            }
-
-            // Convert to image with lower quality for large documents
-            const quality = totalPages > 50 ? 0.7 : 0.95; // Lower quality for large docs
-            const imgData = combinedCanvas.toDataURL("image/jpeg", quality);
-
-            // Calculate dimensions
-            const imgWidth = combinedCanvas.width;
-            const imgHeight = combinedCanvas.height;
-
-            // A4 dimensions in mm
-            const pdfWidth = 210;
-            const pdfHeight = 297;
-
-            // Calculate scale to fit page
-            const scaleX = pdfWidth / imgWidth;
-            const scaleY = pdfHeight / imgHeight;
-            const scale = Math.min(scaleX, scaleY);
-
-            const scaledWidth = imgWidth * scale;
-            const scaledHeight = imgHeight * scale;
-
-            // Center the image
-            const x = (pdfWidth - scaledWidth) / 2;
-            const y = (pdfHeight - scaledHeight) / 2;
-
-            if (!isFirstPage) {
-              pdf.addPage();
-            }
-
-            // Add image to PDF
-            pdf.addImage(imgData, "JPEG", x, y, scaledWidth, scaledHeight);
-            isFirstPage = false;
-
-            // Update progress
-            const progress = (pageNum / totalPages) * 80;
-            setDownloadProgress(progress);
-
-            // Small delay to prevent browser freeze
-            await new Promise((resolve) => setTimeout(resolve, 50));
-          } catch (pageError) {
-            console.log(`Error processing page ${pageNum}:`, pageError);
-            setError(
-              `Warning: Page ${pageNum} failed to process, continuing...`
-            );
-          }
+          batchPromises.push(
+            renderPageSilent(pageNum).then((canvas) => ({ pageNum, canvas }))
+          );
         }
 
-        // Memory cleanup between batches
-        if (batchIndex < totalBatches - 1) {
-          console.log("Performing memory cleanup...");
-          // Force garbage collection hint
-          if (window.gc) {
-            window.gc();
+        try {
+          // Wait for all pages in batch to render (with timeout)
+          const batchResults = await Promise.race([
+            Promise.all(batchPromises),
+            new Promise<never>((_, reject) =>
+              setTimeout(
+                () => reject(new Error("Batch processing timeout")),
+                30000
+              )
+            ),
+          ]);
+
+          // Sort results by page number to maintain order
+          batchResults.sort((a, b) => a.pageNum - b.pageNum);
+
+          // Add pages to PDF
+          for (const { pageNum, canvas } of batchResults) {
+            try {
+              // Use lower quality for faster processing on large documents
+              const quality = totalPages > 20 ? 0.8 : 0.95;
+              const imgData = canvas.toDataURL("image/jpeg", quality);
+
+              // Calculate dimensions
+              const imgWidth = canvas.width;
+              const imgHeight = canvas.height;
+
+              // A4 dimensions in mm
+              const pdfWidth = 210;
+              const pdfHeight = 297;
+
+              // Calculate scale to fit page
+              const scaleX = pdfWidth / imgWidth;
+              const scaleY = pdfHeight / imgHeight;
+              const scale = Math.min(scaleX, scaleY);
+
+              const scaledWidth = imgWidth * scale;
+              const scaledHeight = imgHeight * scale;
+
+              // Center the image
+              const x = (pdfWidth - scaledWidth) / 2;
+              const y = (pdfHeight - scaledHeight) / 2;
+
+              if (!isFirstPage) {
+                pdf.addPage();
+              }
+
+              pdf.addImage(imgData, "JPEG", x, y, scaledWidth, scaledHeight);
+              isFirstPage = false;
+
+              // Update progress more frequently
+              const progress = 10 + (pageNum / totalPages) * 70;
+              setDownloadProgress(progress);
+            } catch (pageError) {
+              console.warn(`Failed to add page ${pageNum} to PDF:`, pageError);
+              // Continue with other pages
+            }
           }
-          // Longer pause between batches
-          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          // Short break between batches to prevent UI freezing
+          if (batchIndex < totalBatches - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 50));
+          }
+        } catch (batchError) {
+          console.error(
+            `Error processing batch ${batchIndex + 1}:`,
+            batchError
+          );
+          // Continue with next batch
         }
       }
 
       setDownloadProgress(85);
-      setDownloadType("Compressing and Uploading PDF");
+      setDownloadType("Compressing PDF");
 
-      // Convert PDF to blob with size limit check
+      // Create PDF blob
       const pdfBlob = pdf.output("blob");
 
-      // Check file size (limit to 50MB)
+      // Check file size
       const maxSize = 50 * 1024 * 1024; // 50MB
       if (pdfBlob.size > maxSize) {
         throw new Error(
           `PDF too large (${Math.round(
             pdfBlob.size / 1024 / 1024
-          )}MB). Maximum allowed: 50MB`
+          )}MB). Maximum: 50MB`
         );
       }
 
-      console.log(
-        `Final PDF size: ${Math.round(pdfBlob.size / 1024 / 1024)}MB`
-      );
-
-      // Create form data
-      const formData = new FormData();
-      formData.append("file", pdfBlob, `feedback-pdf-${Date.now()}.pdf`);
-
       setDownloadProgress(90);
+      setDownloadType("Uploading to Server");
 
-      // Upload with timeout
-      const uploadPromise = createMedia(formData).unwrap();
-      const timeoutPromise = new Promise(
-        (_, reject) =>
-          setTimeout(() => reject(new Error("Upload timeout")), 300000) // 5 minutes
-      );
+      // Upload with optimized FormData
+      const formData = new FormData();
+      formData.append("file", pdfBlob, `annotated-pdf-${Date.now()}.pdf`);
 
-      const result = await Promise.race([uploadPromise, timeoutPromise]);
+      const uploadResult = await Promise.race([
+        createMedia(formData).unwrap(),
+        new Promise<never>(
+          (_, reject) =>
+            setTimeout(() => reject(new Error("Upload timeout")), 120000) // 2 minutes
+        ),
+      ]);
 
-      console.log("PDF uploaded successfully:", result);
       setDownloadProgress(100);
 
-      const uploadedUri = (result as any)?.data?.uri;
+      const uploadedUri = (uploadResult as any)?.data?.uri;
 
       if (onUploadSuccess) {
         onUploadSuccess(uploadedUri);
       }
 
-      // Return to original page SILENTLY (without triggering annotation redraw)
-      // Use setTimeout to avoid immediate redraw conflicts
-      setTimeout(async () => {
-        console.log(`Returning to original page ${originalPage}...`);
-        // Temporarily disable annotation redrawing
-        const tempAnnotations = [...annotations];
-        setAnnotations([]);
+      // Clear cache after successful upload
+      setRenderingCache(new Map());
 
-        await goToPage(originalPage);
-
-        // Restore annotations after a brief delay
-        setTimeout(() => {
-          setAnnotations(tempAnnotations);
-        }, 500);
+      // Return to original page quickly
+      setTimeout(() => {
+        if (originalPage !== currentPage) {
+          goToPage(originalPage);
+        }
       }, 100);
 
       alert("PDF with annotations uploaded successfully!");
       return uploadedUri;
     } catch (error) {
-      zzzzz("Error creating/uploading PDF:", error);
-      let errorMessage = "Unknown error occurred";
+      console.error("Error creating/uploading PDF:", error);
 
+      let errorMessage = "Unknown error occurred";
       if (error instanceof Error) {
         errorMessage = error.message;
       } else if (typeof error === "string") {
         errorMessage = error;
-      } else if (error && typeof error === "object" && "message" in error) {
-        errorMessage = (error as any).message;
       }
 
       setError(`Failed to create/upload PDF: ${errorMessage}`);
 
-      // Still return to original page on error - use the captured originalPage
-      setTimeout(async () => {
-        await goToPage(originalPage);
+      // Clear cache on error
+      setRenderingCache(new Map());
+
+      // Return to original page
+      setTimeout(() => {
+        if (originalPage !== currentPage) {
+          goToPage(originalPage);
+        }
       }, 100);
+
       return null;
     } finally {
       setIsDownloading(false);
       setDownloadProgress(0);
       setDownloadType("");
+    }
+  };
+
+  // Optimized function to render page without navigation
+  const renderPageSilent = async (
+    pageNumber: number
+  ): Promise<HTMLCanvasElement> => {
+    if (!pdfDoc) throw new Error("No PDF document loaded");
+
+    // Check cache first
+    if (renderingCache.has(pageNumber)) {
+      const cachedCanvas = renderingCache.get(pageNumber);
+      if (cachedCanvas) return cachedCanvas;
+    }
+
+    try {
+      const page = await pdfDoc.getPage(pageNumber);
+
+      // Create temporary canvases for this page
+      const tempPdfCanvas = document.createElement("canvas");
+      const tempOverlayCanvas = document.createElement("canvas");
+
+      const viewport = page.getViewport({ scale, rotation });
+
+      // Set canvas dimensions
+      tempPdfCanvas.width = viewport.width;
+      tempPdfCanvas.height = viewport.height;
+      tempOverlayCanvas.width = viewport.width;
+      tempOverlayCanvas.height = viewport.height;
+
+      const pdfCtx = tempPdfCanvas.getContext("2d");
+      const overlayCtx = tempOverlayCanvas.getContext("2d");
+
+      if (!pdfCtx || !overlayCtx) {
+        throw new Error("Failed to get canvas contexts");
+      }
+
+      // Render PDF page
+      await page.render({
+        canvasContext: pdfCtx,
+        viewport: viewport,
+      }).promise;
+
+      // Clear overlay canvas
+      overlayCtx.clearRect(
+        0,
+        0,
+        tempOverlayCanvas.width,
+        tempOverlayCanvas.height
+      );
+
+      // Draw annotations for this specific page
+      const pageAnnotations = annotations.filter(
+        (ann) => ann.page === pageNumber
+      );
+
+      pageAnnotations.forEach((annotation) => {
+        overlayCtx.save();
+        try {
+          if (annotation.type === "draw") {
+            overlayCtx.strokeStyle = annotation.color;
+            overlayCtx.lineWidth = annotation.strokeWidth;
+            overlayCtx.lineCap = "round";
+            overlayCtx.lineJoin = "round";
+            overlayCtx.beginPath();
+
+            if (annotation.points && annotation.points.length > 0) {
+              overlayCtx.moveTo(annotation.points[0].x, annotation.points[0].y);
+              for (let i = 1; i < annotation.points.length; i++) {
+                overlayCtx.lineTo(
+                  annotation.points[i].x,
+                  annotation.points[i].y
+                );
+              }
+            }
+            overlayCtx.stroke();
+          } else if (annotation.type === "highlight") {
+            overlayCtx.fillStyle = annotation.color + "80";
+            overlayCtx.fillRect(
+              annotation.x,
+              annotation.y,
+              annotation.width,
+              annotation.height
+            );
+          } else if (annotation.type === "text") {
+            overlayCtx.fillStyle = annotation.color || "#000000";
+            overlayCtx.font = `${annotation.fontSize || 16}px Arial`;
+            overlayCtx.fillText(annotation.text, annotation.x, annotation.y);
+          }
+        } catch (error) {
+          console.warn(`Error drawing annotation:`, error);
+        }
+        overlayCtx.restore();
+      });
+
+      // Combine canvases
+      const combinedCanvas = document.createElement("canvas");
+      combinedCanvas.width = viewport.width;
+      combinedCanvas.height = viewport.height;
+
+      const combinedCtx = combinedCanvas.getContext("2d");
+      if (combinedCtx) {
+        // Draw PDF content
+        combinedCtx.drawImage(tempPdfCanvas, 0, 0);
+        // Draw annotations on top
+        combinedCtx.drawImage(tempOverlayCanvas, 0, 0);
+      }
+
+      // Cache the result for potential reuse
+      setRenderingCache((prev) => {
+        const newCache = new Map(prev);
+        // Limit cache size to prevent memory issues
+        if (newCache.size >= 10) {
+          const firstKey = newCache.keys().next().value;
+          if (firstKey !== undefined) {
+            newCache.delete(firstKey);
+          }
+        }
+        newCache.set(pageNumber, combinedCanvas);
+        return newCache;
+      });
+
+      return combinedCanvas;
+    } catch (error) {
+      console.error(`Error rendering page ${pageNumber}:`, error);
+      throw error;
     }
   };
 
@@ -321,9 +438,9 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
             {/* Progress Bar */}
             <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
               <div
-                className="bg-blue-500 h-3 rounded-full transition-all duration-300 ease-out"
+                className="bg-blue-500 h-3 rounded-full transition-all duration-200 ease-out"
                 style={{ width: `${downloadProgress}%` }}
-              ></div>
+              />
             </div>
 
             {/* Percentage */}
@@ -332,7 +449,11 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
             </div>
 
             <p className="text-sm text-gray-500 mt-2">
-              Please wait while we process your request...
+              {downloadProgress < 50
+                ? "This may take a moment for large documents..."
+                : downloadProgress < 90
+                ? "Almost ready..."
+                : "Finalizing upload..."}
             </p>
           </div>
         </div>

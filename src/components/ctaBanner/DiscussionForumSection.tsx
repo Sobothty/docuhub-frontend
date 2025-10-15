@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 const DiscussionForumSection: React.FC = () => {
   return (
-    <section className="bg-gray-100 py-12 w-300 justify-around justify-betwee items-center px-6 md:px-20 flex flex-col md:flex-row gap-12 mx-auto">
+    <section className="bg-background py-12 w-300 justify-around justify-betwee items-center px-6 md:px-20 flex flex-col md:flex-row gap-12 mx-auto">
       {/* Left side: Image container with blue blob */}
       <div className="relative w-64 h-[460px] flex-shrink-0">
         {/* Blue blob background with blur */}
@@ -30,7 +30,7 @@ const DiscussionForumSection: React.FC = () => {
         </p>
 
         {/* Main heading */}
-        <h2 className="text-4xl font-extrabold text-gray-900 leading-tight">
+        <h2 className="text-4xl font-extrabold leading-tight">
           Connect, Share, and Learn Together
         </h2>
 
