@@ -3,9 +3,17 @@ import DashboardLayout from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGetAssignmentByAdviserQuery } from "@/feature/adviserAssignment/AdviserAssignmentSlice";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function MentorOverviewPage() {
+  const router = useRouter();
+
+  const token = useSession();
+  if (!token.data?.accessToken) {
+    router.push("/login");
+  }
   // ✅ Fetch adviser profile
   const { data: adviserProfile } = useGetUserProfileQuery();
 

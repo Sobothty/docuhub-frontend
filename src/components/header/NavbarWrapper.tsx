@@ -20,11 +20,7 @@ export default function NavbarWrapper() {
     return null;
   }
 
-  if (status === "loading") {
-    return <div>Loading...</div>;
-  }
-
-  if (status === "authenticated" && session?.accessToken) {
+  if (session?.accessToken) {
     return <NavbarUser />;
   }
 

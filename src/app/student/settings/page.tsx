@@ -1,6 +1,7 @@
 "use client";
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import ProfileExport from "@/components/profiles/profileExport";
 import {
   Card,
   CardContent,
@@ -20,11 +21,11 @@ import {
   Camera,
   Loader2,
   X,
+  Download,
 } from "lucide-react";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-// Import the new mutations from your updated slice
 import {
   useUpdateProfileMutation,
   useUploadMediaMutation,
@@ -59,6 +60,8 @@ export default function StudentSettingsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
+
   const [formData, setFormData] = useState<UserProfileForm>({
     userName: "",
     gender: "",
@@ -260,7 +263,7 @@ export default function StudentSettingsPage() {
       userName={user?.user.fullName || "User"}
       userAvatar={user?.user.imageUrl || "/placeholder.svg?height=40&width=40"}
     >
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
+      <div className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="text-center mb-12">
@@ -271,6 +274,17 @@ export default function StudentSettingsPage() {
               Manage your profile, academic information, and account preferences
               in one place
             </p>
+          </div>
+
+          {/* Export Profile Button */}
+          <div className="mb-8 flex justify-center">
+            <Button
+              onClick={() => setShowExportModal(true)}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+            >
+              <Download className="w-5 h-5" />
+              Export Profile
+            </Button>
           </div>
 
           {/* Profile Image Section - Top of both sides */}
@@ -685,6 +699,31 @@ export default function StudentSettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 w-full">
+          <div className="bg-white *:max-w-8xl w-full max-h-full overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-xl">
+              <h2 className="text-2xl font-bold text-gray-800">
+                Export Profile
+              </h2>
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              <ProfileExport userType="student" />
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

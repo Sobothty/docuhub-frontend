@@ -1,10 +1,10 @@
-import type React from "react"
-import ProtectedRoute from "@/components/auth/protected-route"
+import type React from "react";
+import ProtectedRoute from "@/components/auth/protected-route";
 
 export default function MentorLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  return <ProtectedRoute requiredRole="adviser">{children}</ProtectedRoute>
+  return <ProtectedRoute requiredRole="adviser">{children}</ProtectedRoute>;
 }
