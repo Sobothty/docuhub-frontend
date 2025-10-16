@@ -1,12 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { apiSlide } from "@/feature/apiSlice/apiSlice";
 import { authApi } from "@/feature/apiSlice/authApi";
-import adviserDetailReducer from "@/feature/adviserSlice/adviserDetailSlice";
-import categoryReducer from "@/feature/categorySlice";
-import userReducer from "@/feature/users/userSlice";
-import paperReducer from "@/feature/paperSlice/paperSlice";
-import mediaReducer from "@/feature/mediaSlice/mediaSlice";
-import { categoryApi } from "@/feature/apiSlice/categoryApiSlice";
 import { profileApi } from "@/feature/profileSlice/profileSlice";
 import { papersApi } from "@/feature/paperSlice/papers";
 import starSlice from "@/feature/star/StarSlice";
@@ -20,18 +14,10 @@ import { commentsApi } from "@/feature/commentSlice/commentSlice";
 
 export const store = configureStore({
   reducer: {
-    // Regular reducers
-    adviserDetail: adviserDetailReducer,
-    category: categoryReducer,
-    user: userReducer,
-    paper: paperReducer,
-    media: mediaReducer,
-    
     // RTK Query API reducers - ONLY ONCE each
     [profileApi.reducerPath]: profileApi.reducer,
     [apiSlide.reducerPath]: apiSlide.reducer,
     [authApi.reducerPath]: authApi.reducer,
-    [categoryApi.reducerPath]: categoryApi.reducer,
     [categoriesApi.reducerPath]: categoriesApi.reducer,
     [papersApi.reducerPath]: papersApi.reducer,
     [starSlice.reducerPath]: starSlice.reducer,
@@ -87,7 +73,6 @@ export const store = configureStore({
     }).concat(
       apiSlide.middleware,
       authApi.middleware,
-      categoryApi.middleware,
       profileApi.middleware,
       papersApi.middleware,
       starSlice.middleware,
