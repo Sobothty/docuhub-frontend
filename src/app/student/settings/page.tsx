@@ -29,7 +29,7 @@ import { toast } from "sonner";
 import {
   useUpdateProfileMutation,
   useUploadMediaMutation,
-} from "@/feature/apiSlice/studentApi"; // Update the import path
+} from "@/feature/apiSlice/studentApiSlice"; // Update the import path
 import Image from "next/image";
 
 interface UserProfileForm {
