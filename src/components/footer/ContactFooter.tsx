@@ -24,7 +24,8 @@ const ContactFooter: FC<ContactFooterProps> = () => {
     '/student',
     '/adviser',
     '/profile',
-    "/student-verification"
+    "/student-verification",
+    "/users",
   ];
   const shouldHide = hiddenPaths.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`)

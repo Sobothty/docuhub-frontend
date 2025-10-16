@@ -9,7 +9,7 @@ export interface Specialize {
 export interface AdviserDetailRequest {
   experienceYears: number;
   linkedinUrl: string;
-  publication: string;
+  office: string;
   socialLinks: string;
   status: "ACTIVE" | "PENDING" | "REJECTED";
   userUuid: string;
@@ -19,7 +19,7 @@ export interface AdviserDetailRequest {
 export interface UpdateAdviserDetailRequest {
   experienceYears?: number;
   linkedinUrl?: string;
-  publication?: string;
+  office?: string;
   socialLinks?: string;
   status?: "ACTIVE" | "PENDING" | "REJECTED";
 }
@@ -28,7 +28,7 @@ export interface AdviserDetailResponse {
   uuid: string;
   experienceYears: number;
   linkedinUrl: string;
-  publication: string;
+  office: string; // ✅ must exist
   socialLinks: string;
   status: string;
   userUuid: string;

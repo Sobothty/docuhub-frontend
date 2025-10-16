@@ -109,7 +109,7 @@ export interface StudentResponse {
 export interface AdviserDetailResponse {
   experienceYears?: number;
   linkedinUrl?: string;
-  publication?: string;
+  office?: string;
   status?: string;
   socialLinks?: string;
   userUuid: string;
