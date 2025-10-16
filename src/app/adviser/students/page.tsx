@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -20,23 +20,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Search,
-  MoreHorizontal,
-  MessageSquare,
-  Eye,
-  CheckCircle,
-  XCircle,
-} from 'lucide-react';
-import { useGetUserProfileQuery } from '@/feature/profileSlice/profileSlice';
-import { useGetAssignmentByAdviserQuery } from '@/feature/adviserAssignment/AdviserAssignmentSlice';
+} from "@/components/ui/dropdown-menu";
+import { Search, MoreHorizontal, MessageSquare, Eye } from "lucide-react";
+import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
+import { useGetAssignmentByAdviserQuery } from "@/feature/adviserAssignment/AdviserAssignmentSlice";
+import Image from "next/image";
 
 export default function MentorStudentsPage() {
   const router = useRouter();
@@ -48,8 +42,10 @@ export default function MentorStudentsPage() {
   const { data, error, isLoading } = useGetAssignmentByAdviserQuery();
 
   const [isMessageOpen, setIsMessageOpen] = useState(false);
-  const [messageText, setMessageText] = useState('');
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [messageText, setMessageText] = useState("");
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
+    null
+  );
 
   if (isLoading)
     return (
@@ -100,14 +96,14 @@ export default function MentorStudentsPage() {
     if (!selectedStudentId) return;
     // Here you can send message via API call later
     setIsMessageOpen(false);
-    setMessageText('');
+    setMessageText("");
   };
 
   return (
     <DashboardLayout
       userRole="adviser"
-      userName={adviserProfile?.user?.fullName || 'Adviser'}
-      userAvatar={adviserProfile?.user?.imageUrl || '/placeholder.svg'}
+      userName={adviserProfile?.user?.fullName || "Adviser"}
+      userAvatar={adviserProfile?.user?.imageUrl || "/placeholder.svg"}
     >
       <div className="space-y-6">
         {/* Header */}
@@ -153,43 +149,67 @@ export default function MentorStudentsPage() {
               <TableBody>
                 {students.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    <TableCell
+                      colSpan={5}
+                      className="text-center text-muted-foreground"
+                    >
                       No assigned students found.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  students.map((student: any) => (
+                  students.map((student: any) =>
                     student.papers.map((paper: any, index: number) => (
-                      <TableRow key={`${student.uuid}-${index}`}>
+                      <TableRow
+                        key={`${student.uuid}-${index}`}
+                        className="hover:bg-muted/40 transition-colors"
+                      >
                         <TableCell>
-                          <div>
-                            <div className="font-medium">{student.fullName}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {student.email}
+                          <div
+                            className="flex items-center gap-3 cursor-pointer hover:opacity-90"
+                            onClick={() => openProfile(student.uuid)}
+                          >
+                            <Image
+                              src={student.imageUrl || "/placeholder.svg"}
+                              alt={student.fullName}
+                              className="w-10 h-10 rounded-full object-cover border border-border shadow-sm"
+                              unoptimized
+                              width={60}
+                              height={60}
+                            />
+                            <div>
+                              <div className="font-semibold text-foreground">
+                                {student.fullName}
+                              </div>
                             </div>
                           </div>
                         </TableCell>
+
                         <TableCell className="max-w-xs">
-                          <div className="truncate font-medium">
+                          <div className="truncate font-medium text-foreground">
                             {paper.title || "Untitled Paper"}
                           </div>
                         </TableCell>
+
                         <TableCell>
                           <Badge
                             variant={
-                              paper.status === 'APPROVED'
-                                ? 'default'
-                                : paper.status === 'REJECTED'
-                                ? 'destructive'
-                                : 'secondary'
+                              paper.status === "APPROVED"
+                                ? "default"
+                                : paper.status === "REJECTED"
+                                ? "destructive"
+                                : "secondary"
                             }
                           >
                             {paper.status?.toLowerCase()}
                           </Badge>
                         </TableCell>
+
                         <TableCell className="text-sm text-muted-foreground">
-                          {paper.deadline ? new Date(paper.deadline).toLocaleDateString() : '-'}
+                          {paper.deadline
+                            ? new Date(paper.deadline).toLocaleDateString()
+                            : "-"}
                         </TableCell>
+
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -198,15 +218,25 @@ export default function MentorStudentsPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => router.push(`/adviser/papers/${paper.uuid}`)}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  router.push(
+                                    `/adviser/documents/${paper.uuid}`
+                                  )
+                                }
+                              >
                                 <Eye className="h-4 w-4 mr-2" />
                                 View Paper
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => openProfile(student.uuid)}>
+                              <DropdownMenuItem
+                                onClick={() => openProfile(student.uuid)}
+                              >
                                 <MessageSquare className="h-4 w-4 mr-2" />
                                 View Profile
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => openMessage(student.uuid)}>
+                              <DropdownMenuItem
+                                onClick={() => openMessage(student.uuid)}
+                              >
                                 <MessageSquare className="h-4 w-4 mr-2" />
                                 Send Message
                               </DropdownMenuItem>
@@ -215,7 +245,7 @@ export default function MentorStudentsPage() {
                         </TableCell>
                       </TableRow>
                     ))
-                  ))
+                  )
                 )}
               </TableBody>
             </Table>
@@ -225,12 +255,15 @@ export default function MentorStudentsPage() {
         {/* Message Dialog */}
         {isMessageOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-background border border-border rounded-lg w-full max-w-lg p-4 sm:p-6 shadow-lg">
+            <div className="bg-background border border-border rounded-xl w-full max-w-lg p-6 shadow-xl">
               <div className="mb-4">
-                <h2 className="text-lg font-semibold">Send Message</h2>
+                <h2 className="text-xl font-semibold">Send Message</h2>
                 <p className="text-sm text-muted-foreground">
-                  To:{' '}
-                  {students.find((s: any) => s.uuid === selectedStudentId)?.fullName}
+                  To:{" "}
+                  {
+                    students.find((s: any) => s.uuid === selectedStudentId)
+                      ?.fullName
+                  }
                 </p>
               </div>
               <div>
@@ -238,6 +271,7 @@ export default function MentorStudentsPage() {
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   placeholder="Type your message..."
+                  className="rounded-lg"
                 />
               </div>
               <div className="mt-4 flex justify-end gap-2">
@@ -245,7 +279,7 @@ export default function MentorStudentsPage() {
                   variant="outline"
                   onClick={() => {
                     setIsMessageOpen(false);
-                    setMessageText('');
+                    setMessageText("");
                   }}
                 >
                   Cancel
