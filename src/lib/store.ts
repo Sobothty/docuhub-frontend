@@ -5,7 +5,6 @@ import adviserDetailReducer from "@/feature/adviserSlice/adviserDetailSlice";
 import categoryReducer from "@/feature/categorySlice";
 import userReducer from "@/feature/users/userSlice";
 import paperReducer from "@/feature/paperSlice/paperSlice";
-import mediaReducer from "@/feature/mediaSlice/mediaSlice";
 import { categoryApi } from "@/feature/apiSlice/categoryApiSlice";
 import { profileApi } from "@/feature/profileSlice/profileSlice";
 import { papersApi } from "@/feature/paperSlice/papers";
@@ -25,7 +24,6 @@ export const store = configureStore({
     category: categoryReducer,
     user: userReducer,
     paper: paperReducer,
-    media: mediaReducer,
     
     // RTK Query API reducers - ONLY ONCE each
     [profileApi.reducerPath]: profileApi.reducer,

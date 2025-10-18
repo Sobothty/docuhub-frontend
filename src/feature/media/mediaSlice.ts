@@ -1,3 +1,5 @@
+// mediaSlice.ts - Fixed version for image upload
+import { UpdateUserImageDto, UserResponse } from "@/types/userType";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { getSession } from "next-auth/react";
 
@@ -24,35 +26,45 @@ export const mediaApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: process.env.NEXT_PUBLIC_BASE_URL,
     prepareHeaders: async (headers) => {
-      // Get token from session
       const session = await getSession();
       if (session?.accessToken) {
         headers.set("Authorization", `Bearer ${session.accessToken}`);
       }
-      // Don't set Content-Type for FormData - let the browser set it with boundary
       return headers;
     },
   }),
-  tagTypes: ["Media"],
+  tagTypes: ["Media", "Profile"],
   endpoints: (builder) => ({
-    // GET single media by ID
+    // 🧾 GET single media by ID
     getMediaById: builder.query<MediaResponse, string>({
       query: (id) => `/media/${id}`,
       providesTags: (result, error, id) => [{ type: "Media", id }],
     }),
 
-    // POST - Create/upload media
+    // 📤 POST - Upload file to /media endpoint
     createMedia: builder.mutation<MediaResponse, FormData>({
       query: (formData) => ({
         url: "/media",
         method: "POST",
         body: formData,
-        // Let the browser set the Content-Type with multipart boundary
       }),
       invalidatesTags: ["Media"],
     }),
 
-    // DELETE media
+    // 🖼️ UPDATE user profile image - CORRECTED: Use PUT with imageUrl
+    updateProfileImage: builder.mutation<UserResponse, { uuid: string; imageUrl: string }>({
+      query: ({ uuid, imageUrl }) => ({
+        url: `/auth/user/${uuid}`,
+        method: "PUT", // Changed from PATCH to PUT
+        body: { imageUrl }, // Send as JSON with imageUrl field
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }),
+      invalidatesTags: ["Media", "Profile"],
+    }),
+
+    // ❌ DELETE media
     deleteMedia: builder.mutation<DeleteMediaResponse, string>({
       query: (mediaId) => ({
         url: `/media/${mediaId}`,
@@ -65,10 +77,10 @@ export const mediaApi = createApi({
   }),
 });
 
-// Export hooks for usage in components
 export const {
   useGetMediaByIdQuery,
-  useCreateMediaMutation,
+  useCreateMediaMutation, // Renamed from useCreateMediaMutation
+  useUpdateProfileImageMutation,
   useDeleteMediaMutation,
 } = mediaApi;
 
