@@ -271,15 +271,7 @@ export default function StudentSettingsPage() {
           </div>
 
           {/* Export Profile Button */}
-          <div className="mb-8 flex justify-center">
-            <Button
-              onClick={() => setShowExportModal(true)}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
-            >
-              <Download className="w-5 h-5" />
-              Export Profile
-            </Button>
-          </div>
+          <div className="mb-8 flex justify-center"></div>
 
           {/* Profile Image Section - Top of both sides */}
           <Card className="shadow-lg border-slate-200 mb-8">
@@ -361,6 +353,13 @@ export default function StudentSettingsPage() {
                           Cancel
                         </Button>
                       )}
+                      <Button
+                        onClick={() => setShowExportModal(true)}
+                        className="bg-accent hover:bg-accent-hover text-white px-8 py-3 rounded-lg transition-all duration-200 flex items-center gap-2"
+                      >
+                        <Download className="w-5 h-5" />
+                        Export Profile
+                      </Button>
                     </div>
                     <p className="text-sm text-slate-500">
                       Recommended: Square image, at least 400x400 pixels, max
@@ -697,7 +696,7 @@ export default function StudentSettingsPage() {
       {/* Export Modal */}
       {showExportModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 w-full">
-          <div className="bg-white *:max-w-8xl w-full max-h-full overflow-y-auto">
+          <div className="bg-white *:max-w-8xl w-full max-h-full overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {/* Modal Header */}
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-xl">
               <h2 className="text-2xl font-bold text-gray-800">
