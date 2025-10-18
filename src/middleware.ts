@@ -1,4 +1,4 @@
-import { getSession } from "next-auth/react";
+import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -6,13 +6,7 @@ import type { NextRequest } from "next/server";
 const protectedRoutes = ["/adviser", "/student", "/profile", "/dashboard"];
 
 // Public routes that don't require authentication
-const publicRoutes = [
-  "/",
-  "/browse",
-  "/directory",
-  "/login",
-  "/register",
-];
+const publicRoutes = ["/", "/browse", "/directory", "/login", "/register"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -27,19 +21,29 @@ export async function middleware(req: NextRequest) {
   );
 
   if (isProtectedRoute) {
-    // 1) Custom cookie set by our own login flow
-    const hasAccessToken = await getSession();
+    // Use getToken instead of getSession for Edge Runtime compatibility
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
-    if (!hasAccessToken?.accessToken) {
+    if (!token) {
       const signInUrl = new URL("/login", req.url);
       signInUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(signInUrl);
     }
-    // Role-based redirects disabled for now
   }
 
   // Default passthrough
   return NextResponse.next();
 }
 
-
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+  ],
+};

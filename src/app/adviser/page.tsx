@@ -7,6 +7,32 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
+// Define types
+interface Student {
+  uuid: string;
+  fullName: string;
+  imageUrl: string;
+}
+
+interface Paper {
+  uuid: string;
+  title: string;
+}
+
+interface Assignment {
+  student: Student;
+  paper: Paper;
+  status: string;
+  deadline: string;
+}
+
+interface StudentData {
+  student: Student;
+  papers: Paper[];
+  statuses: string[];
+  deadlines: string[];
+}
+
 export default function MentorOverviewPage() {
   const router = useRouter();
 
@@ -35,15 +61,12 @@ export default function MentorOverviewPage() {
     );
 
   // ✅ Extract assignment data
-  const assignments = data?.data?.content || [];
+  const assignments = (data?.data?.content || []) as Assignment[];
 
   // ✅ Group by student to count their assigned papers
-  const studentMap = new Map<
-    string,
-    { student: any; papers: any[]; statuses: string[]; deadlines: string[] }
-  >();
+  const studentMap = new Map<string, StudentData>();
 
-  assignments.forEach((assignment: any) => {
+  assignments.forEach((assignment: Assignment) => {
     const studentUuid = assignment.student.uuid;
     if (!studentMap.has(studentUuid)) {
       studentMap.set(studentUuid, {
@@ -66,10 +89,10 @@ export default function MentorOverviewPage() {
   const totalAssignedStudents = uniqueStudents.length;
   const totalAssignedPapers = assignments.length;
   const approvedCount = assignments.filter(
-    (a: any) => a.status === "APPROVED"
+    (a: Assignment) => a.status === "APPROVED"
   ).length;
   const pendingCount = assignments.filter(
-    (a: any) => a.status !== "APPROVED" && a.status !== "REJECTED"
+    (a: Assignment) => a.status !== "APPROVED" && a.status !== "REJECTED"
   ).length;
 
   return (

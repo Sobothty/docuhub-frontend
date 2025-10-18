@@ -121,7 +121,7 @@ const handler = NextAuth({
   ],
 
   callbacks: {
-    async jwt({ token, account, trigger }) {
+    async jwt({ token, account }) {
 
       // Initial sign in
       if (account) {

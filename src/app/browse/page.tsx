@@ -4,8 +4,8 @@ import { useState, useMemo } from "react";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
 import HorizontalCard from "@/components/card/HorizontalCard";
-import { useCategories } from "@/hooks/useCategories";
 import { useGetAllPublishedPapersQuery } from "@/feature/paperSlice/papers";
+import { useGetAllCategoriesQuery } from "@/feature/categoriesSlice/categoriesSlices";
 
 // Fallback categories based on your API response
 const FALLBACK_CATEGORIES = [
@@ -59,10 +59,16 @@ export default function BrowsePage() {
 
   // Fetch categories from API - with error handling for 404
   const {
-    categories: apiCategories,
+    data: apiCategoriesResponse,
     isLoading: categoriesLoading,
     error: categoriesError,
-  } = useCategories();
+  } = useGetAllCategoriesQuery();
+
+  // Extract categories array from response
+  const apiCategories = useMemo(() => {
+    if (!apiCategoriesResponse?.content) return [];
+    return apiCategoriesResponse.content;
+  }, [apiCategoriesResponse]);
 
   // Fetch published papers from API
   const {
@@ -76,24 +82,6 @@ export default function BrowsePage() {
     sortBy: "publishedAt",
     direction: "desc",
   });
-
-  // Use fallback categories if API fails
-  const categories = useMemo(() => {
-    const allCategoriesOption = {
-      uuid: "all",
-      name: t("categoriesList.allCategories") || "All Categories",
-      slug: "",
-    };
-
-    // If API returns error or empty, use fallback categories
-    const availableCategories =
-      apiCategories.length > 0 && !categoriesError
-        ? apiCategories
-        : FALLBACK_CATEGORIES;
-
-    return [allCategoriesOption, ...availableCategories];
-  }, [apiCategories, categoriesError, t]);
-
   // Extract unique categories from papers as another fallback
   const categoriesFromPapers = useMemo(() => {
     if (!papersResponse?.papers?.content) return [];

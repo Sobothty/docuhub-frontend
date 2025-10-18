@@ -42,7 +42,7 @@ const notifications = [
 ];
 
 export default function MentorNotificationsPage() {
-  const { data: adviserProfile, error, isLoading } = useGetUserProfileQuery();
+  const { data: adviserProfile } = useGetUserProfileQuery();
   return (
     <DashboardLayout
       userRole="adviser"

@@ -12,20 +12,15 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import {
   CheckCircle,
   XCircle,
   Clock,
   User,
-  MessageSquare,
   Search,
-  X,
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
-import PDFEdit from '@/components/pdf/PDFEdit';
 import { useGetUserProfileQuery } from '@/feature/profileSlice/profileSlice';
 import {
   useGetAssignmentByAdviserWithPaginationQuery
@@ -37,10 +32,10 @@ import Image from 'next/image';
 // Assignment Card Component with user fetching
 function AssignmentCard({ assignment } : { assignment: any }) {
   const router = useRouter();
-  const [reviewingProposal, setReviewingProposal] = useState(false);
+  const [ setReviewingProposal] = useState<boolean>(false);
   const [feedback, setFeedback] = useState('');
   const [decision, setDecision] = useState<'approve' | 'reject' | null>(null);
-  const [showPdfEditor, setShowPdfEditor] = useState(false);
+  const [ setShowPdfEditor] = useState<boolean>(false);
 
   // Fetch student data
   const { data: studentData, isLoading: studentLoading } = useGetUserByIdQuery(
@@ -78,25 +73,6 @@ function AssignmentCard({ assignment } : { assignment: any }) {
     }
   };
 
-  const handleSubmitReview = () => {
-    if (decision && feedback.trim()) {
-      console.log(
-        `${decision} assignment ${assignment.assignmentUuid} with feedback: ${feedback}`
-      );
-      // TODO: Implement review submission API
-      setReviewingProposal(false);
-      setFeedback('');
-      setDecision(null);
-    }
-  };
-
-  const handleReviewDocument = () => {
-    setShowPdfEditor(true);
-  };
-
-  const handleClosePdfEditor = () => {
-    setShowPdfEditor(false);
-  };
 
   return (
     <>
@@ -215,7 +191,7 @@ export default function MentorProposalsPage() {
   const [page, setPage] = useState(0);
   const [size] = useState(10);
 
-  const { data: adviserProfile, isLoading: profileLoading } =
+  const { data: adviserProfile } =
     useGetUserProfileQuery();
 
   // Fetch assignments with pagination

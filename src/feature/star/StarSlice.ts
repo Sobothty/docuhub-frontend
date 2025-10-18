@@ -35,7 +35,7 @@ const starSlice = createApi({
       providesTags: ["starSlice"],
     }),
     getAllUserStarredPapers: builder.query<Star[], string>({
-      queryFn: async (userUuid, _queryApi, _extraOptions, fetchWithBQ) => {
+      queryFn: async (userUuid, _queryApi, _extraOptions) => {
         const result = await publicBaseQuery(
           `/stars/user/${userUuid}`,
           _queryApi,
