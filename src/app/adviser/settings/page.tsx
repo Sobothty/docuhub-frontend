@@ -1,4 +1,4 @@
-// AdviserSettingsPage.tsx - Enhanced UI with username editing
+
 "use client";
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
@@ -197,12 +197,12 @@ export default function AdviserSettingsPage() {
       let imageUrl;
       if (uploadResponse.data?.uri) {
         imageUrl = uploadResponse.data.uri;
-      } else if (uploadResponse.data?.url) {
-        imageUrl = uploadResponse.data.url;
       } else if (uploadResponse.uri) {
         imageUrl = uploadResponse.uri;
-      } else if (uploadResponse.url) {
+      } else if ('url' in uploadResponse) {
         imageUrl = uploadResponse.url;
+      } else if (uploadResponse.data && 'url' in uploadResponse.data) {
+        imageUrl = uploadResponse.data.url;
       } else {
         throw new Error("No image URL returned from upload");
       }
