@@ -1,4 +1,4 @@
-// profileApi.ts - Updated with correct adviser details endpoint
+// profileApi.ts - Fixed version with username support
 "use client";
 
 import { UserProfileResponse, UserResponse, AdviserDetailResponse } from "@/types/userType";
@@ -28,11 +28,12 @@ export interface UpdateAdviserDetailsDto {
   status?: string;
 }
 
-// Helper function to transform frontend data to backend format
+// FIXED: Helper function to transform frontend data to backend format
 const transformUserDataForBackend = (data: any): UpdateUserDto => {
   const transformed: UpdateUserDto = {};
   
-  // Map frontend fields to backend fields
+  // Map ALL frontend fields to backend fields including userName
+  if (data.userName !== undefined) transformed.userName = data.userName;
   if (data.firstName !== undefined) transformed.firstName = data.firstName;
   if (data.lastName !== undefined) transformed.lastName = data.lastName;
   if (data.gender !== undefined) transformed.gender = data.gender;
@@ -42,19 +43,16 @@ const transformUserDataForBackend = (data: any): UpdateUserDto => {
   if (data.bio !== undefined) transformed.bio = data.bio;
   if (data.telegramId !== undefined) transformed.telegramId = data.telegramId;
   
-  // Generate fullName from firstName and lastName
+  // Generate fullName from firstName and lastName if both are provided
   if (data.firstName && data.lastName) {
     transformed.fullName = `${data.firstName} ${data.lastName}`;
+  } else if (data.firstName && !data.lastName) {
+    transformed.fullName = data.firstName;
+  } else if (!data.firstName && data.lastName) {
+    transformed.fullName = data.lastName;
   }
   
-  // Remove null/empty values
-  Object.keys(transformed).forEach(key => {
-    if (transformed[key as keyof UpdateUserDto] === null || 
-        transformed[key as keyof UpdateUserDto] === '' || 
-        transformed[key as keyof UpdateUserDto] === undefined) {
-      delete transformed[key as keyof UpdateUserDto];
-    }
-  });
+  console.log("Transformed user data for backend:", transformed);
   
   return transformed;
 };
@@ -80,13 +78,22 @@ export const profileApi = createApi({
         method: "GET",
       }),
       providesTags: ["Profile"],
+      // Add transform response to ensure data consistency
+      transformResponse: (response: UserProfileResponse) => {
+        console.log("Profile API Response:", response);
+        return response;
+      },
     }),
 
-    // Updated to transform data before sending
+    // FIXED: Now includes username transformation
     updateUserProfile: builder.mutation<UserResponse, { uuid: string; updateData: any }>({
       query: ({ uuid, updateData }) => {
         const transformedData = transformUserDataForBackend(updateData);
-        console.log("Transformed user update data:", transformedData);
+        console.log("Sending user update data to backend:", {
+          uuid,
+          transformedData,
+          originalData: updateData
+        });
         
         return {
           url: `/auth/user/${uuid}`,
@@ -95,9 +102,17 @@ export const profileApi = createApi({
         };
       },
       invalidatesTags: ["Profile"],
+      // Add transform response for better debugging
+      transformResponse: (response: UserResponse) => {
+        console.log("User update successful:", response);
+        return response;
+      },
+      transformErrorResponse: (error: any) => {
+        console.error("User update failed:", error);
+        return error;
+      },
     }),
 
-    // UPDATED: Adviser details now requires UUID
     updateAdviserDetails: builder.mutation<AdviserDetailResponse, { uuid: string; updateData: UpdateAdviserDetailsDto }>({
       query: ({ uuid, updateData }) => {
         const cleanedData = { ...updateData };
