@@ -1,41 +1,53 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/dashboard-layout';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import {
-  CheckCircle,
-  XCircle,
-  Clock,
-  User,
-  Search,
-} from 'lucide-react';
-import { PageHeader } from '@/components/ui/page-header';
-import { useGetUserProfileQuery } from '@/feature/profileSlice/profileSlice';
-import {
-  useGetAssignmentByAdviserWithPaginationQuery
-} from '@/feature/adviserAssignment/AdviserAssignmentSlice';
-import { useGetUserByIdQuery } from '@/feature/users/usersSlice';
-import { Skeleton } from '@/components/ui/skeleton';
-import Image from 'next/image';
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { CheckCircle, XCircle, Clock, User, Search } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
+import { useGetAssignmentByAdviserWithPaginationQuery } from "@/feature/adviserAssignment/AdviserAssignmentSlice";
+import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
+import { Skeleton } from "@/components/ui/skeleton";
+import Image from "next/image";
+
+// Extended Assignment type with student details
+interface AssignmentWithStudent {
+  uuid?: string;
+  paperUuid?: string;
+  adviserUuid?: string;
+  adminUuid?: string;
+  updateDate?: string | null;
+  status?: string;
+  student: {
+    uuid: string;
+    fullName: string;
+    imageUrl?: string | null;
+  };
+  paper: {
+    uuid: string;
+    title: string;
+    thumbnailUrl?: string | null;
+    Status: string;
+  };
+  assignmentUuid: string;
+  assignedDate: string;
+  deadline: string;
+}
 
 // Assignment Card Component with user fetching
-function AssignmentCard({ assignment } : { assignment: any }) {
+function AssignmentCard({ assignment }: { assignment: AssignmentWithStudent }) {
   const router = useRouter();
-  const [ setReviewingProposal] = useState<boolean>(false);
-  const [feedback, setFeedback] = useState('');
-  const [decision, setDecision] = useState<'approve' | 'reject' | null>(null);
-  const [ setShowPdfEditor] = useState<boolean>(false);
 
   // Fetch student data
   const { data: studentData, isLoading: studentLoading } = useGetUserByIdQuery(
@@ -47,21 +59,21 @@ function AssignmentCard({ assignment } : { assignment: any }) {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'ASSIGNED':
+      case "ASSIGNED":
         return (
           <Badge variant="secondary">
             <Clock className="w-3 h-3 mr-1" />
             Pending Review
           </Badge>
         );
-      case 'APPROVED':
+      case "APPROVED":
         return (
           <Badge variant="default" className="bg-green-500">
             <CheckCircle className="w-3 h-3 mr-1" />
             Approved
           </Badge>
         );
-      case 'REJECTED':
+      case "REJECTED":
         return (
           <Badge variant="destructive">
             <XCircle className="w-3 h-3 mr-1" />
@@ -72,7 +84,6 @@ function AssignmentCard({ assignment } : { assignment: any }) {
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
-
 
   return (
     <>
@@ -96,7 +107,7 @@ function AssignmentCard({ assignment } : { assignment: any }) {
                   <span className="flex items-center gap-1">
                     <User className="w-3 h-3" />
                     {studentLoading
-                      ? 'Loading...'
+                      ? "Loading..."
                       : studentData?.fullName || assignment.student.fullName}
                   </span>
                   <span>Assigned: {assignment.assignedDate}</span>
@@ -111,21 +122,24 @@ function AssignmentCard({ assignment } : { assignment: any }) {
           <div className="space-y-4">
             {/* Student Info */}
             <div className="flex items-center gap-3">
-              <img
+              <Image
                 src={
                   studentData?.imageUrl ||
                   assignment.student.imageUrl ||
-                  '/placeholder.svg'
+                  "/placeholder.svg"
                 }
                 alt={assignment.student.fullName}
                 className="w-10 h-10 rounded-full object-cover"
+                width={40}
+                height={40}
+                unoptimized
               />
               <div>
                 <p className="font-medium">
                   {studentData?.fullName || assignment.student.fullName}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {studentData?.email || 'Student'}
+                  {studentData?.email || "Student"}
                 </p>
               </div>
             </div>
@@ -146,8 +160,6 @@ function AssignmentCard({ assignment } : { assignment: any }) {
           </div>
         </CardContent>
       </Card>
-
-
     </>
   );
 }
@@ -187,12 +199,11 @@ function AssignmentCardSkeleton({ count = 3 }: { count?: number }) {
 }
 
 export default function MentorProposalsPage() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(0);
   const [size] = useState(10);
 
-  const { data: adviserProfile } =
-    useGetUserProfileQuery();
+  const { data: adviserProfile } = useGetUserProfileQuery();
 
   // Fetch assignments with pagination
   const {
@@ -202,17 +213,18 @@ export default function MentorProposalsPage() {
   } = useGetAssignmentByAdviserWithPaginationQuery({
     page,
     size,
-    sortBy: 'assignedDate',
-    direction: 'desc',
+    sortBy: "assignedDate",
+    direction: "desc",
   });
 
-  const assignments = assignmentsData?.data?.content || [];
+  const assignments = (assignmentsData?.data?.content ||
+    []) as AssignmentWithStudent[];
   const totalPages = assignmentsData?.data?.totalPages || 0;
   const totalElements = assignmentsData?.data?.totalElements || 0;
 
   // Filter assignments based on search
   const filteredAssignments = assignments.filter(
-    (assignment) =>
+    (assignment: AssignmentWithStudent) =>
       assignment.paper.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       assignment.student.fullName
         .toLowerCase()
@@ -222,7 +234,7 @@ export default function MentorProposalsPage() {
   return (
     <DashboardLayout
       userRole="adviser"
-      userName={adviserProfile?.user.fullName || 'Adviser Name'}
+      userName={adviserProfile?.user.fullName || "Adviser Name"}
       userAvatar={adviserProfile?.user.imageUrl || undefined}
     >
       <div className="space-y-6">
@@ -257,8 +269,8 @@ export default function MentorProposalsPage() {
               <CardContent className="py-8 text-center">
                 <p className="text-muted-foreground">
                   {searchTerm
-                    ? 'No documents match your search'
-                    : 'No documents assigned yet'}
+                    ? "No documents match your search"
+                    : "No documents assigned yet"}
                 </p>
               </CardContent>
             </Card>
@@ -276,8 +288,8 @@ export default function MentorProposalsPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing {page * size + 1} to{' '}
-              {Math.min((page + 1) * size, totalElements)} of {totalElements}{' '}
+              Showing {page * size + 1} to{" "}
+              {Math.min((page + 1) * size, totalElements)} of {totalElements}{" "}
               assignments
             </p>
             <div className="flex gap-2">
@@ -293,7 +305,7 @@ export default function MentorProposalsPage() {
                 {Array.from({ length: totalPages }, (_, i) => (
                   <Button
                     key={i}
-                    variant={page === i ? 'default' : 'outline'}
+                    variant={page === i ? "default" : "outline"}
                     size="sm"
                     onClick={() => setPage(i)}
                     className="w-8 h-8 p-0"

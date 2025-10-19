@@ -1,16 +1,12 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { 
-  UserCreateDto, 
+import {
   UserResponse, 
   UpdateUserDto, 
   UpdateUserImageDto,
-  LoginDto,
-  TokenResponseRecord,
   CurrentUser,
   UserProfileResponse,
-  AuthTokenResponse
 } from '@/types/userType';
-import { User, UserQueryParams } from '@/types/authTypes';
+import { UserQueryParams } from '@/types/authTypes';
 
 // ===============================
 // 🔐 AUTH API SLICE CONFIGURATION
@@ -27,63 +23,7 @@ export const authApi = createApi({
   }),
   tagTypes: ['User', 'Student', 'Mentor', 'Admin'],
 
-  // ===============================
-  // 🔧 API ENDPOINTS
-  // ===============================
   endpoints: (builder) => ({
-    // =========================
-    // AUTHENTICATION ENDPOINTS
-    // =========================
-    register: builder.mutation<UserResponse, UserCreateDto>({
-      query: (userData) => ({
-        url: 'register',
-        method: 'POST',
-        body: userData,
-      }),
-      invalidatesTags: ['User'],
-    }),
-
-    login: builder.mutation<any, LoginDto>({
-      query: (credentials) => ({
-        url: 'login',
-        method: 'POST',
-        body: credentials,
-      }),
-      invalidatesTags: ['User'],
-    }),
-
-    getTokens: builder.query<TokenResponseRecord, void>({
-      query: () => ({
-        url: 'tokens',
-        credentials: 'include',
-      }),
-      providesTags: ['User'],
-    }),
-
-    refreshTokens: builder.query<TokenResponseRecord, void>({
-      query: () => ({
-        url: 'refreshTokens',
-        credentials: 'include',
-      }),
-      providesTags: ['User'],
-    }),
-
-    getProtectedEndpoint: builder.query<AuthTokenResponse, void>({
-      query: () => ({
-        url: 'protected-endpoint',
-        credentials: 'include',
-      }),
-      providesTags: ['User'],
-    }),
-
-    refreshToken: builder.mutation<{ status: string }, string>({
-      query: (username) => ({
-        url: `refresh?username=${username}`,
-        method: 'POST',
-        credentials: 'include',
-      }),
-      invalidatesTags: ['User'],
-    }),
 
     // =========================
     // USER MANAGEMENT ENDPOINTS
@@ -217,14 +157,6 @@ export const authApi = createApi({
 // EXPORT HOOKS
 // ===============================
 export const {
-  // Auth
-  useRegisterMutation,
-  useLoginMutation,
-  useGetTokensQuery,
-  useRefreshTokensQuery,
-  useGetProtectedEndpointQuery,
-  useRefreshTokenMutation,
-
   // User
   useGetAllUsersQuery,
   useGetAllUsersByPageQuery,

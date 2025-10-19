@@ -46,21 +46,8 @@ interface Paper {
   deadline: string;
 }
 
-interface Assignment {
-  student: Student;
-  paper: Paper;
-  status: string;
-  deadline: string;
-}
-
 interface StudentWithPapers extends Student {
   papers: Paper[];
-}
-
-interface ApiResponse {
-  data?: {
-    content?: Assignment[];
-  };
 }
 
 export default function MentorStudentsPage() {

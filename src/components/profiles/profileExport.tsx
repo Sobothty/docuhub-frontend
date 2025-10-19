@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo,  useCallback } from "react";
 import {
   Download,
   User,
   BookOpen,
   Users,
   Search,
-  Loader2,
   Palette,
   RotateCcw,
   AlertCircle,
@@ -16,11 +15,11 @@ import { toast } from "sonner";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetPapersByAuthorQuery } from "@/feature/paperSlice/papers";
 import { useGetAllAdvisersQuery } from "@/feature/users/studentSlice";
-import { useGetAllUsersQuery } from "@/feature/users/usersSlice";
 import DocuhubLoader from "../loader/docuhub-loading";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useGetCategoryNamesQuery } from "@/feature/categoriesSlice/categoriesSlices";
+import { ExportData } from "@/types/profileExportType";
 
 interface ProfileExportProps {
   userType: "student" | "adviser" | "admin";
@@ -100,7 +99,7 @@ export default function ProfileExport({ userType }: ProfileExportProps) {
   const exportData = useMemo(() => {
     if (!userProfile) return null;
 
-    const data: any = {};
+    const data: ExportData = {};
 
     // Student Info
     if (selectedCategories.studentInfo && userProfile) {
@@ -180,7 +179,8 @@ export default function ProfileExport({ userType }: ProfileExportProps) {
     }));
   };
 
-  const generatePDFPreview = (data: any, colors: typeof DEFAULT_COLORS) => {
+  // ✅ Wrapped with useCallback
+  const generatePDFPreview = useCallback((data: ExportData, colors: typeof DEFAULT_COLORS) => {
     const styles = `
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { 
@@ -375,7 +375,7 @@ export default function ProfileExport({ userType }: ProfileExportProps) {
       }
     `;
 
-    let htmlContent = `
+    const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -444,7 +444,7 @@ export default function ProfileExport({ userType }: ProfileExportProps) {
                     ${data.studentAdviser
                       .slice(0, 2)
                       .map(
-                        (adviser: any) =>
+                        (adviser) =>
                           `<p><strong>${adviser.adviserName}</strong></p>`
                       )
                       .join("")}
@@ -462,7 +462,7 @@ export default function ProfileExport({ userType }: ProfileExportProps) {
                     ${data.papers
                       .slice(0, 5)
                       .map(
-                        (paper: any) => `
+                        (paper) => `
                       <div class="publication-item">
                         <div class="item-title">${paper.title}</div>
                         <div class="item-meta">${paper.categories} • ${paper.status} • ${paper.downloads} downloads</div>
@@ -489,15 +489,15 @@ export default function ProfileExport({ userType }: ProfileExportProps) {
     `;
 
     return htmlContent;
-  };
+  }, [userType]);
 
-  // Auto-generate preview when colors or data changes
+  // ✅ Auto-generate preview when colors or data changes - now includes generatePDFPreview
   useEffect(() => {
     if (exportData) {
       const preview = generatePDFPreview(exportData, customColors);
       setPreviewContent(preview);
     }
-  }, [exportData, customColors]);
+  }, [exportData, customColors, generatePDFPreview]);
 
   // Handle iframe height adjustment
   const handleIframeLoad = (event: React.SyntheticEvent<HTMLIFrameElement>) => {
@@ -520,7 +520,7 @@ export default function ProfileExport({ userType }: ProfileExportProps) {
           setIframeHeight(adjustedHeight);
         }, 100);
       }
-    } catch (error) {
+    } catch {
       console.log("Could not access iframe content for height calculation");
       setIframeHeight(900);
     }
@@ -540,7 +540,7 @@ export default function ProfileExport({ userType }: ProfileExportProps) {
     setCustomColors(DEFAULT_COLORS);
   };
 
-  const exportToPDF = async (data: any) => {
+  const exportToPDF = async (data: ExportData) => {
     try {
       // Create a temporary container for rendering
       const tempContainer = document.createElement("div");

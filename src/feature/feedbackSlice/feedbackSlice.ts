@@ -63,18 +63,16 @@ export const feedbackApi = createApi({
     }),
     createFeedback: builder.mutation<FeedbackResponse, CreateFeedbackRequest>({
       query: (body) => {
-
         return {
           url: "/feedback",
           method: "POST",
           body,
         };
       },
-      transformResponse: (response: any) => {
+      transformResponse: (response: FeedbackResponse) => {
         return response;
       },
-      transformErrorResponse: (response: any) => {
-
+      transformErrorResponse: (response) => {
         return response;
       },
       invalidatesTags: (result, error, arg) => [

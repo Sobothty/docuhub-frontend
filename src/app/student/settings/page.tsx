@@ -45,6 +45,20 @@ interface UserProfileForm {
   telegramId: string;
 }
 
+interface UpdateProfileData {
+  userName?: string;
+  gender?: string;
+  email?: string;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  bio?: string;
+  address?: string;
+  contactNumber?: string;
+  telegramId?: string;
+  imageUrl?: string;
+}
+
 export default function StudentSettingsPage() {
   const {
     data: user,
@@ -123,7 +137,7 @@ export default function StudentSettingsPage() {
       }
 
       // Prepare update data - only include fields that have changed
-      const updateData: any = {};
+      const updateData: UpdateProfileData = {};
 
       if (formData.userName !== user.user.userName)
         updateData.userName = formData.userName;
@@ -162,17 +176,9 @@ export default function StudentSettingsPage() {
       await refetch();
       setIsEditing(false);
       toast.success("Profile updated successfully!");
-    } catch (error: any) {
-      console.error("Failed to update profile:", error);
-      if (error.data?.message) {
-        toast.error(`Failed to update profile: ${error.data.message}`);
-      } else if (error.status === 405) {
-        toast.error(
-          "Server method not allowed. Please check API configuration."
-        );
-      } else {
-        toast.error("Failed to update profile");
-      }
+    } catch (error) {
+      console.log("Failed to update profile:", error);
+      toast.error("Server method not allowed. Please check API configuration.");
     }
   };
 
@@ -211,17 +217,11 @@ export default function StudentSettingsPage() {
       } else {
         throw new Error("No URL returned from upload");
       }
-    } catch (error: any) {
-      console.error("Failed to update image:", error);
-      if (error.data?.message) {
-        toast.error(`Failed to update image: ${error.data.message}`);
-      } else if (error.status === 405) {
-        toast.error(
-          "Image upload method not allowed. Please try a different approach."
-        );
-      } else {
-        toast.error("Failed to update profile image");
-      }
+    } catch (error) {
+      console.log("Failed to update image:", error);
+      toast.error(
+        "Image upload method not allowed. Please try a different approach."
+      );
     }
   };
 

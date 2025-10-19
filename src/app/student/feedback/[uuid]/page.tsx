@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState, useRef, useEffect, useCallback } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import {
   Card,
@@ -18,12 +17,7 @@ import {
   CheckCircle,
   XCircle,
   Edit,
-  MessageSquare,
-  Download,
-  Loader2,
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
+  MessageSquare
 } from "lucide-react";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetFeedbackByPaperUuidQuery } from "@/feature/feedbackSlice/feedbackSlice";
@@ -40,7 +34,7 @@ export default function StudentFeedbackDetailPage() {
   // Fetch user profile
   const { data: userProfile } = useGetUserProfileQuery();
 
-  const { data: feedbackData, isLoading: feedbackLoading } =
+  const { data: feedbackData } =
     useGetFeedbackByPaperUuidQuery(paperUuid);
     console.log("Feedback Data:", feedbackData);
 
