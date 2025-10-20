@@ -13,7 +13,6 @@ import FeedbackCardCarousel from "@/components/carousel/FeedbackCarousel";
 import { useTranslation } from "react-i18next";
 
 import { useGetAllPublishedPapersQuery } from "@/feature/paperSlice/papers";
-
 import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
 
 // Sample research paper data
@@ -27,7 +26,7 @@ const researchPapers = [
     year: "2024",
     citations: "120",
     abstract:
-      "This document provides a detailed overview of GlobalCorp’s financial performance for the fiscal year 2024, including revenue, expenses, and projections for 2025.",
+      "This document provides a detailed overview of GlobalCorp's financial performance for the fiscal year 2024, including revenue, expenses, and projections for 2025.",
     tags: ["Finance", "Reports"],
     isBookmarked: false,
     image:
@@ -114,7 +113,7 @@ const feedbacksData = [
   {
     id: "1",
     userName: "Chim Theara",
-    userTitle: "ISTAD’s Student",
+    userTitle: "ISTAD's Student",
     content:
       "IPUB AcademicHub helped me publish my first research paper and connect with mentors who guided me every step of the way.",
     rating: 5,
@@ -123,7 +122,7 @@ const feedbacksData = [
   {
     id: "2",
     userName: "Sorn Sophamarinet",
-    userTitle: "ISTAD’s Student",
+    userTitle: "ISTAD's Student",
     content:
       "The platform streamlines mentorship and feedback, making it easier to guide multiple students and track their progress.",
     rating: 4,
@@ -132,7 +131,7 @@ const feedbacksData = [
   {
     id: "3",
     userName: "BUT SEAVTHONG",
-    userTitle: "ISTAD’s Student",
+    userTitle: "ISTAD's Student",
     content:
       "I discovered valuable research in my field and received constructive feedback that greatly improved a lot of my works.",
     rating: 5,
@@ -141,7 +140,7 @@ const feedbacksData = [
   {
     id: "4",
     userName: "KRY SOBOTHTY",
-    userTitle: "ISTAD’s Student",
+    userTitle: "ISTAD's Student",
     content:
       "The advanced search and project discovery features helped me find relevant studies and collaborate with peers worldwide.",
     rating: 4,
@@ -172,7 +171,6 @@ export default function Home() {
   const { data: papersData, isLoading, error } = useGetAllPublishedPapersQuery({});
 
   const papers = papersData?.papers.content ?? [];
-  console.log("Papers : ", papersData)
 
   type PaperType = {
     uuid: string;
@@ -182,27 +180,26 @@ export default function Home() {
     publishedAt?: string | null;
     createdAt?: string | null;
     abstractText?: string;
-    thumbnailUrl?: string | null; // allow null
+    thumbnailUrl?: string | null;
     citations?: string;
     fileUrl?: string;
   };
 
-  // Fix type for papers mapping
   const apiPapers = papers.map((paper: PaperType) => ({
-    id: paper.uuid, // always string
+    id: paper.uuid,
     title: paper.title,
     authorUuid: paper.authorUuid,
     authors: [paper.authorUuid ?? "Unknown Author"],
     authorImage: "/default-author.png",
     journal: paper.categoryNames?.[0] ?? "",
-    year: getYear(paper), // always string
+    year: getYear(paper),
     abstract: paper.abstractText ?? "",
     tags: paper.categoryNames ?? [],
     isBookmarked: false,
     image: paper.thumbnailUrl ?? "/default-image.png",
     citations: paper.citations ?? "",
-    thumbnailUrl: paper.thumbnailUrl ?? undefined, // always string | undefined
-    publishedAt: paper.publishedAt ?? undefined, // always string | undefined
+    thumbnailUrl: paper.thumbnailUrl ?? undefined,
+    publishedAt: paper.publishedAt ?? undefined,
     fileUrl: paper.fileUrl,
   }));
 
@@ -210,41 +207,40 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      
       {/* Hero Section */}
       <HeroSection />
 
       <DevelopmentServicesBanner />
 
       {/* Card Section */}
-      <section className="w-full max-w-[1400px] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 lg:py-12">
-        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-center text-[var(--color-foreground)] mb-2 sm:mb-4 md:mb-6 lg:mb-8">
+      <section className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-[var(--color-foreground)] mb-6 sm:mb-8 lg:mb-12">
           New Documents
         </h2>
-        <div className="mb-2 sm:mb-4 md:mb-6">
+        <div className="mb-6 sm:mb-8 lg:mb-12">
           <ButtonScrollHorizontal />
         </div>
 
         {/* Loading State */}
         {isLoading && (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-2 text-gray-600">Loading papers...</span>
+          <div className="flex flex-col sm:flex-row justify-center items-center py-12 sm:py-16 lg:py-20 space-y-4 sm:space-y-0 sm:space-x-4">
+            <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-blue-600"></div>
+            <span className="text-base sm:text-lg lg:text-xl text-gray-600">Loading papers...</span>
           </div>
         )}
 
         {/* Error State */}
         {error && (
-          <div className="text-center py-8">
-            <p className="text-red-500 mb-2">Failed to load papers from API</p>
-            <p className="text-sm text-gray-500">Showing sample data instead</p>
+          <div className="text-center py-8 sm:py-12 lg:py-16">
+            <p className="text-red-500 mb-3 text-base sm:text-lg lg:text-xl">Failed to load papers from API</p>
+            <p className="text-sm sm:text-base lg:text-lg text-gray-500">Showing sample data instead</p>
           </div>
         )}
 
         {/* Papers Grid */}
         {!isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-            {papersToShow.map((paper) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
+            {papersToShow.slice(0, 6).map((paper) => (
               <PaperCardWithAuthor
                 key={paper.id}
                 paper={paper}
@@ -257,44 +253,70 @@ export default function Home() {
       </section>
 
       {/* Most Popular Documents */}
-      <section className="w-full px-2 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12 bg-background">
-        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-section-headings text-center mb-6 sm:mb-8 md:mb-10">
-          Popular Documents
-        </h2>
-        <HorizontalCardCarousel
-          papers={researchPapers}
-          onViewPaper={handleViewPaper}
-          onDownloadPDF={handleDownloadPDF}
-          onToggleBookmark={handleToggleBookmark}
-        />
+      <section className="w-full px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20 bg-background">
+        <div className="max-w-[1400px] mx-auto">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-8 sm:mb-12 lg:mb-16">
+            Popular Documents
+          </h2>
+          <HorizontalCardCarousel
+            papers={researchPapers}
+            onViewPaper={handleViewPaper}
+            onDownloadPDF={handleDownloadPDF}
+            onToggleBookmark={handleToggleBookmark}
+          />
+        </div>
       </section>
 
       {/* Feature Section */}
-      <FeatureCardGrid />
-      <AdventureSection />
-      <WorksCardGrid />
-      <DiscussionForumSection />
+      <section className="w-full px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+        <div className="max-w-[1400px] mx-auto">
+          <FeatureCardGrid />
+        </div>
+      </section>
+
+      {/* Adventure Section */}
+      <section className="w-full px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+        <div className="max-w-[1400px] mx-auto">
+          <AdventureSection />
+        </div>
+      </section>
+
+      {/* Works Section */}
+      <section className="w-full px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+        <div className="max-w-[1400px] mx-auto">
+          <WorksCardGrid />
+        </div>
+      </section>
+
+      {/* Discussion Forum Section */}
+      <section className="w-full px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+        <div className="max-w-[1400px] mx-auto">
+          <DiscussionForumSection />
+        </div>
+      </section>
 
       {/* Feedback Section */}
-      <section className="w-full py-6 sm:py-8 md:py-12">
+      <section className="w-full py-12 sm:py-16 lg:py-20">
         {/* Banner */}
-        <div className="relative w-full h-40 sm:h-56 md:h-72 lg:h-[28rem] bg-[url('/banner/feedbackBanner.png')] bg-cover bg-center">
+        <div className="relative w-full h-48 sm:h-64 lg:h-80 xl:h-96 bg-[url('/banner/feedbackBanner.png')] bg-cover bg-center">
           {/* Overlay */}
           <div className="absolute inset-0 bg-black/60"></div>
 
           {/* Text Content */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-2 sm:px-4 md:px-6 text-center sm:text-left sm:pl-10 z-10">
-            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-5xl font-bold text-white mb-1 sm:mb-2 md:mb-4">
-              Discover Academic Excellence
-            </h1>
-            <p className="text-sm sm:text-base md:text-lg text-gray-200">
-              Access thousands of research papers and connect with academic mentors
-            </p>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full px-4 sm:px-6 lg:px-8 text-center">
+            <div className="max-w-4xl mx-auto">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-4 sm:mb-6 lg:mb-8">
+                Discover Academic Excellence
+              </h1>
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-200 px-2 sm:px-4">
+                Access thousands of research papers and connect with academic mentors
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Carousel */}
-        <div className="max-w-[90%] sm:max-w-[85%] md:max-w-7xl mx-auto -mt-16 sm:-mt-20 md:-mt-32 mb-8 sm:mb-12 md:mb-20 px-2 sm:px-4 md:px-6 lg:px-8">
+        <div className="max-w-full sm:max-w-[90%] lg:max-w-6xl xl:max-w-7xl mx-auto -mt-12 sm:-mt-16 lg:-mt-20 xl:-mt-24 mb-12 sm:mb-16 lg:mb-20 px-4 sm:px-6 lg:px-8">
           <FeedbackCardCarousel
             feedbacks={feedbacksData}
             autoPlay
@@ -308,10 +330,10 @@ export default function Home() {
   );
 }
 
-// PaperCardWithAuthor props and types
+// PaperCardWithAuthor Component
 interface PaperCardWithAuthorProps {
   paper: {
-    id: string; // always string
+    id: string;
     title: string;
     authors: string[];
     authorImage?: string;
@@ -342,7 +364,7 @@ function PaperCardWithAuthor({ paper, onDownloadPDF, onToggleBookmark }: PaperCa
   return (
     <VerticalCard
       key={paper.id}
-      paperId={paper.id} // always string
+      paperId={paper.id}
       title={paper.title}
       authors={authorLoading ? ["Loading..."] : author ? [author.fullName || "Unknown Author"] : ["Unknown Author"]}
       authorImage={
@@ -350,7 +372,7 @@ function PaperCardWithAuthor({ paper, onDownloadPDF, onToggleBookmark }: PaperCa
         "./placeholder.svg"
       }
       journal={paper.journal}
-      year={paper.year} // pass year, not publishedAt
+      year={paper.year}
       citations={paper.citations}
       abstract={paper.abstract}
       tags={paper.tags}
