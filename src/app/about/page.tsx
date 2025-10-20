@@ -12,7 +12,7 @@ export default function AboutUsPage() {
     {
       id: 1,
       nameKey: 'team_member_1_name',
-      roleKey: 'team_member_1_role',
+      roleKey: 'Team Lead & Full Stack',
       image: '/memberTeam/BUTSEAVTHONG.jpg',
       socialLinks: [
         {
@@ -32,7 +32,7 @@ export default function AboutUsPage() {
     {
       id: 2,
       nameKey: 'team_member_2_name',
-      roleKey: 'team_member_2_role',
+      roleKey: 'Full Stack',
       image: '/memberTeam/KrySobothty.JPG',
       socialLinks: [
         { name: 'GitHub', icon: 'github', url: 'https://github.com/Sobothty' },
@@ -48,7 +48,7 @@ export default function AboutUsPage() {
     {
       id: 3,
       nameKey: 'team_member_3_name',
-      roleKey: 'team_member_3_role',
+      roleKey: 'UX/UI & Front End',
       image: '/memberTeam/ChimTheara.JPG',
       socialLinks: [
         { name: 'GitHub', icon: 'github', url: 'https://github.com/theara24' },
@@ -80,7 +80,7 @@ export default function AboutUsPage() {
     {
       id: 5,
       nameKey: 'team_member_5_name',
-      roleKey: 'team_member_5_role',
+      roleKey: 'Front End',
       image: '/memberTeam/SornSophamarinet.JPG',
       socialLinks: [
         {
@@ -104,7 +104,7 @@ export default function AboutUsPage() {
     {
       id: 6,
       nameKey: 'team_member_6_name',
-      roleKey: 'team_member_6_role',
+      roleKey: 'Front End',
       image: '/memberTeam/KHIMSOKHA.jpg',
       socialLinks: [
         { name: 'GitHub', icon: 'github', url: 'https://github.com/Khaagic' },
@@ -120,7 +120,7 @@ export default function AboutUsPage() {
     {
       id: 7,
       nameKey: 'team_member_7_name',
-      roleKey: 'team_member_7_role',
+      roleKey: 'Front End',
       image: '/memberTeam/PhoHongleap.JPG',
       socialLinks: [
         { name: 'GitHub', icon: 'github', url: 'https://github.com/hongleap' },
@@ -136,7 +136,7 @@ export default function AboutUsPage() {
     {
       id: 8,
       nameKey: 'team_member_8_name',
-      roleKey: 'team_member_8_role',
+      roleKey: 'Back End',
       image: '/memberTeam/VannarithVr.JPG',
       socialLinks: [
         {
@@ -303,37 +303,37 @@ export default function AboutUsPage() {
       </section>
 
       {/* Our Vision */}
-      <section className="py-20 px-6 bg-background">
+      <section className="py-5 md:py-20 px-6 bg-background">
         <div className="text-center md:mb-6 lg:mb-12">
           <h1 className="text-3xl font-bold text-foreground dark:card dark:px-6 dark:py-4 dark:rounded-lg dark:mx-auto dark:max-w-4xl dark:text-center">
             {t('about_us', { defaultValue: 'About Us' })}
           </h1>
         </div>
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 gap-6 lg:gap-12 p-10 items-center">
-            <div>
-              <h2 className="text-section-headings text-center mb-6 text-text-section-headings dark:px-6 dark:py-4 dark:rounded-lg dark:max-w-2xl">
+            <div className='space-y-4'>
+              <h2 className="text-section-headings text-center  md:text-start dark:px-6 dark:py-4 dark:rounded-lg dark:max-w-2xl">
                 {t('vision_title', {
                   defaultValue: 'The Vision Behind DocuHub',
                 })}
               </h2>
-              <p className="md:text-md lg:text-body-text text-foreground dark:text-descript-1 font-bold mb-2 md:mb-3 lg:mb-6 leading-relaxed transition-colors duration-300 line-clamp-2 md:line-clamp-3 lg:line-clamp-none">
+              <p className="text-sm md:text-md lg:text-body-text text-foreground dark:text-descript-1 font-bold mb-2 md:mb-3 lg:mb-6 leading-relaxed transition-colors duration-300 line-clamp-none">
                 {t('vision_description_1', {
                   defaultValue:
                     'DocuHub was created with a simple but powerful vision — to make high-quality academic resources available to all.',
                 })}
               </p>
-              <p className="text-sm md:text-md lg:text-body-text text-gray-500 dark:text-descript font-bold leading-relaxed transition-colors duration-300 line-clamp-2 md:line-clamp-3 lg:line-clamp-none">
+              <p className="text-sm md:text-md lg:text-body-text text-gray-500 dark:text-descript font-bold leading-relaxed transition-colors duration-300 line-clamp-none">
                 {t('vision_description_2', {
                   defaultValue:
                     'DocuHub bridges the gap by curating an extensive repository of thousands of scholarly papers, journals, datasets, and educational tools, all centralized in one intuitive platform.',
                 })}
               </p>
             </div>
-            <div className="flex justify-center">
+            <div className="flex justify-center mt-4">
               <div className="relative group" id="mouse-follow-container">
-                <div className="absolute -top-4 -left-4 w-20 h-20 bg-blue-500 rounded-tl-2xl z-0"></div>
-                <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-accent rounded-br-2xl z-0"></div>
+                <div className="absolute -top-4 -left-4 size-20 md:size-40 bg-blue-500 rounded-tl-2xl z-0"></div>
+                <div className="absolute -bottom-4 -right-4 size-20 md:size-40 bg-accent rounded-br-2xl z-0"></div>
                 <div className="relative bg-card rounded-lg shadow-lg p-4 max-w-md z-10 animate-float">
                   <Image
                     src="https://www.cstad.edu.kh/_next/image?url=https%3A%2F%2Flms-api.istad.co%2Fapi%2Fv1%2Fmedias%2Fview%2F6a4e078a-b8d0-46d6-ada4-a9565c328b92.png&w=1920&q=75"
@@ -699,23 +699,23 @@ export default function AboutUsPage() {
             {t('our_mentors', { defaultValue: 'Our Mentors' })}
           </h2>
         </div>
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="flex justify-center gap-25 flex-wrap">
             {mentors.map((mentor) => (
               <div key={mentor.id} className="relative z-20">
-                <div className="absolute -top-3 -left-3 w-16 h-16 bg-secondary rounded-tl-lg z-20"></div>
-                <div className="absolute -bottom-3 -right-3 w-16 h-16 bg-accent rounded-br-lg z-20"></div>
-                <div className="relative bg-card rounded-lg shadow-lg p-5 max-w-lg z-20 transition-colors duration-300">
+                <div className="absolute -top-3 -left-3 size-25 bg-secondary rounded-tl-lg z-20"></div>
+                <div className="absolute -bottom-3 -right-3 size-25 bg-accent rounded-br-lg z-20"></div>
+                <div className="relative bg-card rounded-lg shadow-lg p-5 w-full z-20 transition-colors duration-300">
                   <div className="flex items-start space-x-8">
                     <Image
                       src={mentor.image}
                       alt={t(mentor.nameKey, { defaultValue: mentor.nameKey })}
                       width={160}
                       height={160}
-                      className="w-40 h-40 rounded-lg object-cover hover:scale-110 transition-transform duration-300 ease-in-out"
+                      className="size-25 md:size-40 rounded-lg object-cover hover:scale-110 transition-transform duration-300 ease-in-out"
                     />
-                    <div>
-                      <h3 className="text-subheadings font-bold text-foreground mb-2 transition-colors duration-300">
+                    <div className=''>
+                      <h3 className="text-subheadings font-bold text-foreground mb-2 transition-colors duration-300 text-center">
                         {t(mentor.nameKey, { defaultValue: mentor.nameKey })}
                       </h3>
                       <p className="text-accent text-small-text font-medium mb-4 text-center">
@@ -740,8 +740,8 @@ export default function AboutUsPage() {
       </section>
 
       {/* Our Team Members */}
-      <section className="py-20 px-6 bg-background mb-25 relative z-10">
-        <div className="text-center mb-[150px]">
+      <section className="py-10 md:py-20 px-6 bg-background mb-25 relative z-10">
+        <div className="text-center mb-10 md:mb-[150px]">
           <h2 className="text-section-headings font-bold text-foreground">
             {t('our_team_members', { defaultValue: 'Our Team Members' })}
           </h2>
@@ -758,7 +758,7 @@ export default function AboutUsPage() {
                       alt={t(member.nameKey, { defaultValue: member.nameKey })}
                       width={120}
                       height={120}
-                      className="w-42 h-42 rounded-lg object-cover -mt-20 mb-4 hover:scale-110 transition-transform duration-300 ease-in-out"
+                      className="size-32 md:size-42 rounded-lg object-cover -mt-20 mb-4 hover:scale-110 transition-transform duration-300 ease-in-out"
                     />
                     <h3 className="text-subheadings font-bold text-foreground mb-2 transition-colors duration-300">
                       {t(member.nameKey, { defaultValue: member.nameKey })}
@@ -777,8 +777,8 @@ export default function AboutUsPage() {
                     </div>
                   </div>
                 </div>
-                <div className="absolute top-14 -left-2 w-12 h-12 bg-secondary rounded-tl-lg -z-20"></div>
-                <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-accent rounded-br-lg -z-20"></div>
+                <div className="absolute top-14 -left-2 size-20 bg-secondary rounded-tl-lg -z-20"></div>
+                <div className="absolute -bottom-2 -right-2 size-20 bg-accent rounded-br-lg -z-20"></div>
               </div>
             ))}
           </div>
