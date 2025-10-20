@@ -1364,16 +1364,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
         </div>
       )}
 
-      {/* Loading Display */}
-      {loading && (
-        <div className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
-          <div className="flex items-center text-blue-800">
-            <Loader2 className="mr-3 animate-spin text-blue-500" size={20} />
-            <span className="font-medium">Loading PDF...</span>
-          </div>
-        </div>
-      )}
-
       {/* PDF Display Container */}
       <div className="p-1 bg-background rounded-xl" ref={containerRef}>
         <div className="flex justify-center relative">
