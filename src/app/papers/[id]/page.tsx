@@ -589,10 +589,8 @@ export default function PaperDetailPage({
     }));
   };
 
-  const router = useRouter();
-
-  const handleClickBack = () => {
-    router.back();
+  const handleOnClickBack = () => {
+    window.history.back();
   }
 
   return (
@@ -604,7 +602,7 @@ export default function PaperDetailPage({
             <Link
               href='#'
               className="hover:text-foreground flex items-center gap-2"
-              onClick={handleClickBack}
+              onClick={handleOnClickBack}
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Papers
