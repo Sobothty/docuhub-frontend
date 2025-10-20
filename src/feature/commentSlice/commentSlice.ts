@@ -1,4 +1,4 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi, fetchBaseQuery, FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
 import { getSession } from "next-auth/react";
 
 // Define interfaces for comment data
@@ -11,6 +11,7 @@ export interface Comment {
   parentUuid: string | null;
   replies: Comment[];
   isDeleted: boolean;
+  updatedAt: string;
 }
 
 export interface CommentsResponse {
@@ -67,7 +68,7 @@ export const commentsApi = createApi({
 
     // Create a new comment (REQUIRES AUTH)
     createComment: builder.mutation<Comment, CreateCommentRequest>({
-      queryFn: async (body, api, extraOptions, baseQuery) => {
+      queryFn: async (body, api, extraOptions) => {
         const result = await authenticatedBaseQuery(
           {
             url: "/comments",
@@ -79,7 +80,7 @@ export const commentsApi = createApi({
         );
         return result.data
           ? { data: result.data as Comment }
-          : { error: result.error as any };
+          : { error: result.error as FetchBaseQueryError };
       },
       invalidatesTags: (result, error, arg) => [
         { type: "Comments", id: arg.paperUuid },
@@ -88,7 +89,7 @@ export const commentsApi = createApi({
 
     // Update a comment (REQUIRES AUTH)
     updateComment: builder.mutation<Comment, UpdateCommentRequest>({
-      queryFn: async ({ uuid, content }, api, extraOptions, baseQuery) => {
+      queryFn: async ({ uuid, content }, api, extraOptions) => {
         const result = await authenticatedBaseQuery(
           {
             url: `/comments/${uuid}`,
@@ -100,7 +101,7 @@ export const commentsApi = createApi({
         );
         return result.data
           ? { data: result.data as Comment }
-          : { error: result.error as any };
+          : { error: result.error as FetchBaseQueryError };
       },
       invalidatesTags: (result) =>
         result ? [{ type: "Comments", id: result.paperUuid }] : [],
@@ -108,7 +109,7 @@ export const commentsApi = createApi({
 
     // Delete a comment (REQUIRES AUTH)
     deleteComment: builder.mutation<{ message: string }, string>({
-      queryFn: async (uuid, api, extraOptions, baseQuery) => {
+      queryFn: async (uuid, api, extraOptions) => {
         const result = await authenticatedBaseQuery(
           {
             url: `/comments/${uuid}`,
@@ -119,7 +120,7 @@ export const commentsApi = createApi({
         );
         return result.data
           ? { data: result.data as { message: string } }
-          : { error: result.error as any };
+          : { error: result.error as FetchBaseQueryError };
       },
       invalidatesTags: ["Comments"],
     }),

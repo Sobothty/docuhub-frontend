@@ -17,34 +17,89 @@ import {
   RotateCw,
   Minimize,
 } from "lucide-react";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { useCreateMediaMutation } from "@/feature/media/mediaSlice";
+import { PDFDocumentProxy } from "pdfjs-dist";
+import { toast } from "sonner";
+import DocuhubLoader from "../loader/docuhub-loading";
 
 interface PDFEditProps {
   pdfUri: string;
   onUploadSuccess?: (fileUri: string) => void;
 }
 
+interface UploadMediaResponse {
+  data: {
+    uri: string;
+  };
+}
+
+interface PdfjsLib {
+  getDocument: (url: string) => {
+    promise: Promise<PDFDocumentProxy>;
+  };
+  GlobalWorkerOptions: {
+    workerSrc: string;
+  };
+  version: string;
+}
+
+type DrawAnnotation = {
+  id: number;
+  type: "draw";
+  page: number;
+  points: Array<{ x: number; y: number }>;
+  color: string;
+  strokeWidth: number;
+};
+
+type HighlightAnnotation = {
+  id: number;
+  type: "highlight";
+  page: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+};
+
+type TextAnnotation = {
+  id: number;
+  type: "text";
+  page: number;
+  x: number;
+  y: number;
+  text: string;
+  color: string;
+  fontSize: number;
+};
+
+type Annotation = DrawAnnotation | HighlightAnnotation | TextAnnotation;
+
+interface RenderPageParams {
+  pdf: PDFDocumentProxy;
+  pageNumber: number;
+}
+
 const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
-  const [pdfDoc, setPdfDoc] = useState<any>(null);
+  const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [pdfjsLib, setPdfjsLib] = useState<any>(null);
+  const [pdfjsLib, setPdfjsLib] = useState<PdfjsLib | null>(null);
 
-  // Add download progress states
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadType, setDownloadType] = useState<string>("");
+  const [downloadType, setDownloadType] = useState("");
 
-  // Annotation states
   const [tool, setTool] = useState<"none" | "draw" | "text" | "highlight">(
     "none"
   );
   const [isDrawing, setIsDrawing] = useState(false);
   const [isHighlighting, setIsHighlighting] = useState(false);
-  const [annotations, setAnnotations] = useState<any[]>([]);
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [showTextInput, setShowTextInput] = useState(false);
   const [textInputPos, setTextInputPos] = useState({ x: 0, y: 0 });
   const [textInputScreenPos, setTextInputScreenPos] = useState({ x: 0, y: 0 });
@@ -53,7 +108,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
   const [highlightColor, setHighlightColor] = useState("#ffff00");
   const [strokeWidth, setStrokeWidth] = useState(2);
 
-  // NEW: Enhanced UX states
   const [scale, setScale] = useState(1.5);
   const [rotation, setRotation] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -66,419 +120,301 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const pageInputRef = useRef<HTMLInputElement>(null);
 
-  // Add RTK Query mutation hook
   const [createMedia, { isLoading: isUploading }] = useCreateMediaMutation();
 
-  // Add performance optimization states
   const [renderingCache, setRenderingCache] = useState<
     Map<number, HTMLCanvasElement>
   >(new Map());
 
-  // Update only the createAndUploadPDF function to include progress
-  const createAndUploadPDF = async (): Promise<string | null> => {
-    const originalPage = currentPage;
-
-    try {
-      setIsDownloading(true);
-      setDownloadProgress(0);
-      setDownloadType("Initializing PDF Creation");
-      setError("");
-
-      // Clear rendering cache to free memory
-      setRenderingCache(new Map());
-
-      // Dynamic import of jsPDF
-      const jsPDFModule = await import("jspdf");
-      const jsPDF = jsPDFModule.default;
-
-      if (!pdfDoc) {
-        throw new Error("No PDF document loaded");
-      }
-
-      // Create PDF with compression
-      const pdf = new jsPDF({
-        compress: true,
-        format: "a4",
-        unit: "mm",
-      });
-
-      setDownloadProgress(5);
-      setDownloadType("Processing PDF Pages");
-
-      // Process pages in smaller batches for better performance
-      const BATCH_SIZE = 5; // Reduced batch size for faster processing
-      const totalBatches = Math.ceil(totalPages / BATCH_SIZE);
-      let isFirstPage = true;
-
-      for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-        const startPage = batchIndex * BATCH_SIZE + 1;
-        const endPage = Math.min((batchIndex + 1) * BATCH_SIZE, totalPages);
-
-        // Process batch concurrently for speed
-        const batchPromises: Promise<{
-          pageNum: number;
-          canvas: HTMLCanvasElement;
-        }>[] = [];
-
-        for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
-          batchPromises.push(
-            renderPageSilent(pageNum).then((canvas) => ({ pageNum, canvas }))
-          );
-        }
-
-        try {
-          // Wait for all pages in batch to render (with timeout)
-          const batchResults = await Promise.race([
-            Promise.all(batchPromises),
-            new Promise<never>((_, reject) =>
-              setTimeout(
-                () => reject(new Error("Batch processing timeout")),
-                30000
-              )
-            ),
-          ]);
-
-          // Sort results by page number to maintain order
-          batchResults.sort((a, b) => a.pageNum - b.pageNum);
-
-          // Add pages to PDF
-          for (const { pageNum, canvas } of batchResults) {
-            try {
-              // Use lower quality for faster processing on large documents
-              const quality = totalPages > 20 ? 0.8 : 0.95;
-              const imgData = canvas.toDataURL("image/jpeg", quality);
-
-              // Calculate dimensions
-              const imgWidth = canvas.width;
-              const imgHeight = canvas.height;
-
-              // A4 dimensions in mm
-              const pdfWidth = 210;
-              const pdfHeight = 297;
-
-              // Calculate scale to fit page
-              const scaleX = pdfWidth / imgWidth;
-              const scaleY = pdfHeight / imgHeight;
-              const scale = Math.min(scaleX, scaleY);
-
-              const scaledWidth = imgWidth * scale;
-              const scaledHeight = imgHeight * scale;
-
-              // Center the image
-              const x = (pdfWidth - scaledWidth) / 2;
-              const y = (pdfHeight - scaledHeight) / 2;
-
-              if (!isFirstPage) {
-                pdf.addPage();
-              }
-
-              pdf.addImage(imgData, "JPEG", x, y, scaledWidth, scaledHeight);
-              isFirstPage = false;
-
-              // Update progress more frequently
-              const progress = 10 + (pageNum / totalPages) * 70;
-              setDownloadProgress(progress);
-            } catch (pageError) {
-              console.warn(`Failed to add page ${pageNum} to PDF:`, pageError);
-              // Continue with other pages
-            }
-          }
-
-          // Short break between batches to prevent UI freezing
-          if (batchIndex < totalBatches - 1) {
-            await new Promise((resolve) => setTimeout(resolve, 50));
-          }
-        } catch (batchError) {
-          console.error(
-            `Error processing batch ${batchIndex + 1}:`,
-            batchError
-          );
-          // Continue with next batch
-        }
-      }
-
-      setDownloadProgress(85);
-      setDownloadType("Compressing PDF");
-
-      // Create PDF blob
-      const pdfBlob = pdf.output("blob");
-
-      // Check file size
-      const maxSize = 50 * 1024 * 1024; // 50MB
-      if (pdfBlob.size > maxSize) {
-        throw new Error(
-          `PDF too large (${Math.round(
-            pdfBlob.size / 1024 / 1024
-          )}MB). Maximum: 50MB`
-        );
-      }
-
-      setDownloadProgress(90);
-      setDownloadType("Uploading to Server");
-
-      // Upload with optimized FormData
-      const formData = new FormData();
-      formData.append("file", pdfBlob, `annotated-pdf-${Date.now()}.pdf`);
-
-      const uploadResult = await Promise.race([
-        createMedia(formData).unwrap(),
-        new Promise<never>(
-          (_, reject) =>
-            setTimeout(() => reject(new Error("Upload timeout")), 120000) // 2 minutes
-        ),
-      ]);
-
-      setDownloadProgress(100);
-
-      const uploadedUri = (uploadResult as any)?.data?.uri;
-
-      if (onUploadSuccess) {
-        onUploadSuccess(uploadedUri);
-      }
-
-      // Clear cache after successful upload
-      setRenderingCache(new Map());
-
-      // Return to original page quickly
-      setTimeout(() => {
-        if (originalPage !== currentPage) {
-          goToPage(originalPage);
-        }
-      }, 100);
-
-      alert("PDF with annotations uploaded successfully!");
-      return uploadedUri;
-    } catch (error) {
-      console.error("Error creating/uploading PDF:", error);
-
-      let errorMessage = "Unknown error occurred";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === "string") {
-        errorMessage = error;
-      }
-
-      setError(`Failed to create/upload PDF: ${errorMessage}`);
-
-      // Clear cache on error
-      setRenderingCache(new Map());
-
-      // Return to original page
-      setTimeout(() => {
-        if (originalPage !== currentPage) {
-          goToPage(originalPage);
-        }
-      }, 100);
-
-      return null;
-    } finally {
-      setIsDownloading(false);
-      setDownloadProgress(0);
-      setDownloadType("");
-    }
-  };
-
-  // Optimized function to render page without navigation
-  const renderPageSilent = async (
-    pageNumber: number
-  ): Promise<HTMLCanvasElement> => {
-    if (!pdfDoc) throw new Error("No PDF document loaded");
-
-    // Check cache first
-    if (renderingCache.has(pageNumber)) {
-      const cachedCanvas = renderingCache.get(pageNumber);
-      if (cachedCanvas) return cachedCanvas;
+  const forceRedrawCurrentPageOnly = useCallback((pageNumber: number) => {
+    if (!overlayCanvasRef.current) {
+      return;
     }
 
-    try {
-      const page = await pdfDoc.getPage(pageNumber);
-
-      // Create temporary canvases for this page
-      const tempPdfCanvas = document.createElement("canvas");
-      const tempOverlayCanvas = document.createElement("canvas");
-
-      const viewport = page.getViewport({ scale, rotation });
-
-      // Set canvas dimensions
-      tempPdfCanvas.width = viewport.width;
-      tempPdfCanvas.height = viewport.height;
-      tempOverlayCanvas.width = viewport.width;
-      tempOverlayCanvas.height = viewport.height;
-
-      const pdfCtx = tempPdfCanvas.getContext("2d");
-      const overlayCtx = tempOverlayCanvas.getContext("2d");
-
-      if (!pdfCtx || !overlayCtx) {
-        throw new Error("Failed to get canvas contexts");
-      }
-
-      // Render PDF page
-      await page.render({
-        canvasContext: pdfCtx,
-        viewport: viewport,
-      }).promise;
-
-      // Clear overlay canvas
-      overlayCtx.clearRect(
-        0,
-        0,
-        tempOverlayCanvas.width,
-        tempOverlayCanvas.height
-      );
-
-      // Draw annotations for this specific page
-      const pageAnnotations = annotations.filter(
-        (ann) => ann.page === pageNumber
-      );
-
-      pageAnnotations.forEach((annotation) => {
-        overlayCtx.save();
-        try {
-          if (annotation.type === "draw") {
-            overlayCtx.strokeStyle = annotation.color;
-            overlayCtx.lineWidth = annotation.strokeWidth;
-            overlayCtx.lineCap = "round";
-            overlayCtx.lineJoin = "round";
-            overlayCtx.beginPath();
-
-            if (annotation.points && annotation.points.length > 0) {
-              overlayCtx.moveTo(annotation.points[0].x, annotation.points[0].y);
-              for (let i = 1; i < annotation.points.length; i++) {
-                overlayCtx.lineTo(
-                  annotation.points[i].x,
-                  annotation.points[i].y
-                );
-              }
-            }
-            overlayCtx.stroke();
-          } else if (annotation.type === "highlight") {
-            overlayCtx.fillStyle = annotation.color + "80";
-            overlayCtx.fillRect(
-              annotation.x,
-              annotation.y,
-              annotation.width,
-              annotation.height
-            );
-          } else if (annotation.type === "text") {
-            overlayCtx.fillStyle = annotation.color || "#000000";
-            overlayCtx.font = `${annotation.fontSize || 16}px Arial`;
-            overlayCtx.fillText(annotation.text, annotation.x, annotation.y);
-          }
-        } catch (error) {
-          console.warn(`Error drawing annotation:`, error);
-        }
-        overlayCtx.restore();
-      });
-
-      // Combine canvases
-      const combinedCanvas = document.createElement("canvas");
-      combinedCanvas.width = viewport.width;
-      combinedCanvas.height = viewport.height;
-
-      const combinedCtx = combinedCanvas.getContext("2d");
-      if (combinedCtx) {
-        // Draw PDF content
-        combinedCtx.drawImage(tempPdfCanvas, 0, 0);
-        // Draw annotations on top
-        combinedCtx.drawImage(tempOverlayCanvas, 0, 0);
-      }
-
-      // Cache the result for potential reuse
-      setRenderingCache((prev) => {
-        const newCache = new Map(prev);
-        // Limit cache size to prevent memory issues
-        if (newCache.size >= 10) {
-          const firstKey = newCache.keys().next().value;
-          if (firstKey !== undefined) {
-            newCache.delete(firstKey);
-          }
-        }
-        newCache.set(pageNumber, combinedCanvas);
-        return newCache;
-      });
-
-      return combinedCanvas;
-    } catch (error) {
-      console.error(`Error rendering page ${pageNumber}:`, error);
-      throw error;
+    const ctx = overlayCanvasRef.current.getContext("2d");
+    if (!ctx) {
+      return;
     }
-  };
 
-  // Example function that uses the returned URI
-  const handleUploadAndProcess = async () => {
-    const uploadedUri = await createAndUploadPDF();
-
-    if (uploadedUri) {
-      console.log("Uploaded PDF URI:", uploadedUri);
-    } else {
-      console.log("Upload failed, no URI returned");
-    }
-  };
-
-  // Add the Download Progress Modal component
-  const DownloadProgressModal = () => {
-    if (!isDownloading) return null;
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-          <div className="text-center">
-            <div className="mb-4">
-              <Loader2
-                className="mx-auto animate-spin text-blue-500"
-                size={48}
-              />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">{downloadType}</h3>
-            <p className="text-gray-600 mb-4">
-              Processing page {Math.ceil((downloadProgress / 100) * totalPages)}{" "}
-              of {totalPages}
-            </p>
-
-            {/* Progress Bar */}
-            <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
-              <div
-                className="bg-blue-500 h-3 rounded-full transition-all duration-200 ease-out"
-                style={{ width: `${downloadProgress}%` }}
-              />
-            </div>
-
-            {/* Percentage */}
-            <div className="text-2xl font-bold text-blue-500">
-              {Math.round(downloadProgress)}%
-            </div>
-
-            <p className="text-sm text-gray-500 mt-2">
-              {downloadProgress < 50
-                ? "This may take a moment for large documents..."
-                : downloadProgress < 90
-                ? "Almost ready..."
-                : "Finalizing upload..."}
-            </p>
-          </div>
-        </div>
-      </div>
+    ctx.clearRect(
+      0,
+      0,
+      overlayCanvasRef.current.width,
+      overlayCanvasRef.current.height
     );
-  };
 
-  // Add these new handler functions after the state declarations
-  const handleZoomIn = () => {
+    const pageAnnotations = annotations.filter(
+      (ann) => ann.page === pageNumber
+    );
+
+    if (pageAnnotations.length === 0) {
+      return;
+    }
+
+    console.log(
+      `Redrawing ${pageAnnotations.length} annotations for page ${pageNumber}`
+    );
+
+    pageAnnotations.forEach((annotation) => {
+      ctx.save();
+
+      try {
+        if (annotation.type === "draw") {
+          ctx.strokeStyle = annotation.color;
+          ctx.lineWidth = annotation.strokeWidth;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.beginPath();
+
+          if (annotation.points && annotation.points.length > 0) {
+            ctx.moveTo(annotation.points[0].x, annotation.points[0].y);
+            for (let i = 1; i < annotation.points.length; i++) {
+              ctx.lineTo(annotation.points[i].x, annotation.points[i].y);
+            }
+          }
+          ctx.stroke();
+        } else if (annotation.type === "highlight") {
+          ctx.fillStyle = annotation.color + "80";
+          ctx.fillRect(
+            annotation.x,
+            annotation.y,
+            annotation.width,
+            annotation.height
+          );
+        } else if (annotation.type === "text") {
+          ctx.fillStyle = annotation.color || "#000000";
+          ctx.font = `${annotation.fontSize || 16}px Arial`;
+          ctx.fillText(annotation.text, annotation.x, annotation.y);
+        }
+      } catch (error) {
+        console.log(`Error drawing annotation:`, error);
+      }
+
+      ctx.restore();
+    });
+  }, [annotations]);
+
+  const renderPageSilent = useCallback(
+    async (pageNumber: number): Promise<HTMLCanvasElement> => {
+      if (!pdfDoc) throw new Error("No PDF document loaded");
+
+      if (renderingCache.has(pageNumber)) {
+        const cachedCanvas = renderingCache.get(pageNumber);
+        if (cachedCanvas) return cachedCanvas;
+      }
+
+      try {
+        const page = await pdfDoc.getPage(pageNumber);
+
+        const tempPdfCanvas = document.createElement("canvas");
+        const tempOverlayCanvas = document.createElement("canvas");
+
+        const viewport = page.getViewport({ scale, rotation });
+
+        tempPdfCanvas.width = viewport.width;
+        tempPdfCanvas.height = viewport.height;
+        tempOverlayCanvas.width = viewport.width;
+        tempOverlayCanvas.height = viewport.height;
+
+        const pdfCtx = tempPdfCanvas.getContext("2d");
+        const overlayCtx = tempOverlayCanvas.getContext("2d");
+
+        if (!pdfCtx || !overlayCtx) {
+          throw new Error("Failed to get canvas contexts");
+        }
+
+        await page.render({
+          canvasContext: pdfCtx,
+          viewport: viewport,
+        }).promise;
+
+        overlayCtx.clearRect(
+          0,
+          0,
+          tempOverlayCanvas.width,
+          tempOverlayCanvas.height
+        );
+
+        const pageAnnotations = annotations.filter(
+          (ann) => ann.page === pageNumber
+        );
+
+        pageAnnotations.forEach((annotation) => {
+          overlayCtx.save();
+          try {
+            if (annotation.type === "draw") {
+              overlayCtx.strokeStyle = annotation.color;
+              overlayCtx.lineWidth = annotation.strokeWidth;
+              overlayCtx.lineCap = "round";
+              overlayCtx.lineJoin = "round";
+              overlayCtx.beginPath();
+
+              if (annotation.points && annotation.points.length > 0) {
+                overlayCtx.moveTo(annotation.points[0].x, annotation.points[0].y);
+                for (let i = 1; i < annotation.points.length; i++) {
+                  overlayCtx.lineTo(
+                    annotation.points[i].x,
+                    annotation.points[i].y
+                  );
+                }
+              }
+              overlayCtx.stroke();
+            } else if (annotation.type === "highlight") {
+              overlayCtx.fillStyle = annotation.color + "80";
+              overlayCtx.fillRect(
+                annotation.x,
+                annotation.y,
+                annotation.width,
+                annotation.height
+              );
+            } else if (annotation.type === "text") {
+              overlayCtx.fillStyle = annotation.color || "#000000";
+              overlayCtx.font = `${annotation.fontSize || 16}px Arial`;
+              overlayCtx.fillText(annotation.text, annotation.x, annotation.y);
+            }
+          } catch (error) {
+            console.warn(`Error drawing annotation:`, error);
+          }
+          overlayCtx.restore();
+        });
+
+        const combinedCanvas = document.createElement("canvas");
+        combinedCanvas.width = viewport.width;
+        combinedCanvas.height = viewport.height;
+
+        const combinedCtx = combinedCanvas.getContext("2d");
+        if (combinedCtx) {
+          combinedCtx.drawImage(tempPdfCanvas, 0, 0);
+          combinedCtx.drawImage(tempOverlayCanvas, 0, 0);
+        }
+
+        setRenderingCache((prev) => {
+          const newCache = new Map(prev);
+          if (newCache.size >= 10) {
+            const firstKey = newCache.keys().next().value;
+            if (firstKey !== undefined) {
+              newCache.delete(firstKey);
+            }
+          }
+          newCache.set(pageNumber, combinedCanvas);
+          return newCache;
+        });
+
+        return combinedCanvas;
+      } catch (error) {
+        console.error(`Error rendering page ${pageNumber}:`, error);
+        throw error;
+      }
+    },
+    [pdfDoc, scale, rotation, annotations, renderingCache]
+  );
+
+  const renderPage = useCallback(
+    async ({ pdf, pageNumber }: RenderPageParams) => {
+      if (!pdf || !canvasRef.current) return;
+      try {
+        const page = await pdf.getPage(pageNumber);
+        const canvas = canvasRef.current;
+        const overlayCanvas = overlayCanvasRef.current;
+        const context = canvas.getContext("2d");
+
+        if (!context) {
+          throw new Error("Failed to get canvas context");
+        }
+
+        const viewport = page.getViewport({ scale, rotation });
+
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        if (overlayCanvas) {
+          overlayCanvas.height = viewport.height;
+          overlayCanvas.width = viewport.width;
+
+          const overlayCtx = overlayCanvas.getContext("2d");
+          if (overlayCtx) {
+            overlayCtx.clearRect(
+              0,
+              0,
+              overlayCanvas.width,
+              overlayCanvas.height
+            );
+            overlayCtx.fillStyle = "rgba(255,255,255,0)";
+            overlayCtx.fillRect(
+              0,
+              0,
+              overlayCanvas.width,
+              overlayCanvas.height
+            );
+            overlayCtx.clearRect(
+              0,
+              0,
+              overlayCanvas.width,
+              overlayCanvas.height
+            );
+          }
+        }
+
+        await page.render({ canvasContext: context, viewport: viewport })
+          .promise;
+
+        setTimeout(() => {
+          forceRedrawCurrentPageOnly(pageNumber);
+        }, 150);
+      } catch (error) {
+        console.log(`Error rendering page ${pageNumber}:`, error);
+        setError(`Failed to render page ${pageNumber}`);
+      }
+    },
+    [scale, rotation, forceRedrawCurrentPageOnly]
+  );
+
+  const goToPage = useCallback(
+    async (pageNumber: number) => {
+      if (!pdfDoc || pageNumber < 1 || pageNumber > totalPages) return;
+
+      console.log(`Navigating from page ${currentPage} to page ${pageNumber}`);
+
+      setIsDrawing(false);
+      setIsHighlighting(false);
+      setShowTextInput(false);
+
+      if (overlayCanvasRef.current) {
+        const overlayCtx = overlayCanvasRef.current.getContext("2d");
+        if (overlayCtx) {
+          overlayCtx.clearRect(
+            0,
+            0,
+            overlayCanvasRef.current.width,
+            overlayCanvasRef.current.height
+          );
+        }
+      }
+
+      setCurrentPage(pageNumber);
+
+      await renderPage({ pdf: pdfDoc, pageNumber });
+    },
+    [pdfDoc, totalPages, currentPage, renderPage]
+  );
+
+  const handleZoomIn = useCallback(() => {
     setScale((prev) => Math.min(prev + 0.25, 3));
-  };
+  }, []);
 
-  const handleZoomOut = () => {
+  const handleZoomOut = useCallback(() => {
     setScale((prev) => Math.max(prev - 0.25, 0.5));
-  };
+  }, []);
 
-  const handleResetZoom = () => {
+  const handleResetZoom = useCallback(() => {
     setScale(1.5);
-  };
+  }, []);
 
-  const handleRotate = () => {
+  const handleRotate = useCallback(() => {
     setRotation((prev) => (prev + 90) % 360);
-  };
+  }, []);
 
-  const toggleFullscreen = () => {
+  const toggleFullscreen = useCallback(() => {
     if (!containerRef.current) return;
 
     if (!document.fullscreenElement) {
@@ -488,33 +424,31 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
       document.exitFullscreen?.();
       setIsFullscreen(false);
     }
-  };
+  }, []);
 
-  const handlePageJump = () => {
+  const nextPage = useCallback(() => {
+    if (currentPage < totalPages) goToPage(currentPage + 1);
+  }, [currentPage, totalPages, goToPage]);
+
+  const prevPage = useCallback(() => {
+    if (currentPage > 1) goToPage(currentPage - 1);
+  }, [currentPage, goToPage]);
+
+  const handlePageJump = useCallback(() => {
     const pageNum = parseInt(pageInputValue, 10);
     if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
       goToPage(pageNum);
     } else {
       setPageInputValue(currentPage.toString());
     }
-  };
+  }, [pageInputValue, totalPages, currentPage, goToPage]);
 
-  // Update the scale and rotation effects
-  useEffect(() => {
-    if (pdfDoc && currentPage) {
-      renderPage({ pdf: pdfDoc, pageNumber: currentPage });
-    }
-  }, [scale, rotation]);
-
-  // Sync pageInputValue with currentPage
   useEffect(() => {
     setPageInputValue(currentPage.toString());
   }, [currentPage]);
 
-  // Add keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if typing in an input field
       if (
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement
@@ -604,9 +538,8 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentPage, totalPages]);
+  }, [nextPage, prevPage, handleZoomIn, handleZoomOut, handleResetZoom, toggleFullscreen, totalPages, goToPage]);
 
-  // Handle fullscreen change events
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -623,9 +556,7 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
         if (typeof window !== "undefined") {
           const pdfjs = await import("pdfjs-dist");
           pdfjs.GlobalWorkerOptions.workerSrc =
-            "//unpkg.com/pdfjs-dist@" +
-            pdfjs.version +
-            "/build/pdf.worker.min.js";
+            `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
           setPdfjsLib(pdfjs);
         }
       } catch (error) {
@@ -636,310 +567,39 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
     loadPdfjs();
   }, []);
 
-  // Add this useEffect to re-render annotations when currentPage changes
   useEffect(() => {
-    // Re-render annotations whenever the current page changes
     if (overlayCanvasRef.current) {
       forceRedrawCurrentPageOnly(currentPage);
     }
-  }, [currentPage, annotations]); // Depend on both currentPage and annotations
+  }, [currentPage, annotations, forceRedrawCurrentPageOnly]);
 
-  // Update your renderPage function to properly clear and redraw
-  const renderPage = async ({ pdf, pageNumber }: any) => {
-    if (!pdf || !canvasRef.current) return;
-    try {
-      const page = await pdf.getPage(pageNumber);
-      const canvas = canvasRef.current;
-      const overlayCanvas = overlayCanvasRef.current;
-      const context = canvas.getContext("2d");
-      const viewport = page.getViewport({ scale, rotation });
-
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-
-      if (overlayCanvas) {
-        overlayCanvas.height = viewport.height;
-        overlayCanvas.width = viewport.width;
-
-        const overlayCtx = overlayCanvas.getContext("2d");
-        if (overlayCtx) {
-          overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-          overlayCtx.fillStyle = "rgba(255,255,255,0)";
-          overlayCtx.fillRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-          overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-        }
-      }
-
-      await page.render({ canvasContext: context, viewport: viewport }).promise;
-
-      setTimeout(() => {
-        forceRedrawCurrentPageOnly(pageNumber);
-      }, 150);
-    } catch (error) {
-      console.log(`Error rendering page ${pageNumber}:`, error);
-      setError(`Failed to render page ${pageNumber}`);
-    }
-  };
-
-  // Add a new function that forces redraw only for specific page
-  const forceRedrawCurrentPageOnly = (pageNumber: number) => {
-    if (!overlayCanvasRef.current) {
-      return;
-    }
-
-    const ctx = overlayCanvasRef.current.getContext("2d");
-    if (!ctx) {
-      return;
-    }
-
-    // Clear the canvas
-    ctx.clearRect(
-      0,
-      0,
-      overlayCanvasRef.current.width,
-      overlayCanvasRef.current.height
-    );
-
-    // Get annotations for this specific page
-    const pageAnnotations = annotations.filter(
-      (ann) => ann.page === pageNumber
-    );
-
-    // If no annotations, just return silently (don't log)
-    if (pageAnnotations.length === 0) {
-      return;
-    }
-
-    console.log(
-      `Redrawing ${pageAnnotations.length} annotations for page ${pageNumber}`
-    );
-
-    pageAnnotations.forEach((annotation, index) => {
-      ctx.save();
-
+  const loadPdf = useCallback(
+    async (pdfUrl: string) => {
+      if (!pdfjsLib) return;
+      setLoading(true);
+      setError("");
       try {
-        if (annotation.type === "draw") {
-          ctx.strokeStyle = annotation.color;
-          ctx.lineWidth = annotation.strokeWidth;
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
-          ctx.beginPath();
-
-          if (annotation.points && annotation.points.length > 0) {
-            ctx.moveTo(annotation.points[0].x, annotation.points[0].y);
-            for (let i = 1; i < annotation.points.length; i++) {
-              ctx.lineTo(annotation.points[i].x, annotation.points[i].y);
-            }
-          }
-          ctx.stroke();
-        } else if (annotation.type === "highlight") {
-          ctx.fillStyle = annotation.color + "80";
-          ctx.fillRect(
-            annotation.x,
-            annotation.y,
-            annotation.width,
-            annotation.height
-          );
-        } else if (annotation.type === "text") {
-          ctx.fillStyle = annotation.color || "#000000";
-          ctx.font = `${annotation.fontSize || 16}px Arial`;
-          ctx.fillText(annotation.text, annotation.x, annotation.y);
-        }
+        const loadingTask = pdfjsLib.getDocument(pdfUrl);
+        const pdf = await loadingTask.promise;
+        setPdfDoc(pdf);
+        setTotalPages(pdf.numPages);
+        setCurrentPage(1);
+        await renderPage({ pdf, pageNumber: 1 });
       } catch (error) {
-        console.log(`Error drawing annotation ${index}:`, error);
+        console.log("Error loading PDF:", error);
+        setError("Failed to load PDF.");
+      } finally {
+        setLoading(false);
       }
+    },
+    [pdfjsLib, renderPage]
+  );
 
-      ctx.restore();
-    });
-  };
-
-  const loadPdf = async (pdfUrl: string) => {
-    if (!pdfjsLib) return;
-    setLoading(true);
-    setError("");
-    try {
-      const loadingTask = pdfjsLib.getDocument(pdfUrl);
-      const pdf = await loadingTask.promise;
-      setPdfDoc(pdf);
-      setTotalPages(pdf.numPages);
-      setCurrentPage(1);
-      await renderPage({ pdf, pageNumber: 1 });
-    } catch (error) {
-      console.log("Error loading PDF:", error);
-      setError("Failed to load PDF.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const goToPage = async (pageNumber: number) => {
-    if (!pdfDoc || pageNumber < 1 || pageNumber > totalPages) return;
-
-    console.log(`Navigating from page ${currentPage} to page ${pageNumber}`);
-
-    // Clear any ongoing drawing operations
-    setIsDrawing(false);
-    setIsHighlighting(false);
-    setShowTextInput(false);
-
-    // IMMEDIATELY clear the overlay canvas
-    if (overlayCanvasRef.current) {
-      const overlayCtx = overlayCanvasRef.current.getContext("2d");
-      if (overlayCtx) {
-        overlayCtx.clearRect(
-          0,
-          0,
-          overlayCanvasRef.current.width,
-          overlayCanvasRef.current.height
-        );
-      }
-    }
-
-    // Set the current page
-    setCurrentPage(pageNumber);
-
-    // Render the new page
-    await renderPage({ pdf: pdfDoc, pageNumber });
-  };
-
-  const nextPage = () => {
-    if (currentPage < totalPages) goToPage(currentPage + 1);
-  };
-
-  const prevPage = () => {
-    if (currentPage > 1) goToPage(currentPage - 1);
-  };
-
-  const getCanvasCoordinates = (e: React.MouseEvent) => {
-    if (!overlayCanvasRef.current) return { x: 0, y: 0 };
-    const rect = overlayCanvasRef.current.getBoundingClientRect();
-
-    // Get the actual displayed size vs canvas internal size
-    const displayWidth = rect.width;
-    const displayHeight = rect.height;
-    const canvasWidth = overlayCanvasRef.current.width;
-    const canvasHeight = overlayCanvasRef.current.height;
-
-    // Calculate scale factors
-    const scaleX = canvasWidth / displayWidth;
-    const scaleY = canvasHeight / displayHeight;
-
-    // Get mouse position relative to canvas
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
-
-    return { x, y };
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    const coords = getCanvasCoordinates(e);
-
-    if (tool === "draw") {
-      setIsDrawing(true);
-      const newAnnotation = {
-        id: Date.now(),
-        type: "draw",
-        page: currentPage,
-        points: [coords],
-        color: drawColor,
-        strokeWidth: strokeWidth,
-      };
-      setAnnotations((prev) => [...prev, newAnnotation]);
-    } else if (tool === "highlight") {
-      setIsHighlighting(true);
-      const newAnnotation = {
-        id: Date.now(),
-        type: "highlight",
-        page: currentPage,
-        x: coords.x,
-        y: coords.y,
-        width: 0,
-        height: 0,
-        color: highlightColor,
-      };
-      setAnnotations((prev) => [...prev, newAnnotation]);
-    } else if (tool === "text") {
-      setTextInputPos(coords);
-      // Set screen position for the text input
-      if (overlayCanvasRef.current) {
-        const rect = overlayCanvasRef.current.getBoundingClientRect();
-        setTextInputScreenPos({
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top,
-        });
-      }
-      setShowTextInput(true);
-      setTextValue("");
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    const coords = getCanvasCoordinates(e);
-
-    if (isDrawing && tool === "draw") {
-      setAnnotations((prev) => {
-        const newAnnotations = [...prev];
-        const lastAnnotation = newAnnotations[newAnnotations.length - 1];
-        if (lastAnnotation && lastAnnotation.type === "draw") {
-          lastAnnotation.points.push(coords);
-        }
-        return newAnnotations;
-      });
-    } else if (isHighlighting && tool === "highlight") {
-      setAnnotations((prev) => {
-        const newAnnotations = [...prev];
-        const lastAnnotation = newAnnotations[newAnnotations.length - 1];
-        if (lastAnnotation && lastAnnotation.type === "highlight") {
-          lastAnnotation.width = coords.x - lastAnnotation.x;
-          lastAnnotation.height = coords.y - lastAnnotation.y;
-        }
-        return newAnnotations;
-      });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDrawing(false);
-    setIsHighlighting(false);
-  };
-
-  const handleTextSubmit = () => {
-    console.log("Text submit:", textValue, "at position:", textInputPos);
-    if (textValue.trim()) {
-      const newAnnotation = {
-        id: Date.now(),
-        type: "text",
-        page: currentPage,
-        x: textInputPos.x,
-        y: textInputPos.y + 16, // Offset for font baseline
-        text: textValue,
-        color: drawColor,
-        fontSize: 16,
-      };
-      setAnnotations((prev) => {
-        const updated = [...prev, newAnnotation];
-        return updated;
-      });
-    }
-    setShowTextInput(false);
-    setTextValue("");
-  };
-
-  const clearAnnotations = () => {
-    setAnnotations((prev) => prev.filter((ann) => ann.page !== currentPage));
-  };
-
-  const clearAllAnnotations = () => {
-    setAnnotations([]);
-  };
-
-  // Function to combine PDF and annotations into a single canvas
   const combineCanvases = (): HTMLCanvasElement => {
     if (!canvasRef.current || !overlayCanvasRef.current) {
       throw new Error("Canvases not available");
     }
 
-    // Create a new canvas for the combined result
     const combinedCanvas = document.createElement("canvas");
     const combinedCtx = combinedCanvas.getContext("2d");
 
@@ -947,37 +607,26 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
       throw new Error("Failed to get canvas context");
     }
 
-    // Set dimensions to match the PDF canvas
     combinedCanvas.width = canvasRef.current.width;
     combinedCanvas.height = canvasRef.current.height;
 
-    // Draw the PDF content first (background)
     combinedCtx.drawImage(canvasRef.current, 0, 0);
-
-    // Draw the annotations on top
     combinedCtx.drawImage(overlayCanvasRef.current, 0, 0);
 
     return combinedCanvas;
   };
 
-  // Function to get the combined canvas as a base64 string
-  const getCanvasAsBase64 = (format: "png" | "jpeg" = "png"): string => {
-    try {
-      const combinedCanvas = combineCanvases();
-      return combinedCanvas.toDataURL(`image/${format}`);
-    } catch (error) {
-      console.log("Error getting canvas as base64:", error);
-      return "";
-    }
-  };
+  const createAndUploadPDF = useCallback(async (): Promise<string | null> => {
+    const originalPage = currentPage;
 
-  // Alternative function to create PDF and download locally first
-  const createPDFAndDownload = async () => {
     try {
-      setLoading(true);
+      setIsDownloading(true);
+      setDownloadProgress(0);
+      setDownloadType("Initializing PDF Creation");
       setError("");
 
-      // Dynamic import of jsPDF
+      setRenderingCache(new Map());
+
       const jsPDFModule = await import("jspdf");
       const jsPDF = jsPDFModule.default;
 
@@ -985,33 +634,248 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
         throw new Error("No PDF document loaded");
       }
 
-      // Create a new PDF
+      const pdf = new jsPDF({
+        compress: true,
+        format: "a4",
+        unit: "mm",
+      });
+
+      setDownloadProgress(5);
+      setDownloadType("Processing PDF Pages");
+
+      const BATCH_SIZE = 5;
+      const totalBatches = Math.ceil(totalPages / BATCH_SIZE);
+      let isFirstPage = true;
+
+      for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+        const startPage = batchIndex * BATCH_SIZE + 1;
+        const endPage = Math.min((batchIndex + 1) * BATCH_SIZE, totalPages);
+
+        const batchPromises: Promise<{
+          pageNum: number;
+          canvas: HTMLCanvasElement;
+        }>[] = [];
+
+        for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
+          batchPromises.push(
+            renderPageSilent(pageNum).then((canvas) => ({ pageNum, canvas }))
+          );
+        }
+
+        try {
+          const batchResults = await Promise.race([
+            Promise.all(batchPromises),
+            new Promise<never>((_, reject) =>
+              setTimeout(
+                () => reject(new Error("Batch processing timeout")),
+                30000
+              )
+            ),
+          ]);
+
+          batchResults.sort((a, b) => a.pageNum - b.pageNum);
+
+          for (const { pageNum, canvas } of batchResults) {
+            try {
+              const quality = totalPages > 20 ? 0.8 : 0.95;
+              const imgData = canvas.toDataURL("image/jpeg", quality);
+
+              const imgWidth = canvas.width;
+              const imgHeight = canvas.height;
+
+              const pdfWidth = 210;
+              const pdfHeight = 297;
+
+              const scaleX = pdfWidth / imgWidth;
+              const scaleY = pdfHeight / imgHeight;
+              const scale = Math.min(scaleX, scaleY);
+
+              const scaledWidth = imgWidth * scale;
+              const scaledHeight = imgHeight * scale;
+
+              const x = (pdfWidth - scaledWidth) / 2;
+              const y = (pdfHeight - scaledHeight) / 2;
+
+              if (!isFirstPage) {
+                pdf.addPage();
+              }
+
+              pdf.addImage(imgData, "JPEG", x, y, scaledWidth, scaledHeight);
+              isFirstPage = false;
+
+              const progress = 10 + (pageNum / totalPages) * 70;
+              setDownloadProgress(progress);
+            } catch (pageError) {
+              console.warn(`Failed to add page ${pageNum} to PDF:`, pageError);
+            }
+          }
+
+          if (batchIndex < totalBatches - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 50));
+          }
+        } catch (batchError) {
+          console.error(
+            `Error processing batch ${batchIndex + 1}:`,
+            batchError
+          );
+        }
+      }
+
+      setDownloadProgress(85);
+      setDownloadType("Compressing PDF");
+
+      const pdfBlob = pdf.output("blob");
+
+      const maxSize = 50 * 1024 * 1024;
+      if (pdfBlob.size > maxSize) {
+        throw new Error(
+          `PDF too large (${Math.round(
+            pdfBlob.size / 1024 / 1024
+          )}MB). Maximum: 50MB`
+        );
+      }
+
+      setDownloadProgress(90);
+      setDownloadType("Uploading to Server");
+
+      const formData = new FormData();
+      formData.append("file", pdfBlob, `annotated-pdf-${Date.now()}.pdf`);
+
+      const uploadResult = await Promise.race([
+        createMedia(formData).unwrap(),
+        new Promise<never>(
+          (_, reject) =>
+            setTimeout(() => reject(new Error("Upload timeout")), 120000)
+        ),
+      ]);
+
+      setDownloadProgress(100);
+
+      const uploadedUri = (uploadResult as UploadMediaResponse)?.data?.uri;
+
+      if (onUploadSuccess) {
+        onUploadSuccess(uploadedUri);
+      }
+
+      setRenderingCache(new Map());
+
+      setTimeout(() => {
+        if (originalPage !== currentPage) {
+          goToPage(originalPage);
+        }
+      }, 100);
+
+      toast.success("PDF uploaded successfully!");
+      return uploadedUri;
+    } catch (error) {
+      console.error("Error creating/uploading PDF:", error);
+
+      let errorMessage = "Unknown error occurred";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      }
+
+      setError(`Failed to create/upload PDF: ${errorMessage}`);
+
+      setRenderingCache(new Map());
+
+      setTimeout(() => {
+        if (originalPage !== currentPage) {
+          goToPage(originalPage);
+        }
+      }, 100);
+
+      return null;
+    } finally {
+      setIsDownloading(false);
+      setDownloadProgress(0);
+      setDownloadType("");
+    }
+  }, [currentPage, pdfDoc, totalPages, renderPageSilent, createMedia, onUploadSuccess, goToPage]);
+
+  const DownloadProgressModal = () => {
+    if (!isDownloading) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="text-center">
+            <div className="mb-4">
+              <DocuhubLoader />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">{downloadType}</h3>
+            <p className="text-gray-600 mb-4">
+              Processing page {Math.ceil((downloadProgress / 100) * totalPages)}{" "}
+              of {totalPages}
+            </p>
+
+            <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
+              <div
+                className="bg-blue-500 h-3 rounded-full transition-all duration-200 ease-out"
+                style={{ width: `${downloadProgress}%` }}
+              />
+            </div>
+
+            <div className="text-2xl font-bold text-blue-500">
+              {Math.round(downloadProgress)}%
+            </div>
+
+            <p className="text-sm text-gray-500 mt-2">
+              {downloadProgress < 50
+                ? "This may take a moment for large documents..."
+                : downloadProgress < 90
+                ? "Almost ready..."
+                : "Finalizing upload..."}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const handleUploadAndProcess = useCallback(async () => {
+    const uploadedUri = await createAndUploadPDF();
+
+    if (uploadedUri) {
+      console.log("Uploaded PDF URI:", uploadedUri);
+    } else {
+      console.log("Upload failed, no URI returned");
+    }
+  }, [createAndUploadPDF]);
+
+  const createPDFAndDownload = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const jsPDFModule = await import("jspdf");
+      const jsPDF = jsPDFModule.default;
+
+      if (!pdfDoc) {
+        throw new Error("No PDF document loaded");
+      }
+
       const pdf = new jsPDF();
       let isFirstPage = true;
 
       const originalPage = currentPage;
 
-      // Process each page
       for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-        // Navigate to the page
         await goToPage(pageNum);
 
-        // Wait for the page to render completely
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        // Get the combined canvas (PDF + annotations)
         const combinedCanvas = combineCanvases();
         const imgData = combinedCanvas.toDataURL("image/jpeg", 0.95);
 
-        // Calculate dimensions to fit PDF page
         const imgWidth = combinedCanvas.width;
         const imgHeight = combinedCanvas.height;
 
-        // A4 dimensions in mm
         const pdfWidth = 210;
         const pdfHeight = 297;
 
-        // Calculate scale to fit page while maintaining aspect ratio
         const scaleX = pdfWidth / imgWidth;
         const scaleY = pdfHeight / imgHeight;
         const scale = Math.min(scaleX, scaleY);
@@ -1019,7 +883,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
         const scaledWidth = imgWidth * scale;
         const scaledHeight = imgHeight * scale;
 
-        // Center the image on the page
         const x = (pdfWidth - scaledWidth) / 2;
         const y = (pdfHeight - scaledHeight) / 2;
 
@@ -1027,15 +890,12 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
           pdf.addPage();
         }
 
-        // Add the image to PDF
         pdf.addImage(imgData, "JPEG", x, y, scaledWidth, scaledHeight);
         isFirstPage = false;
       }
 
-      // Return to original page
       await goToPage(originalPage);
 
-      // Download the PDF
       pdf.save(`annotated-pdf-${Date.now()}.pdf`);
     } catch (error) {
       console.log("Error creating PDF:", error);
@@ -1043,13 +903,13 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pdfDoc, currentPage, totalPages, goToPage]);
 
   useEffect(() => {
     if (pdfUri && pdfjsLib) {
       loadPdf(pdfUri);
     }
-  }, [pdfUri, pdfjsLib]);
+  }, [pdfUri, pdfjsLib, loadPdf]);
 
   useEffect(() => {
     if (showTextInput && textInputRef.current) {
@@ -1060,7 +920,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
     }
   }, [showTextInput]);
 
-  // Keyboard Shortcuts Modal - Enhanced with more shortcuts
   const KeyboardShortcutsModal = () => {
     if (!showKeyboardShortcuts) return null;
 
@@ -1207,6 +1066,125 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
       </div>
     );
   };
+
+  const getCanvasCoordinates = (e: React.MouseEvent) => {
+    if (!overlayCanvasRef.current) return { x: 0, y: 0 };
+    const rect = overlayCanvasRef.current.getBoundingClientRect();
+
+    const displayWidth = rect.width;
+    const displayHeight = rect.height;
+    const canvasWidth = overlayCanvasRef.current.width;
+    const canvasHeight = overlayCanvasRef.current.height;
+
+    const scaleX = canvasWidth / displayWidth;
+    const scaleY = canvasHeight / displayHeight;
+
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    return { x, y };
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const coords = getCanvasCoordinates(e);
+
+    if (tool === "draw") {
+      setIsDrawing(true);
+      const newAnnotation: DrawAnnotation = {
+        id: Date.now(),
+        type: "draw",
+        page: currentPage,
+        points: [coords],
+        color: drawColor,
+        strokeWidth: strokeWidth,
+      };
+      setAnnotations((prev) => [...prev, newAnnotation]);
+    } else if (tool === "highlight") {
+      setIsHighlighting(true);
+      const newAnnotation: HighlightAnnotation = {
+        id: Date.now(),
+        type: "highlight",
+        page: currentPage,
+        x: coords.x,
+        y: coords.y,
+        width: 0,
+        height: 0,
+        color: highlightColor,
+      };
+      setAnnotations((prev) => [...prev, newAnnotation]);
+    } else if (tool === "text") {
+      setTextInputPos(coords);
+      if (overlayCanvasRef.current) {
+        const rect = overlayCanvasRef.current.getBoundingClientRect();
+        setTextInputScreenPos({
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+        });
+      }
+      setShowTextInput(true);
+      setTextValue("");
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const coords = getCanvasCoordinates(e);
+
+    if (isDrawing && tool === "draw") {
+      setAnnotations((prev) => {
+        const newAnnotations = [...prev];
+        const lastAnnotation = newAnnotations[newAnnotations.length - 1];
+        if (lastAnnotation && lastAnnotation.type === "draw") {
+          lastAnnotation.points.push(coords);
+        }
+        return newAnnotations;
+      });
+    } else if (isHighlighting && tool === "highlight") {
+      setAnnotations((prev) => {
+        const newAnnotations = [...prev];
+        const lastAnnotation = newAnnotations[newAnnotations.length - 1];
+        if (lastAnnotation && lastAnnotation.type === "highlight") {
+          lastAnnotation.width = coords.x - lastAnnotation.x;
+          lastAnnotation.height = coords.y - lastAnnotation.y;
+        }
+        return newAnnotations;
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDrawing(false);
+    setIsHighlighting(false);
+  };
+
+  const handleTextSubmit = () => {
+    console.log("Text submit:", textValue, "at position:", textInputPos);
+    if (textValue.trim()) {
+      const newAnnotation: TextAnnotation = {
+        id: Date.now(),
+        type: "text",
+        page: currentPage,
+        x: textInputPos.x,
+        y: textInputPos.y + 16,
+        text: textValue,
+        color: drawColor,
+        fontSize: 16,
+      };
+      setAnnotations((prev) => {
+        const updated = [...prev, newAnnotation];
+        return updated;
+      });
+    }
+    setShowTextInput(false);
+    setTextValue("");
+  };
+
+  const clearAnnotations = useCallback(() => {
+    setAnnotations((prev) => prev.filter((ann) => ann.page !== currentPage));
+  }, [currentPage]);
+
+  const clearAllAnnotations = useCallback(() => {
+    setAnnotations([]);
+  }, []);
 
   if (!pdfjsLib) {
     return (
@@ -1578,7 +1556,7 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
               }}
             />
 
-            {/* Text Input - Improved styling */}
+            {/* Text Input */}
             {showTextInput && (
               <div
                 className="absolute z-20 bg-white border-2 border-blue-500 rounded-lg shadow-xl p-3"
@@ -1638,13 +1616,13 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
         </div>
       </div>
 
-      {/* Download Progress Modal - Enhanced styling */}
+      {/* Download Progress Modal */}
       <DownloadProgressModal />
 
-      {/* Keyboard Shortcuts Modal - NEW */}
+      {/* Keyboard Shortcuts Modal */}
       <KeyboardShortcutsModal />
 
-      {/* Quick Navigation Footer - NEW */}
+      {/* Quick Navigation Footer */}
       {totalPages > 0 && (
         <div className="mt-4 sm:mt-6 rounded-xl p-3 sm:p-4">
           <div className="flex items-center justify-between flex-wrap gap-3 sm:gap-4">

@@ -32,6 +32,24 @@ import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetAssignmentByAdviserQuery } from "@/feature/adviserAssignment/AdviserAssignmentSlice";
 import Image from "next/image";
 
+// Define types
+interface Student {
+  uuid: string;
+  fullName: string;
+  imageUrl?: string | null;
+}
+
+interface Paper {
+  uuid: string;
+  title: string;
+  status: string;
+  deadline: string;
+}
+
+interface StudentWithPapers extends Student {
+  papers: Paper[];
+}
+
 export default function MentorStudentsPage() {
   const router = useRouter();
 
@@ -64,8 +82,8 @@ export default function MentorStudentsPage() {
   const assignments = data?.data?.content || [];
 
   // ✅ Group by student
-  const studentMap = new Map();
-  assignments.forEach((assignment: any) => {
+  const studentMap = new Map<string, StudentWithPapers>();
+  assignments.forEach((assignment) => {
     const student = assignment.student;
     if (!studentMap.has(student.uuid)) {
       studentMap.set(student.uuid, {
@@ -73,7 +91,7 @@ export default function MentorStudentsPage() {
         papers: [],
       });
     }
-    const studentObj = studentMap.get(student.uuid);
+    const studentObj = studentMap.get(student.uuid)!;
     studentObj.papers.push({
       ...assignment.paper,
       status: assignment.status,
@@ -157,8 +175,8 @@ export default function MentorStudentsPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  students.map((student: any) =>
-                    student.papers.map((paper: any, index: number) => (
+                  students.map((student: StudentWithPapers) =>
+                    student.papers.map((paper: Paper, index: number) => (
                       <TableRow
                         key={`${student.uuid}-${index}`}
                         className="hover:bg-muted/40 transition-colors"
@@ -261,8 +279,9 @@ export default function MentorStudentsPage() {
                 <p className="text-sm text-muted-foreground">
                   To:{" "}
                   {
-                    students.find((s: any) => s.uuid === selectedStudentId)
-                      ?.fullName
+                    students.find(
+                      (s: StudentWithPapers) => s.uuid === selectedStudentId
+                    )?.fullName
                   }
                 </p>
               </div>

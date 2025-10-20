@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -33,10 +32,9 @@ import { useGetAllStarOfPapersQuery } from "@/feature/star/StarSlice";
 
 export default function StudentOverviewPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data:user, error, isLoading } = useGetUserProfileQuery();
+  const { data:user } = useGetUserProfileQuery();
   const {
     data: starData,
-    error: starError,
     isLoading: starLoading,
   } = useGetAllStarOfPapersQuery();
 

@@ -3,6 +3,7 @@
 import { use } from "react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Image from "next/image";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import {
   Card,
@@ -276,8 +277,8 @@ export default function AdviserDocumentDetailPage({
               <CardHeader>
                 <CardTitle>Document Review</CardTitle>
                 <CardDescription>
-                  Review and annotate the student document. Click "Upload to
-                  Student" to save your annotations.
+                  Review and annotate the student document. Click &quot;Upload to
+                  Student&quot; to save your annotations.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -388,10 +389,13 @@ export default function AdviserDocumentDetailPage({
                     ) : (
                       <>
                         {studentData?.imageUrl && (
-                          <img
+                          <Image
                             src={studentData.imageUrl}
                             alt={studentData.fullName}
                             className="w-6 h-6 rounded-full"
+                            width={24}
+                            height={24}
+                            unoptimized
                           />
                         )}
                         {studentData?.fullName || "Unknown Student"}
@@ -443,10 +447,13 @@ export default function AdviserDocumentDetailPage({
                     <div className="text-sm text-muted-foreground mb-2">
                       Thumbnail
                     </div>
-                    <img
+                    <Image
                       src={paper.thumbnailUrl}
                       alt={paper.title}
                       className="w-full rounded-lg object-cover"
+                      width={700}
+                      height={300}
+                      unoptimized
                     />
                   </div>
                 )}

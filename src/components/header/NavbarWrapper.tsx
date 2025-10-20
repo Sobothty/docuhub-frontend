@@ -6,7 +6,7 @@ import NavbarGuest from "./NavbarGuest";
 import NavbarUser from "./NavbarUser";
 
 export default function NavbarWrapper() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const pathname = usePathname();
 
   if (

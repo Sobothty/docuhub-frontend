@@ -23,6 +23,7 @@ import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function ProfilePage() {
     router.push("/login");
   }
 
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const { data: profileData, isLoading } = useGetUserProfileQuery();
 
   if (status === "loading" || isLoading) {
@@ -91,7 +92,7 @@ export default function ProfilePage() {
     );
   }
 
-  const { user, student, adviser } = profileData;
+  const { user, student } = profileData;
   const memberSince = new Date(user.createDate).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
@@ -205,10 +206,13 @@ export default function ProfilePage() {
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
                 {user.imageUrl ? (
-                  <img
+                  <Image
                     src={user.imageUrl}
                     alt={user.fullName}
                     className="w-16 h-16 rounded-full object-cover"
+                    width={100}
+                    height={100}
+                    unoptimized
                   />
                 ) : (
                   <span className="text-2xl font-bold text-primary">
@@ -309,10 +313,13 @@ export default function ProfilePage() {
               {student.studentCardUrl && (
                 <div>
                   <h4 className="font-medium mb-2">Student Card</h4>
-                  <img
+                  <Image
                     src={student.studentCardUrl}
                     alt="Student Card"
                     className="w-full max-w-md rounded-lg border"
+                    width={400}
+                    height={400}
+                    unoptimized
                   />
                 </div>
               )}

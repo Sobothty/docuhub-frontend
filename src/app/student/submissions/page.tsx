@@ -55,6 +55,13 @@ import {
 } from "@/feature/paperSlice/papers";
 import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
 import { useState, useMemo } from "react";
+import { Paper } from "@/types/paperType";
+import { Assignment } from "@/feature/paperSlice/papers";
+
+interface PaperData {
+  assignment: Assignment | undefined;
+  adviserUuid: string | null;
+}
 
 export default function StudentSubmissionsPage() {
   const { data: userProfile } = useGetUserProfileQuery();
@@ -62,8 +69,12 @@ export default function StudentSubmissionsPage() {
     useGetPapersByAuthorQuery({});
   const { data: assignmentData } = useGetAllAssignmentsQuery();
 
-  const papers = authorPapers?.papers.content || [];
-  const assignments = assignmentData || [];
+  const papers = useMemo(
+    () => authorPapers?.papers.content || [],
+    [authorPapers?.papers.content]
+  );
+
+  const assignments = useMemo(() => assignmentData || [], [assignmentData]);
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -78,7 +89,7 @@ export default function StudentSubmissionsPage() {
         adviserUuid: assignment?.adviserUuid || null,
       };
       return acc;
-    }, {} as Record<string, { assignment: any; adviserUuid: string | null }>);
+    }, {} as Record<string, PaperData>);
   }, [papers, assignments]);
 
   // Filter papers based on search query
@@ -274,8 +285,8 @@ function SubmissionRow({
   adviserUuid,
   getStatusBadge,
 }: {
-  paper: any;
-  assignment: any;
+  paper: Paper;
+  assignment: Assignment | undefined;
   adviserUuid: string | null;
   getStatusBadge: (status: string) => React.ReactNode;
 }) {

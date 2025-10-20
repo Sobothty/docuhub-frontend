@@ -12,8 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -24,9 +22,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  MessageSquare,
-  Calendar,
-  Award,
   Search,
   UserPlus,
   Loader2,
@@ -38,7 +33,6 @@ import { useGetAllUserStarredPapersQuery } from "@/feature/star/StarSlice";
 import {
   Assignment,
   useGetAllAdviserAssignmentsQuery,
-  useGetAllAssignmentsQuery,
 } from "@/feature/paperSlice/papers";
 import { useMemo, useState, useEffect } from "react";
 
@@ -141,7 +135,7 @@ export default function StudentMentorshipPage() {
         <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
           <h2 className="text-2xl font-bold">Adviser Not Found</h2>
           <p className="text-muted-foreground">
-            The adviser you're looking for doesn't exist.
+            The adviser you&apos;re looking for doesn&apos;t exist.
           </p>
           <Button onClick={() => window.history.back()}>Go Back</Button>
         </div>

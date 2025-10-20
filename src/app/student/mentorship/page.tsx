@@ -20,7 +20,6 @@ import {
   BookOpen,
   Users,
   Star,
-  Filter,
   GraduationCap,
 } from "lucide-react";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
@@ -46,7 +45,7 @@ export default function StudentMentorshipPage() {
   }, [advisers, searchQuery]);
 
   // Separate advisers into advisors and non-advisors
-  const { activeAdvisors, availableMentors } = useMemo(() => {
+  const { availableMentors } = useMemo(() => {
     const active = filteredAdvisers.filter((a) => a.isAdvisor);
     const available = filteredAdvisers.filter((a) => !a.isAdvisor);
     return { activeAdvisors: active, availableMentors: available };

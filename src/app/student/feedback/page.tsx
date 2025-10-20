@@ -22,13 +22,26 @@ import {
 import { useRouter } from "next/navigation";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetAllFeedbackByAuthorQuery } from "@/feature/feedbackSlice/feedbackSlice";
-import {
-  useGetPaperByUuidQuery,
-  useGetPapersByAuthorQuery,
-} from "@/feature/paperSlice/papers";
+import { useGetPaperByUuidQuery } from "@/feature/paperSlice/papers";
+
+// Add type definitions
+interface Feedback {
+  paperUuid: string;
+  feedbackText: string;
+  status: string;
+  advisorName: string;
+  adviserImageUrl?: string | null;
+  fileUrl?: string | null;
+  createdAt: string;
+}
+
+interface FeedbackItemProps {
+  feedback: Feedback;
+  isLast: boolean;
+}
 
 // Separate component for each feedback item
-function FeedbackItem({ feedback, index, isLast }: any) {
+function FeedbackItem({ feedback, isLast }: FeedbackItemProps) {
   const router = useRouter();
   const { data: paper } = useGetPaperByUuidQuery(feedback.paperUuid);
 
@@ -93,7 +106,7 @@ function FeedbackItem({ feedback, index, isLast }: any) {
           <AvatarFallback>
             {feedback.advisorName
               .split(" ")
-              .map((n: string[]) => n[0])
+              .map((n: string) => n[0])
               .join("")}
           </AvatarFallback>
         </Avatar>
@@ -173,14 +186,7 @@ export default function StudentFeedbackPage() {
   const { data: allFeedbackArray, isLoading: feedbackLoading } =
     useGetAllFeedbackByAuthorQuery();
 
-  // Fetch author's papers
-  const { data: authorPapers, isLoading: papersLoading } =
-    useGetPapersByAuthorQuery({});
-
-  const router = useRouter();
-
-  const papers = authorPapers?.papers.content || [];
-  const allFeedback = allFeedbackArray || [];
+  const allFeedback = (allFeedbackArray || []) as Feedback[];
 
   return (
     <DashboardLayout
@@ -280,11 +286,10 @@ export default function StudentFeedbackPage() {
               </div>
             ) : (
               <div className="space-y-6">
-                {allFeedback.map((feedback, index) => (
+                {allFeedback.map((feedback: Feedback, index: number) => (
                   <FeedbackItem
                     key={feedback.paperUuid}
                     feedback={feedback}
-                    index={index}
                     isLast={index === allFeedback.length - 1}
                   />
                 ))}

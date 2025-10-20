@@ -35,6 +35,7 @@ import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
 import { useGetFeedbackByPaperUuidQuery } from "@/feature/feedbackSlice/feedbackSlice";
 import { Paper } from "@/types/paperType";
 import { PaperCardSkeleton } from "./PaperSkeleton";
+import Image from "next/image";
 
 export default function StudentProposalsPage() {
   const [showNewProposal, setShowNewProposal] = useState(false);
@@ -59,15 +60,14 @@ export default function StudentProposalsPage() {
   const { data: authorPapers, isLoading: papersLoading } =
     useGetPapersByAuthorQuery({});
 
-  const papers = authorPapers?.papers.content || [];
+  const papers = useMemo(
+    () => authorPapers?.papers.content || [],
+    [authorPapers?.papers.content]
+  );
 
   const { data: assignmentData } = useGetAllAssignmentsQuery();
 
-  const assignments = assignmentData || [];
-
-  const [adviserId, setAdviserId] = useState<string>("");
-
-  const { data: adviserData } = useGetUserByIdQuery(adviserId);
+  const assignments = useMemo(() => assignmentData || [], [assignmentData]);
 
   const [thumbnailFile, setThumbnailFile] = useState<string>("");
   const [pdfFile, setPdfFile] = useState<string>("");
@@ -86,7 +86,7 @@ export default function StudentProposalsPage() {
         adviserUuid: assignment?.adviserUuid || null,
       };
       return acc;
-    }, {} as Record<string, { assignment: any; adviserUuid: string | null }>);
+    }, {} as Record<string, { assignment: Assignment | undefined; adviserUuid: string | null }>);
   }, [papers, assignments]);
 
   // Helper to format filename
@@ -383,10 +383,13 @@ export default function StudentProposalsPage() {
                         <p className="text-sm text-foreground mb-2">
                           Selected: {getFileName(thumbnailFile)}
                         </p>
-                        <img
+                        <Image
                           src={thumbnailFile}
                           alt="Thumbnail preview"
                           className="max-w-full h-auto max-h-48 mx-auto rounded-lg border border-border object-cover"
+                          width={200}
+                          height={200}
+                          unoptimized
                         />
                       </div>
                     )}
@@ -468,14 +471,12 @@ export default function StudentProposalsPage() {
           ) : (
             papers.map((proposal) => {
               const paperData = paperDataMap[proposal.uuid];
-              const assignment = paperData?.assignment;
               const adviserUuid = paperData?.adviserUuid;
 
               return (
                 <PaperCard
                   key={proposal.uuid}
                   proposal={proposal}
-                  assignment={assignment}
                   adviserUuid={adviserUuid}
                   getStatusBadge={getStatusBadge}
                 />
@@ -491,12 +492,10 @@ export default function StudentProposalsPage() {
 // Create a separate component for each paper card to properly use hooks
 function PaperCard({
   proposal,
-  assignment,
   adviserUuid,
   getStatusBadge,
 }: {
   proposal: Paper;
-  assignment: Assignment;
   adviserUuid: string | null;
   getStatusBadge: (status: string) => React.ReactNode;
 }) {

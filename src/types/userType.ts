@@ -85,12 +85,6 @@ export interface LoginDto {
   password: string;
 }
 
-export interface TokenResponseRecord {
-  accessToken: string;
-  refreshToken: string | null;
-  idToken: string;
-  claims: Record<string, any>;
-}
 
 export interface CurrentUser {
   id: string;
@@ -119,16 +113,6 @@ export interface UserProfileResponse {
   user: UserResponse;
   student?: StudentResponse;
   adviser?: AdviserDetailResponse;
-}
-
-export interface AuthTokenResponse {
-  status: string;
-  no: number;
-  message: string;
-  access_token?: string;
-  refresh_token?: string;
-  claims?: Record<string, any>;
-  accessTokenExpires?: number;
 }
 
 // Response type wrappers

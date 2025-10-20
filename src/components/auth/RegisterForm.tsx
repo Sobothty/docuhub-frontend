@@ -20,8 +20,7 @@ interface RegisterFormProps {
 }
 
 const RegisterForm: React.FC<RegisterFormProps> = ({
-  onSuccess,
-  onSwitchToLogin,
+  onSuccess
 }) => {
   const router = useRouter();
 
@@ -131,7 +130,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<RegisterFormData> = {};
 
     // Validate all fields
     Object.keys(formData).forEach((key) => {

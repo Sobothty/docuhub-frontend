@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Mail, MapPin, Phone, School, User } from "lucide-react";
+import { ArrowLeft, Mail, MapPin, Phone, User } from "lucide-react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
