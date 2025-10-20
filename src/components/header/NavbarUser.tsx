@@ -119,8 +119,40 @@ export default function NavbarUser() {
   };
 
   const handleProfileClick = () => {
-    if (userRoles.includes("STUDENT") && user?.student && user?.student.isStudent) {
+    if (
+      userRoles.includes("STUDENT") &&
+      user?.student &&
+      user?.student.isStudent
+    ) {
       router.push(`/student`);
+    } else if (userRoles.includes("ADVISER") && user?.adviser) {
+      router.push("/adviser");
+    } else {
+      router.push("/profile");
+    }
+  };
+
+  const handleProfileSettingClick = () => {
+    if (
+      userRoles.includes("STUDENT") &&
+      user?.student &&
+      user?.student.isStudent
+    ) {
+      router.push(`/student/settings`);
+    } else if (userRoles.includes("ADVISER") && user?.adviser) {
+      router.push("/adviser/settings");
+    } else {
+      router.push("/profile/settings");
+    }
+  };
+
+  const handleClickSavedPaper = () => {
+    if (
+      userRoles.includes("STUDENT") &&
+      user?.student &&
+      user?.student.isStudent
+    ) {
+      router.push(`/student/stars`);
     } else if (userRoles.includes("ADVISER") && user?.adviser) {
       router.push("/adviser");
     } else {
@@ -252,23 +284,19 @@ export default function NavbarUser() {
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/profile/settings">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </Link>
+              <DropdownMenuItem onClick={handleProfileSettingClick}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              {/* <DropdownMenuItem asChild>
                 <Link href="/profile/discussions">
                   <Bell className="mr-2 h-4 w-4" />
                   <span>Notifications</span>
                 </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/profile/downloads">
+              </DropdownMenuItem> */}
+              <DropdownMenuItem onClick={handleClickSavedPaper}>
                   <Heart className="mr-2 h-4 w-4" />
                   <span>Saved Papers</span>
-                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
