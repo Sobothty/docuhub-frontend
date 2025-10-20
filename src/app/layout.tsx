@@ -7,6 +7,8 @@ import ContactFooter from "@/components/footer/ContactFooter";
 import { Providers } from "./providers";
 import { Poppins } from "next/font/google";
 import localFont from "next/font/local";
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Analytics } from '@vercel/analytics/next';
 
 // English: Poppins
 const poppins = Poppins({
@@ -159,8 +161,10 @@ export default function RootLayout({
           <StickyBanner />
           <NavbarWrapper />
           <main className="mt-20">
-          
-            {children}</main>
+            {children}
+            <SpeedInsights />
+            <Analytics />
+          </main>
           <ContactFooter />
         </Providers>
       </body>
