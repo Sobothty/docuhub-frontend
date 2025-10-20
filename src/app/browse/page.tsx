@@ -55,7 +55,7 @@ export default function BrowsePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
-  const [pageSize] = useState(12);
+  const [pageSize] = useState(10);
 
   // Fetch categories from API - with error handling for 404
   const {
@@ -241,8 +241,8 @@ export default function BrowsePage() {
       {
         id: "1",
         name: "Mr. But SeavThong",
-        field: "Quantum Computing",
-        institution: "MIT",
+        field: "Team Leader",
+        institution: "ISTAD",
         papers: "47",
         citations: "2.3k",
         avatar: "/memberTeam/BUTSEAVTHONG.jpg", // Fixed path
@@ -250,17 +250,27 @@ export default function BrowsePage() {
       {
         id: "2",
         name: "Mr. Kry Sobothty",
-        field: "Machine Learning",
-        institution: "Stanford",
+        field: "Full Stack Developer",
+        institution: "ISTAD",
         papers: "89",
         citations: "5.1k",
         avatar: "/memberTeam/KrySobothty.jpg", // Fixed path
       },
+      
+      {
+        id: "5",
+        name: "Mr. Sim Pengseang",
+        field: "Full Stack Developer",
+        institution: "ISTAD",
+        papers: "89",
+        citations: "5.1k",
+        avatar: "/memberTeam/PengSeangSim.JPG", // Fixed path
+      },
       {
         id: "3",
         name: "Ms. Chim Theara",
-        field: "Climate Science",
-        institution: "UC Berkeley",
+        field: "Frontend Developer",
+        institution: "ISTAD",
         papers: "34",
         citations: "1.8k",
         avatar: "/memberTeam/ChimTheara.JPG", // Fixed path
@@ -268,26 +278,17 @@ export default function BrowsePage() {
       {
         id: "4",
         name: "Ms.Khim Sokha",
-        field: "Quantum Computing",
-        institution: "MIT",
+        field: "Ux/UI Designer",
+        institution: "ISTAD",
         papers: "47",
         citations: "2.3k",
         avatar: "/memberTeam/KHIMSOKHA.jpg", // Fixed path
       },
       {
-        id: "5",
-        name: "Mr. Sim Pengseang",
-        field: "Machine Learning",
-        institution: "Stanford",
-        papers: "89",
-        citations: "5.1k",
-        avatar: "/memberTeam/PengSeangSim.JPG", // Fixed path
-      },
-      {
         id: "6",
         name: "Ms. Sorn Sophamarinet",
-        field: "Climate Science",
-        institution: "UC Berkeley",
+        field: "Frontend Developer",
+        institution: "ISTAD",
         papers: "34",
         citations: "1.8k",
         avatar: "/memberTeam/SornSophamarinet.JPG", // Fixed path
@@ -295,8 +296,8 @@ export default function BrowsePage() {
       {
         id: "7",
         name: "Mr. Vyra Vanarith",
-        field: "Machine Learning",
-        institution: "Stanford",
+        field: "Backend Developer",
+        institution: "ISTAD",
         papers: "89",
         citations: "5.1k",
         avatar: "/memberTeam/VannarithVr.JPG", // Fixed path
@@ -304,8 +305,8 @@ export default function BrowsePage() {
       {
         id: "8",
         name: "Mr. Pho Hongleap",
-        field: "Climate Science",
-        institution: "UC Berkeley",
+        field: "Frontend Developer",
+        institution: "ISTAD",
         papers: "34",
         citations: "1.8k",
         avatar: "/memberTeam/PhoHongleap.JPG", // Fixed path
@@ -867,10 +868,10 @@ export default function BrowsePage() {
                     <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 rounded-full border-2 border-white"></div>
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-subheadings font-semibold text-foreground">
+                    <h3 className="text-body-text font-bold text-foreground line-clamp-1">
                       {researcher.name}
                     </h3>
-                    <p className="text-small-text text-foreground">
+                    <p className="text-sm text-foreground">
                       {researcher.field}
                     </p>
                     <p className="text-small-text text-foreground">
