@@ -2,10 +2,11 @@
 
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
+import { motion, useScroll } from 'motion/react';
 
 export default function AboutUsPage() {
   const { t } = useTranslation('common');
-
+  const {scrollYProgress} = useScroll();
   // Team members data
   const teamMembers = [
     {
@@ -258,6 +259,21 @@ export default function AboutUsPage() {
   };
 
   return (
+    <>
+    <motion.div
+                    id="scroll-indicator"
+                    style={{
+                        scaleX: scrollYProgress,
+                        position: "fixed",
+                        top: 133,
+                        left: 0,
+                        right: 0,
+                        height: 5,
+                        originX: 0,
+                        backgroundColor: "#f59e0b",
+                        zIndex: 9999,
+                    }}
+                />
     <div className="min-h-screen">
       {/* About Section */}
       <section className="relative h-[90vh] flex items-center justify-center">
@@ -769,5 +785,6 @@ export default function AboutUsPage() {
         </div>
       </section>
     </div>
+    </>
   );
 }

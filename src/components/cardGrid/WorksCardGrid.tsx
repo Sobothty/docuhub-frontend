@@ -95,9 +95,9 @@ const WorksCardGrid: React.FC = () => {
   ] as const;
 
   return (
-    <section className="min-h-screen items-center justify-center bg-background flex flex-col items-center justify-start p-4 mt-20">
+    <section className="bg-background flex flex-col items-center my-10 md:my-20 gap-8">
       {/* Top Section: User Icons */}
-      <h2 className="text-section-headings text-center mb-20">
+      <h2 className="text-section-headings text-center mb-4">
         {t('how_it_works')}
       </h2>
       <div className="flex justify-center gap-10">
@@ -124,7 +124,7 @@ const WorksCardGrid: React.FC = () => {
       </div>
 
       {/* Bottom Section: Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-7xl mt-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {cardsData[selectedUser].map((card, index) => (
           <WorksCard
             key={index}

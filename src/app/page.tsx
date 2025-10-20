@@ -11,9 +11,12 @@ import WorksCardGrid from "@/components/cardGrid/WorksCardGrid";
 import DiscussionForumSection from "@/components/ctaBanner/DiscussionForumSection";
 import FeedbackCardCarousel from "@/components/carousel/FeedbackCarousel";
 
+import { motion, useScroll } from "motion/react"
+
 import { useGetAllPublishedPapersQuery } from "@/feature/paperSlice/papers";
 
 import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
+
 
 // Sample research paper data
 const researchPapers = [
@@ -158,6 +161,8 @@ const getYear = (paper: { publishedAt?: string | null; createdAt?: string | null
 
 export default function Home() {
 
+  const { scrollYProgress } = useScroll();
+
   const handleViewPaper = (paperId: number) => {
     window.location.href = `/papers/${paperId}`;
   };
@@ -207,19 +212,33 @@ export default function Home() {
   const papersToShow = apiPapers.length > 0 ? apiPapers : researchPapers;
 
   return (
+    <>
+    <motion.div
+                id="scroll-indicator"
+                style={{
+                    scaleX: scrollYProgress,
+                    position: "fixed",
+                    top: 133,
+                    left: 0,
+                    right: 0,
+                    height: 5,
+                    originX: 0,
+                    backgroundColor: "#f59e0b",
+                    zIndex: 9999,
+                }}
+            />
     <div className="min-h-screen flex flex-col">
       
       {/* Hero Section */}
       <HeroSection />
-
       <DevelopmentServicesBanner />
 
       {/* Card Section */}
-      <section className="w-full max-w-[1400px] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 lg:py-12">
-        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-center text-[var(--color-foreground)] mb-2 sm:mb-4 md:mb-6 lg:mb-8">
+      <section className="w-full max-w-[1400px] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-6 md:py-8 lg:py-12">
+        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-center text-[var(--color-foreground)] mb-4 md:mb-6 lg:mb-8">
           New Documents
         </h2>
-        <div className="mb-2 sm:mb-4 md:mb-6">
+        <div className="mb-8 md:mb-10">
           <ButtonScrollHorizontal />
         </div>
 
@@ -241,7 +260,7 @@ export default function Home() {
 
         {/* Papers Grid */}
         {!isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {papersToShow.map((paper) => (
               <PaperCardWithAuthor
                 key={paper.id}
@@ -255,8 +274,8 @@ export default function Home() {
       </section>
 
       {/* Most Popular Documents */}
-      <section className="w-full px-2 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12 bg-background">
-        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-section-headings text-center mb-6 sm:mb-8 md:mb-10">
+      <section className="w-full px-2 sm:px-4 md:px-6 py-6 sm:py-8 md:py-10 bg-background">
+        <h2 className="font-semibold text-xl sm:text-2xl md:text-3xl lg:text-5xl lg:text-section-headings text-center mb-6 sm:mb-8 md:mb-10">
           Popular Documents
         </h2>
         <HorizontalCardCarousel
@@ -281,13 +300,10 @@ export default function Home() {
           <div className="absolute inset-0 bg-black/60"></div>
 
           {/* Text Content */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-2 sm:px-4 md:px-6 text-center sm:text-left sm:pl-10 z-10">
-            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-5xl font-bold text-white mb-1 sm:mb-2 md:mb-4">
-              Discover Academic Excellence
+          <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-2 sm:px-4 md:px-6 text-center sm:text-left sm:pl-10 z-10">
+            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-7xl font-bold text-white mb-1 sm:mb-2 md:mb-4">
+              We Prominent Truly Trusted IT Student 
             </h1>
-            <p className="text-sm sm:text-base md:text-lg text-gray-200">
-              Access thousands of research papers and connect with academic mentors
-            </p>
           </div>
         </div>
 
@@ -303,6 +319,7 @@ export default function Home() {
         </div>
       </section>
     </div>
+    </>
   );
 }
 
@@ -330,6 +347,7 @@ interface PaperCardWithAuthorProps {
 }
 
 function PaperCardWithAuthor({ paper, onDownloadPDF, onToggleBookmark }: PaperCardWithAuthorProps) {
+  
   const {
     data: author,
     isLoading: authorLoading
