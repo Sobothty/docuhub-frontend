@@ -29,13 +29,13 @@ const HeroSection: FC = () => {
       </div>
 
       {/* Left Content */}
-      <div className="mt-10 max-w-xl lg:max-w-md ml-0 sm:ml-4 md:ml-8 lg:ml-20 text-center sm:text-left">
-        <h1 className="text-hero-subtitle mb-4 sm:mb-6 text-2xl sm:text-3xl md:text-4xl">
+      <div className="mt-20 max-w-xl lg:max-w-md ml-0 sm:ml-4 md:ml-8 lg:ml-20 text-center sm:text-left gap-10">
+        <h1 className="text-hero-subtitle sm:mb-6 text-2xl sm:text-3xl md:text-4xl lg:text-6xl">
           {t('hero_title', 'Discover, Share & Collaborate on Academic Excellence')}
         </h1>
 
         <p className="mb-4 sm:mb-6 text-foreground text-base sm:text-lg">
-          <span className="text-orange-500 font-semibold">DocuHub</span>{' '}
+          <span className="text-secondary font-semibold">DocuHub</span>{' '}
           {t('hero_description', 'is your space for research and innovation. Explore papers, connect with experts, and showcase your work globally.')}
         </p>
 

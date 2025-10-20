@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import HorizontalCard from "@/components/card/HorizontalCard";
 import { useGetAllPublishedPapersQuery } from "@/feature/paperSlice/papers";
 import { useGetAllCategoriesQuery } from "@/feature/categoriesSlice/categoriesSlices";
+import { motion, useScroll } from "motion/react"
 
 // Fallback categories based on your API response
 const FALLBACK_CATEGORIES = [
@@ -151,6 +152,9 @@ export default function BrowsePage() {
     t("popularSearchesList.artificialIntelligence") ||
       "Artificial Intelligence",
   ];
+
+  
+  const { scrollYProgress } = useScroll()
 
   // Handle category selection
   const handleCategorySelect = (categoryName: string) => {
@@ -423,6 +427,21 @@ export default function BrowsePage() {
   };
 
   return (
+    <>
+    <motion.div
+                    id="scroll-indicator"
+                    style={{
+                        scaleX: scrollYProgress,
+                        position: "fixed",
+                        top: 133,
+                        left: 0,
+                        right: 0,
+                        height: 5,
+                        originX: 0,
+                        backgroundColor: "#f59e0b",
+                        zIndex: 9999,
+                    }}
+                />
     <div className="min-h-screen bg-background">
       {/* Main Search Section */}
       <section className="py-25 px-6 bg-background relative overflow-hidden">
@@ -906,5 +925,6 @@ export default function BrowsePage() {
         </div>
       </section>
     </div>
+    </>
   );
 }

@@ -30,8 +30,8 @@ export default function StickyBanner() {
   }
 
   return (
-    <div className="fixed top-0 left-0 w-full z-50 bg-primary text-foreground py-2 sm:py-3 px-2">
-      <div className="max-w-7xl mx-auto flex flex-wrap gap-y-2 justify-between items-center">
+    <div className="fixed top-0 left-0 w-full z-50 bg-primary text-foreground py-2 px-2 ">
+      <div className="max-w-7xl mx-auto flex flex-wrap gap-y-2 justify-between items-center ">
         {/* Left Section - Contact Information */}
         <div className="flex items-center justify-between gap-12 sm:gap-6 mx-auto">
           {/* Email */}
