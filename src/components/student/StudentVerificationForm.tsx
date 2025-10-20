@@ -33,10 +33,10 @@ import {
   CheckCircle,
   AlertCircle,
   X,
-  Trash2,
 } from "lucide-react";
 import { StudentFormData, StudentFormErrors } from "@/types/studentType";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
+import Image from "next/image";
 
 interface StudentVerificationFormProps {
   userUuid?: string;
@@ -303,10 +303,13 @@ export default function StudentVerificationForm({
             {/* Preview Image */}
             {previewUrl && (
               <div className="relative w-full max-w-md mx-auto mb-4">
-                <img
+                <Image
                   src={previewUrl}
                   alt="Student card preview"
                   className="w-full h-auto rounded-lg border-2 border-gray-200 shadow-sm"
+                  width={400}
+                  height={400}
+                  unoptimized
                 />
                 <Button
                   type="button"

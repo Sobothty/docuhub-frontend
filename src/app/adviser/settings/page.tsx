@@ -1,4 +1,3 @@
-
 "use client";
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
@@ -43,9 +42,11 @@ import {
   MessageCircle,
   Calendar,
   Shield,
+  Download,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
+import ProfileExport from "@/components/profiles/profileExport";
 
 // Enhanced helper function to safely prepare data for backend
 const prepareDataForBackend = (data: any) => {
@@ -113,6 +114,7 @@ export default function AdviserSettingsPage() {
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingProfessional, setIsEditingProfessional] = useState(false);
+  const [showExportProfile, setShowExportProfile] = useState(false);
 
   const [profileForm, setProfileForm] = useState({
     userName: "",
@@ -199,9 +201,9 @@ export default function AdviserSettingsPage() {
         imageUrl = uploadResponse.data.uri;
       } else if (uploadResponse.uri) {
         imageUrl = uploadResponse.uri;
-      } else if ('url' in uploadResponse) {
+      } else if ("url" in uploadResponse) {
         imageUrl = uploadResponse.url;
-      } else if (uploadResponse.data && 'url' in uploadResponse.data) {
+      } else if (uploadResponse.data && "url" in uploadResponse.data) {
         imageUrl = uploadResponse.data.url;
       } else {
         throw new Error("No image URL returned from upload");
@@ -410,6 +412,26 @@ export default function AdviserSettingsPage() {
               </Badge>
             </div>
           </div>
+
+          {/* Add Export Profile Button */}
+          <div className="flex justify-center mt-4">
+            <Button
+              onClick={() => setShowExportProfile(true)}
+              className="gap-2 bg-blue-600 hover:bg-blue/90"
+              size="lg"
+            >
+              <Download className="h-4 w-4" />
+              Export Profile
+            </Button>
+          </div>
+
+          {/* Export Profile Modal */}
+          {showExportProfile && (
+            <ProfileExport
+              userType="adviser"
+              onClose={() => setShowExportProfile(false)}
+            />
+          )}
         </div>
 
         {/* Two Column Layout for Better Organization */}
@@ -869,7 +891,6 @@ export default function AdviserSettingsPage() {
                     </div>
                   )}
                 </div>
-
                 {/* Social Links */}
                 <div className="space-y-2">
                   <Label

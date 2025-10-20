@@ -1,7 +1,8 @@
 import {
-  BaseQueryApi,
   createApi,
   fetchBaseQuery,
+  FetchArgs,
+  BaseQueryApi,
 } from "@reduxjs/toolkit/query/react";
 import { getSession } from "next-auth/react";
 
@@ -76,7 +77,11 @@ export interface Assignment {
 }
 
 // Custom base query to handle text responses
-const customBaseQuery = async (args: any, api: any, extraOptions: any) => {
+const customBaseQuery = async (
+  args: string | FetchArgs,
+  api: BaseQueryApi,
+  extraOptions: Record<string, unknown>
+) => {
   const result = await fetchBaseQuery({
     baseUrl: process.env.NEXT_PUBLIC_BASE_URL,
     prepareHeaders: async (headers) => {
@@ -154,11 +159,11 @@ export const papersApi = createApi({
         if (result.data) {
           return { data: result.data as ApiResponse };
         } else {
-          return { 
-            error: result.error || { 
-              status: 'FETCH_ERROR', 
-              error: 'Unknown error occurred' 
-            } 
+          return {
+            error: result.error || {
+              status: "FETCH_ERROR",
+              error: "Unknown error occurred",
+            },
           };
         }
       },

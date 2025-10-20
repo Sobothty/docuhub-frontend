@@ -3,11 +3,9 @@
 import Image from 'next/image';
 import { FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRouter } from 'next/navigation';
 
 const HeroSection: FC = () => {
   const { t, i18n } = useTranslation('common');
-  const router = useRouter();
 
   // Language switcher handler
   const changeLanguage = (lng: string) => {

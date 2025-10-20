@@ -33,7 +33,7 @@ export default function NavbarUser() {
   const pathname = usePathname();
   const router = useRouter();
   const { t, i18n } = useTranslation("common");
-  const { data: user, error, isLoading } = useGetUserProfileQuery();
+  const { data: user } = useGetUserProfileQuery();
   const tokens = useSession();
   const userRoles = tokens.data?.user.roles || [];
 

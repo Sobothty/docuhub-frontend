@@ -2,6 +2,7 @@
 "use client";
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import ProfileExport from "@/components/profiles/profileExport";
 import {
   Card,
   CardContent,
@@ -38,10 +39,11 @@ import {
   X,
   Camera,
   Loader2,
-  IdCard,
-  School,
-  Calendar,
+  Download,
   Shield,
+  Calendar,
+  School,
+  IdCard,
   Upload,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
@@ -84,6 +86,20 @@ const handleApiError = (error: any, defaultMessage: string) => {
   return defaultMessage;
 };
 
+interface UpdateProfileData {
+  userName?: string;
+  gender?: string;
+  email?: string;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  bio?: string;
+  address?: string;
+  contactNumber?: string;
+  telegramId?: string;
+  imageUrl?: string;
+}
+
 export default function StudentSettingsPage() {
   const {
     data: studentProfile,
@@ -104,6 +120,7 @@ export default function StudentSettingsPage() {
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingAcademic, setIsEditingAcademic] = useState(false);
+  const [showExportPopup, setShowExportPopup] = useState(false);
 
   const [profileForm, setProfileForm] = useState({
     userName: "",
@@ -317,6 +334,11 @@ export default function StudentSettingsPage() {
     }
   };
 
+  // Add this close handler
+  const handleCloseExport = () => {
+    setShowExportPopup(false);
+  };
+
   if (isLoading) {
     return (
       <div className="p-4 sm:p-6 space-y-6">
@@ -361,40 +383,58 @@ export default function StudentSettingsPage() {
       >
         {/* Enhanced Header Section - Responsive */}
         <div className="text-center space-y-3 sm:space-y-4">
-          <motion.div
-            className="relative inline-block group"
-            whileHover={{ scale: 1.02 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <div className="relative">
-              <Image
-                src={user?.imageUrl || "/placeholder.svg"}
-                alt={user?.fullName || "Profile"}
-                width={120}
-                height={120}
-                className="rounded-full border-4 border-white shadow-lg object-cover w-24 h-24 sm:w-32 sm:h-32 lg:w-36 lg:h-36"
-                unoptimized
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 lg:gap-8">
+            {/* Profile Image with Camera Button */}
+            <motion.div
+              className="relative inline-block group"
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="relative">
+                <Image
+                  src={user?.imageUrl || "/placeholder.svg"}
+                  alt={user?.fullName || "Profile"}
+                  width={120}
+                  height={120}
+                  className="rounded-full border-4 border-white shadow-lg object-cover w-24 h-24 sm:w-32 sm:h-32 lg:w-36 lg:h-36"
+                  unoptimized
+                />
+                <button
+                  onClick={handleCameraClick}
+                  disabled={isUpdatingImage || isUploadingFile}
+                  className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-primary rounded-full p-1.5 sm:p-2 shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {isUpdatingImage || isUploadingFile ? (
+                    <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin text-white" />
+                  ) : (
+                    <Camera className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                  )}
+                </button>
+              </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                accept="image/*"
+                className="hidden"
               />
-              <button
-                onClick={handleCameraClick}
-                disabled={isUpdatingImage || isUploadingFile}
-                className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-primary rounded-full p-1.5 sm:p-2 shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+            </motion.div>
+
+            {/* Simple Export Button */}
+            <div className="flex justify-center">
+              <Button
+                onClick={() => setShowExportPopup(true)}
+                variant="default"
+                size="lg"
+                className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                {isUpdatingImage || isUploadingFile ? (
-                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin text-white" />
-                ) : (
-                  <Camera className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
-                )}
-              </button>
+                <Download className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="text-sm sm:text-base font-medium">
+                  Export Profile
+                </span>
+              </Button>
             </div>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-              accept="image/*"
-              className="hidden"
-            />
-          </motion.div>
+          </div>
 
           <div className="space-y-2">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent px-2">
@@ -420,10 +460,13 @@ export default function StudentSettingsPage() {
           </div>
         </div>
 
+        {/* Export Profile Popup/Modal */}
+        {showExportPopup && (
+          <ProfileExport userType="student" onClose={handleCloseExport} />
+        )}
+
+        {/* Rest of your existing code remains the same */}
         {/* Responsive Grid Layout */}
-        {/* Mobile: Single column */}
-        {/* Tablet: Single column with larger cards */}
-        {/* Desktop: Two columns */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Left Column - Profile Information */}
           <div className="space-y-4 sm:space-y-6">
@@ -1174,12 +1217,16 @@ export default function StudentSettingsPage() {
                                   // Download the student card
                                   const url = student?.studentCardUrl;
                                   if (!url) {
-                                    toast.error("Student card not available for download");
+                                    toast.error(
+                                      "Student card not available for download"
+                                    );
                                     return;
                                   }
                                   const link = document.createElement("a");
                                   link.href = url;
-                                  link.download = `student-card-${user.userName ?? "student"}.jpg`;
+                                  link.download = `student-card-${
+                                    user.userName ?? "student"
+                                  }.jpg`;
                                   document.body.appendChild(link);
                                   link.click();
                                   document.body.removeChild(link);

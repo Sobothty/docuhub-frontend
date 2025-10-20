@@ -24,7 +24,10 @@ import {
   Edit,
   FileText,
 } from "lucide-react";
-import { useGetPaperByUuidQuery } from "@/feature/paperSlice/papers";
+import {
+  useGetPaperByUuidQuery,
+  Assignment,
+} from "@/feature/paperSlice/papers";
 import { useGetAllAssignmentsQuery } from "@/feature/paperSlice/papers";
 import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
@@ -84,7 +87,7 @@ export default function SubmissionDetailPage() {
   const assignment = useMemo(() => {
     if (!assignmentData || !paperData) return null;
     return assignmentData.find(
-      (assign: any) => assign.paperUuid === paperData.paper.uuid
+      (assign: Assignment) => assign.paperUuid === paperData.paper.uuid
     );
   }, [assignmentData, paperData]);
 
@@ -96,7 +99,7 @@ export default function SubmissionDetailPage() {
     }
   );
 
-  const { data : feedbackData } = useGetFeedbackByPaperUuidQuery(submissionId, {
+  const { data: feedbackData } = useGetFeedbackByPaperUuidQuery(submissionId, {
     skip: !submissionId,
   });
 

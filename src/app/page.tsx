@@ -10,7 +10,6 @@ import AdventureSection from "@/components/ctaBanner/CtaBanner";
 import WorksCardGrid from "@/components/cardGrid/WorksCardGrid";
 import DiscussionForumSection from "@/components/ctaBanner/DiscussionForumSection";
 import FeedbackCardCarousel from "@/components/carousel/FeedbackCarousel";
-import { useTranslation } from "react-i18next";
 
 import { useGetAllPublishedPapersQuery } from "@/feature/paperSlice/papers";
 import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
@@ -157,7 +156,6 @@ const getYear = (paper: { publishedAt?: string | null; createdAt?: string | null
 };
 
 export default function Home() {
-  const { t } = useTranslation("common");
 
   const handleViewPaper = (paperId: number) => {
     window.location.href = `/papers/${paperId}`;

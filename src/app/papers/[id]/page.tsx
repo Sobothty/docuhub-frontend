@@ -24,15 +24,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Download,
-  Eye,
   MessageSquare,
   Calendar,
-  Star,
   Share2,
   Bookmark,
-  ChevronLeft,
-  ChevronRight,
-  ThumbsUp,
   Reply,
   Link as LinkIcon,
   MoreHorizontal,
@@ -41,37 +36,25 @@ import {
 import Link from "next/link";
 import Loading from "@/app/Loading";
 import PaperCard from "@/components/card/PaperCard";
-import dynamic from "next/dynamic";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import PDFViewer from "@/components/pdf/PDFView";
 
-// Dynamically import react-pdf components to avoid SSR issues
-const Document = dynamic(
-  () => import("react-pdf").then((mod) => ({ default: mod.Document })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="text-center text-muted-foreground py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-        Loading PDF viewer...
-      </div>
-    ),
-  }
-);
-
-const Page = dynamic(
-  () => import("react-pdf").then((mod) => ({ default: mod.Page })),
-  {
-    ssr: false,
-  }
-);
-
-// Remove the Comment interface and initialComments - now using API types
+// Add type definitions
+interface Comment {
+  uuid: string;
+  content: string;
+  userUuid: string;
+  paperUuid: string;
+  parentUuid: string | null;
+  createdAt: string;
+  updatedAt: string;
+  replies: Comment[];
+}
 
 // Add a new component to render comments with user data
 interface CommentItemProps {
-  comment: any;
+  comment: Comment;
   onEdit: (uuid: string, content: string) => void;
   onDelete: (uuid: string) => void;
   onReply: (uuid: string) => void;
@@ -255,7 +238,7 @@ function CommentItem({
               {(showAllReplies
                 ? comment.replies
                 : comment.replies.slice(0, 2)
-              ).map((reply: any) => (
+              ).map((reply) => (
                 <ReplyItem key={reply.uuid} reply={reply} />
               ))}
               {comment.replies.length > 2 && (
@@ -279,7 +262,7 @@ function CommentItem({
 }
 
 // Component for reply items
-function ReplyItem({ reply }: { reply: any }) {
+function ReplyItem({ reply }: { reply: Comment }) {
   const { data: replyUser, isLoading: userLoading } = useGetUserByIdQuery(
     reply.userUuid,
     {
@@ -338,8 +321,6 @@ export default function PaperDetailPage({
 
   // All useState hooks must be at the top level, before any conditional logic
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [numPages, setNumPages] = useState<number | null>(null);
-  const [pageNumber, setPageNumber] = useState(1);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   // Remove static comments state
@@ -840,8 +821,6 @@ export default function PaperDetailPage({
                               variant="outline"
                               onClick={() => {
                                 setPdfError(null);
-                                setNumPages(null);
-                                setPageNumber(1);
                               }}
                             >
                               Retry Loading PDF

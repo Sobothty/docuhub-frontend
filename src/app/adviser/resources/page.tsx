@@ -71,7 +71,7 @@ import {
 const filterCategories = ["All", "Guide", "Template", "Reference", "Tutorial"];
 
 export default function MentorResourcesPage() {
-  const { data: adviserProfile, error, isLoading } = useGetUserProfileQuery();
+  const { data: adviserProfile } = useGetUserProfileQuery();
   const {
     data: papersData,
     error: papersError,
@@ -130,14 +130,6 @@ export default function MentorResourcesPage() {
     }));
   };
 
-  // Handle category change
-  const handleCategoryChange = (value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      categoryNames: value ? [value] : [""],
-    }));
-  };
-
   // Handle file upload
   const handleFileUpload = async (file: File, isThumb: boolean = false) => {
     try {
@@ -172,10 +164,9 @@ export default function MentorResourcesPage() {
       }
 
       toast.success(`${isThumb ? "Thumbnail" : "File"} uploaded successfully!`);
-    } catch (error: any) {
-      console.error("Upload error:", error);
+    } catch (error) {
+      console.log("Upload error:", error);
       toast.error(
-        error?.data?.message ||
           `Failed to upload ${isThumb ? "thumbnail" : "file"}`
       );
     }
@@ -201,10 +192,9 @@ export default function MentorResourcesPage() {
       }
 
       toast.success(`${isThumb ? "Thumbnail" : "File"} deleted successfully!`);
-    } catch (error: any) {
-      console.error("Delete error:", error);
+    } catch (error) {
+      console.log("Delete error:", error);
       toast.error(
-        error?.data?.message ||
           `Failed to delete ${isThumb ? "thumbnail" : "file"}`
       );
     }
@@ -316,10 +306,9 @@ export default function MentorResourcesPage() {
 
       // Reset form and close dialog
       resetForm();
-    } catch (error: any) {
-      console.error("Error creating paper:", error);
-      toast.error(
-        error?.data?.message || "Failed to create paper. Please try again."
+    } catch (error) {
+      console.log("Error creating paper:", error);
+      toast.error("Failed to create paper. Please try again."
       );
     }
   };

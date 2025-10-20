@@ -48,9 +48,20 @@ export const categoriesApi = createApi({
       query: () => "/categories",
       providesTags: ["Categories"],
     }),
+    // Add a new endpoint that returns just the category names
+    getCategoryNames: builder.query<string[], void>({
+      query: () => "/categories",
+      transformResponse: (response: CategoriesResponse) => {
+        // Extract just the names from the content array and add "all" at the beginning
+        const categoryNames = response.content.map((category) => category.name);
+        return ["all", ...categoryNames];
+      },
+      providesTags: ["Categories"],
+    }),
   }),
 });
 
-export const { useGetAllCategoriesQuery } = categoriesApi;
+export const { useGetAllCategoriesQuery, useGetCategoryNamesQuery } =
+  categoriesApi;
 
 export default categoriesApi.reducer;

@@ -19,7 +19,6 @@ import {
   FileText,
   BarChart3,
   Settings,
-  Bell,
   Home,
   Upload,
   MessageSquare,

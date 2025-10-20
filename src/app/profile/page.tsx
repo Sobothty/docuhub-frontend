@@ -1,16 +1,39 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { BookOpen, MessageSquare, Download, Calendar, User, GraduationCap, Briefcase } from "lucide-react"
-import DashboardLayout from "@/components/layout/dashboard-layout"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  BookOpen,
+  MessageSquare,
+  Download,
+  Calendar,
+  User,
+  GraduationCap,
+  Briefcase,
+} from "lucide-react";
+import DashboardLayout from "@/components/layout/dashboard-layout";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
-import { useSession } from "next-auth/react"
-import Link from "next/link"
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  const token = useSession();
+  if (!token.data?.accessToken) {
+    router.push("/login");
+  }
+
+  const { status } = useSession();
   const { data: profileData, isLoading } = useGetUserProfileQuery();
 
   if (status === "loading" || isLoading) {
@@ -32,7 +55,9 @@ export default function ProfilePage() {
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <h2 className="text-xl font-semibold mb-2">Please sign in</h2>
-              <p className="text-muted-foreground">You need to be authenticated to view your profile.</p>
+              <p className="text-muted-foreground">
+                You need to be authenticated to view your profile.
+              </p>
             </div>
           </div>
         </div>
@@ -47,7 +72,9 @@ export default function ProfilePage() {
           <Card>
             <CardContent className="p-6 text-center space-y-4">
               <div>
-                <h2 className="text-xl font-semibold mb-2">Unable to load profile</h2>
+                <h2 className="text-xl font-semibold mb-2">
+                  Unable to load profile
+                </h2>
                 <p className="text-muted-foreground">Please try again later.</p>
               </div>
               <div>
@@ -55,9 +82,7 @@ export default function ProfilePage() {
                   You can still proceed with verification.
                 </p>
                 <Link href="/profile/verification">
-                  <Button size="sm">
-                    Promote to Student
-                  </Button>
+                  <Button size="sm">Promote to Student</Button>
                 </Link>
               </div>
             </CardContent>
@@ -67,25 +92,31 @@ export default function ProfilePage() {
     );
   }
 
-  const { user, student, adviser } = profileData;
-  const memberSince = new Date(user.createDate).toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'short' 
+  const { user, student } = profileData;
+  const memberSince = new Date(user.createDate).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
   });
-  const initials = user.firstName && user.lastName 
-    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-    : user.userName.slice(0, 2).toUpperCase();
+  const initials =
+    user.firstName && user.lastName
+      ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+      : user.userName.slice(0, 2).toUpperCase();
 
   return (
-    <DashboardLayout userRole="public"
+    <DashboardLayout
+      userRole="public"
       userAvatar={profileData.user.imageUrl}
       userName={profileData.user.fullName}
     >
       <div className="space-y-6">
         {/* Overview Section */}
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">My Profile</h1>
-          <p className="text-muted-foreground">Manage your public profile and activity</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            My Profile
+          </h1>
+          <p className="text-muted-foreground">
+            Manage your public profile and activity
+          </p>
         </div>
 
         {/* Activity Overview */}
@@ -108,13 +139,17 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">Discussions participated</p>
+              <p className="text-xs text-muted-foreground">
+                Discussions participated
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Saved Papers</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Saved Papers
+              </CardTitle>
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -125,7 +160,9 @@ export default function ProfilePage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Member Since</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Member Since
+              </CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -138,12 +175,15 @@ export default function ProfilePage() {
           {!user.isStudent && (
             <Card className="lg:col-span-2">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Unlock Student Features</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Unlock Student Features
+                </CardTitle>
                 <GraduationCap className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-3">
-                  Get verified as a student to submit papers, access mentorship, and more.
+                  Get verified as a student to submit papers, access mentorship,
+                  and more.
                 </p>
                 <Link href="/profile/verification">
                   <Button size="sm">
@@ -166,13 +206,18 @@ export default function ProfilePage() {
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
                 {user.imageUrl ? (
-                  <img 
-                    src={user.imageUrl} 
-                    alt={user.fullName} 
+                  <Image
+                    src={user.imageUrl}
+                    alt={user.fullName}
                     className="w-16 h-16 rounded-full object-cover"
+                    width={100}
+                    height={100}
+                    unoptimized
                   />
                 ) : (
-                  <span className="text-2xl font-bold text-primary">{initials}</span>
+                  <span className="text-2xl font-bold text-primary">
+                    {initials}
+                  </span>
                 )}
               </div>
               <div>
@@ -259,26 +304,31 @@ export default function ProfilePage() {
                 {student.yearsOfStudy && (
                   <div>
                     <h4 className="font-medium mb-2">Years of Study</h4>
-                    <p className="text-muted-foreground">{student.yearsOfStudy}</p>
+                    <p className="text-muted-foreground">
+                      {student.yearsOfStudy}
+                    </p>
                   </div>
                 )}
               </div>
               {student.studentCardUrl && (
                 <div>
                   <h4 className="font-medium mb-2">Student Card</h4>
-                  <img 
-                    src={student.studentCardUrl} 
-                    alt="Student Card" 
+                  <Image
+                    src={student.studentCardUrl}
+                    alt="Student Card"
                     className="w-full max-w-md rounded-lg border"
+                    width={400}
+                    height={400}
+                    unoptimized
                   />
                 </div>
               )}
             </CardContent>
           </Card>
         )}
-        
+
         {/* End main content */}
       </div>
     </DashboardLayout>
-  )
+  );
 }

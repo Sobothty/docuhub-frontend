@@ -1,7 +1,7 @@
 'use client';
 
 import { use } from 'react';
-import { useGetUserByIdQuery } from '@/feature/apiSlice/authApi';
+import { useGetUserByIdQuery } from '@/feature/users/usersSlice';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
