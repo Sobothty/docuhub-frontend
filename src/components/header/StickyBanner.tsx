@@ -30,10 +30,10 @@ export default function StickyBanner() {
   }
 
   return (
-    <div className="fixed top-0 left-0 w-full z-50 bg-primary text-foreground py-2 sm:py-3 px-2">
-      <div className="max-w-7xl mx-auto flex flex-wrap gap-y-2 justify-between items-center">
+    <div className="fixed top-0 left-0 w-full z-50 bg-primary text-foreground py-2 px-2 ">
+      <div className="max-w-7xl mx-auto flex flex-wrap gap-y-2 justify-between items-center ">
         {/* Left Section - Contact Information */}
-        <div className="flex items-center gap-4 sm:gap-6">
+        <div className="flex items-center justify-between gap-12 sm:gap-6 mx-auto">
           {/* Email */}
           <div className="flex items-center space-x-2">
             <Mail className="h-4 w-4 text-accent" />
@@ -58,7 +58,7 @@ export default function StickyBanner() {
         </div>
 
         {/* Right Section - Social Media */}
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 mx-auto">
           <span className="hidden text-gray-100 sm:inline text-sm font-medium">
             Follow Us:
           </span>

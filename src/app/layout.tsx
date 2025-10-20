@@ -1,3 +1,4 @@
+
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import NavbarWrapper from "@/components/header/NavbarWrapper";
@@ -157,7 +158,9 @@ export default function RootLayout({
         <Providers>
           <StickyBanner />
           <NavbarWrapper />
-          <main className="mt-20">{children}</main>
+          <main className="mt-20">
+          
+            {children}</main>
           <ContactFooter />
         </Providers>
       </body>

@@ -113,7 +113,7 @@ const FeatureCardGrid: FC = () => {
   ];
 
   return (
-    <section className="min-h-screen bg-light-bg py-12">
+    <section className="min-h-screen bg-light-bg ">
       <h2 className="text-section-headings text-center mb-20 mt-20">
         {t('our_features')}
       </h2>

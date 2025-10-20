@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import HorizontalCard from "@/components/card/HorizontalCard";
 import { useGetAllPublishedPapersQuery } from "@/feature/paperSlice/papers";
 import { useGetAllCategoriesQuery } from "@/feature/categoriesSlice/categoriesSlices";
+import { motion, useScroll } from "motion/react"
 
 // Fallback categories based on your API response
 const FALLBACK_CATEGORIES = [
@@ -55,7 +56,7 @@ export default function BrowsePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
-  const [pageSize] = useState(12);
+  const [pageSize] = useState(10);
 
   // Fetch categories from API - with error handling for 404
   const {
@@ -152,6 +153,9 @@ export default function BrowsePage() {
       "Artificial Intelligence",
   ];
 
+  
+  const { scrollYProgress } = useScroll()
+
   // Handle category selection
   const handleCategorySelect = (categoryName: string) => {
     setSelectedCategory(categoryName);
@@ -241,8 +245,8 @@ export default function BrowsePage() {
       {
         id: "1",
         name: "Mr. But SeavThong",
-        field: "Quantum Computing",
-        institution: "MIT",
+        field: "Team Leader",
+        institution: "ISTAD",
         papers: "47",
         citations: "2.3k",
         avatar: "/memberTeam/BUTSEAVTHONG.jpg", // Fixed path
@@ -250,17 +254,27 @@ export default function BrowsePage() {
       {
         id: "2",
         name: "Mr. Kry Sobothty",
-        field: "Machine Learning",
-        institution: "Stanford",
+        field: "Full Stack Developer",
+        institution: "ISTAD",
         papers: "89",
         citations: "5.1k",
         avatar: "/memberTeam/KrySobothty.jpg", // Fixed path
       },
+      
+      {
+        id: "5",
+        name: "Mr. Sim Pengseang",
+        field: "Full Stack Developer",
+        institution: "ISTAD",
+        papers: "89",
+        citations: "5.1k",
+        avatar: "/memberTeam/PengSeangSim.JPG", // Fixed path
+      },
       {
         id: "3",
         name: "Ms. Chim Theara",
-        field: "Climate Science",
-        institution: "UC Berkeley",
+        field: "Frontend Developer",
+        institution: "ISTAD",
         papers: "34",
         citations: "1.8k",
         avatar: "/memberTeam/ChimTheara.JPG", // Fixed path
@@ -268,26 +282,17 @@ export default function BrowsePage() {
       {
         id: "4",
         name: "Ms.Khim Sokha",
-        field: "Quantum Computing",
-        institution: "MIT",
+        field: "Ux/UI Designer",
+        institution: "ISTAD",
         papers: "47",
         citations: "2.3k",
         avatar: "/memberTeam/KHIMSOKHA.jpg", // Fixed path
       },
       {
-        id: "5",
-        name: "Mr. Sim Pengseang",
-        field: "Machine Learning",
-        institution: "Stanford",
-        papers: "89",
-        citations: "5.1k",
-        avatar: "/memberTeam/PengSeangSim.JPG", // Fixed path
-      },
-      {
         id: "6",
         name: "Ms. Sorn Sophamarinet",
-        field: "Climate Science",
-        institution: "UC Berkeley",
+        field: "Frontend Developer",
+        institution: "ISTAD",
         papers: "34",
         citations: "1.8k",
         avatar: "/memberTeam/SornSophamarinet.JPG", // Fixed path
@@ -295,8 +300,8 @@ export default function BrowsePage() {
       {
         id: "7",
         name: "Mr. Vyra Vanarith",
-        field: "Machine Learning",
-        institution: "Stanford",
+        field: "Backend Developer",
+        institution: "ISTAD",
         papers: "89",
         citations: "5.1k",
         avatar: "/memberTeam/VannarithVr.JPG", // Fixed path
@@ -304,8 +309,8 @@ export default function BrowsePage() {
       {
         id: "8",
         name: "Mr. Pho Hongleap",
-        field: "Climate Science",
-        institution: "UC Berkeley",
+        field: "Frontend Developer",
+        institution: "ISTAD",
         papers: "34",
         citations: "1.8k",
         avatar: "/memberTeam/PhoHongleap.JPG", // Fixed path
@@ -422,6 +427,21 @@ export default function BrowsePage() {
   };
 
   return (
+    <>
+    <motion.div
+                    id="scroll-indicator"
+                    style={{
+                        scaleX: scrollYProgress,
+                        position: "fixed",
+                        top: 128,
+                        left: 0,
+                        right: 0,
+                        height: 5,
+                        originX: 0,
+                        backgroundColor: "#f59e0b",
+                        zIndex: 9999,
+                    }}
+                />
     <div className="min-h-screen bg-background">
       {/* Main Search Section */}
       <section className="py-25 px-6 bg-background relative overflow-hidden">
@@ -935,5 +955,6 @@ export default function BrowsePage() {
         </div>
       </section>
     </div>
+    </>
   );
 }

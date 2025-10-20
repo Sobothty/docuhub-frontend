@@ -39,6 +39,7 @@ import PaperCard from "@/components/card/PaperCard";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import PDFViewer from "@/components/pdf/PDFView";
+import { useRouter } from "next/navigation";
 
 // Add type definitions
 interface Comment {
@@ -588,6 +589,10 @@ export default function PaperDetailPage({
     }));
   };
 
+  const handleOnClickBack = () => {
+    window.history.back();
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 sm:py-8 max-w-6xl">
@@ -595,8 +600,9 @@ export default function PaperDetailPage({
           {/* Back Button */}
           <div className="flex items-center mt-10 gap-2 text-sm text-muted-foreground">
             <Link
-              href="/papers"
+              href='#'
               className="hover:text-foreground flex items-center gap-2"
+              onClick={handleOnClickBack}
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Papers

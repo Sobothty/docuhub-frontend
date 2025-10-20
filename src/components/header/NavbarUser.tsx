@@ -131,32 +131,27 @@ export default function NavbarUser() {
       router.push("/profile");
     }
   };
-
-  const handleProfileSettingClick = () => {
+  const handleClickStars = () => {
     if (
       userRoles.includes("STUDENT") &&
       user?.student &&
       user?.student.isStudent
     ) {
+      router.push(`/student/starts`);
+    } else if (userRoles.includes("ADVISER") && user?.adviser) {
+      router.push("/adviser");
+    } else {
+      router.push("/profile");
+    }
+  };
+
+  const handleProfileSettingClick = () => {
+    if (userRoles.includes("STUDENT") && user?.student && user?.student.isStudent) {
       router.push(`/student/settings`);
     } else if (userRoles.includes("ADVISER") && user?.adviser) {
       router.push("/adviser/settings");
     } else {
       router.push("/profile/settings");
-    }
-  };
-
-  const handleClickSavedPaper = () => {
-    if (
-      userRoles.includes("STUDENT") &&
-      user?.student &&
-      user?.student.isStudent
-    ) {
-      router.push(`/student/stars`);
-    } else if (userRoles.includes("ADVISER") && user?.adviser) {
-      router.push("/adviser");
-    } else {
-      router.push("/profile");
     }
   };
 
@@ -170,7 +165,7 @@ export default function NavbarUser() {
   ];
 
   return (
-    <nav className="fixed top-14 left-0 w-full z-40 border-b bg-background/95 backdrop-blur-sm border-border py-2 shadow-md transition-all duration-300">
+    <nav className="fixed top-16 sm:top-13 md:top-12 left-0 w-full z-40 border-b bg-background/95 backdrop-blur-sm border-border py-2 shadow-md transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
         <Link href="/" className="inline-block">
           <Image
@@ -267,7 +262,7 @@ export default function NavbarUser() {
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuContent className="w-56 bg-background" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
@@ -285,16 +280,16 @@ export default function NavbarUser() {
                 <span>Profile</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleProfileSettingClick}>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
               </DropdownMenuItem>
-              {/* <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild>
                 <Link href="/profile/discussions">
                   <Bell className="mr-2 h-4 w-4" />
                   <span>Notifications</span>
                 </Link>
-              </DropdownMenuItem> */}
-              <DropdownMenuItem onClick={handleClickSavedPaper}>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleClickStars}>
                   <Heart className="mr-2 h-4 w-4" />
                   <span>Saved Papers</span>
               </DropdownMenuItem>
