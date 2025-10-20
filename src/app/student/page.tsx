@@ -61,7 +61,6 @@ export default function StudentOverviewPage() {
 
   // Extract papers from the response
   const authorPapers = papersData?.papers?.content || [];
-  console.log(authorPapers);
 
   // Filter documents based on search query
   const filteredDocuments = authorPapers

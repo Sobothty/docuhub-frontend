@@ -177,7 +177,6 @@ export default function Home() {
   const { data: papersData, isLoading, error } = useGetAllPublishedPapersQuery({});
 
   const papers = papersData?.papers.content ?? [];
-  console.log("Papers : ", papersData)
 
   type PaperType = {
     uuid: string;

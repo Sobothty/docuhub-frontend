@@ -11,23 +11,13 @@ export default function PapersListPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 12;
 
-  const { data, isLoading, error, refetch, isSuccess, isError } =
+  const { data, isLoading, error, refetch } =
     useGetAllPublishedPapersQuery({
       page: currentPage,
       size: pageSize,
       sortBy: "publishedAt",
       direction: "desc",
     });
-
-  // Enhanced debugging
-  console.log("📜 Papers Page Debug:", {
-    data,
-    isLoading,
-    error,
-    isSuccess,
-    isError,
-    papersCount: data?.papers?.content?.length || 0,
-  });
 
   if (isLoading) {
     return (
