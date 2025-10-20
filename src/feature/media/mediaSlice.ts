@@ -1,5 +1,5 @@
 // mediaSlice.ts - Fixed version for image upload
-import { UpdateUserImageDto, UserResponse } from "@/types/userType";
+import {  UserResponse } from "@/types/userType";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { getSession } from "next-auth/react";
 

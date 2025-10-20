@@ -1,7 +1,12 @@
-// profileApi.ts - Enhanced version with student details support
+// profileApi.ts - Fully typed version with student details support
 "use client";
 
-import { UserProfileResponse, UserResponse, AdviserDetailResponse, StudentResponse } from "@/types/userType";
+import { 
+  UserProfileResponse, 
+  UserResponse, 
+  AdviserDetailResponse, 
+  StudentResponse 
+} from "@/types/userType";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { getSession } from "next-auth/react";
 
@@ -36,8 +41,21 @@ export interface UpdateStudentDetailsDto {
   status?: string;
 }
 
-// FIXED: Helper function to transform frontend data to backend format
-const transformUserDataForBackend = (data: any): UpdateUserDto => {
+// Type for the input data from the frontend
+interface FrontendUserData {
+  userName?: string;
+  firstName?: string;
+  lastName?: string;
+  gender?: string;
+  email?: string;
+  contactNumber?: string;
+  address?: string;
+  bio?: string;
+  telegramId?: string;
+}
+
+// Helper function to transform frontend data to backend format
+const transformUserDataForBackend = (data: FrontendUserData): UpdateUserDto => {
   const transformed: UpdateUserDto = {};
   
   // Map ALL frontend fields to backend fields including userName
@@ -64,6 +82,16 @@ const transformUserDataForBackend = (data: any): UpdateUserDto => {
   
   return transformed;
 };
+
+// Type for API error responses
+interface ApiErrorResponse {
+  status: number;
+  data?: {
+    message?: string;
+    error?: string;
+    statusCode?: number;
+  };
+}
 
 export const profileApi = createApi({
   reducerPath: "profileApi",
@@ -92,8 +120,11 @@ export const profileApi = createApi({
       },
     }),
 
-    // FIXED: Now includes username transformation
-    updateUserProfile: builder.mutation<UserResponse, { uuid: string; updateData: any }>({
+    // Now includes username transformation with proper typing
+    updateUserProfile: builder.mutation<
+      UserResponse, 
+      { uuid: string; updateData: FrontendUserData }
+    >({
       query: ({ uuid, updateData }) => {
         const transformedData = transformUserDataForBackend(updateData);
         console.log("Sending user update data to backend:", {
@@ -113,22 +144,25 @@ export const profileApi = createApi({
         console.log("User update successful:", response);
         return response;
       },
-      transformErrorResponse: (error: any) => {
+      transformErrorResponse: (error: ApiErrorResponse) => {
         console.error("User update failed:", error);
         return error;
       },
     }),
 
-    updateAdviserDetails: builder.mutation<AdviserDetailResponse, { uuid: string; updateData: UpdateAdviserDetailsDto }>({
+    updateAdviserDetails: builder.mutation<
+      AdviserDetailResponse, 
+      { uuid: string; updateData: UpdateAdviserDetailsDto }
+    >({
       query: ({ uuid, updateData }) => {
         const cleanedData = { ...updateData };
         
         // Remove null/empty values
-        Object.keys(cleanedData).forEach(key => {
-          if (cleanedData[key as keyof UpdateAdviserDetailsDto] === null || 
-              cleanedData[key as keyof UpdateAdviserDetailsDto] === '' || 
-              cleanedData[key as keyof UpdateAdviserDetailsDto] === undefined) {
-            delete cleanedData[key as keyof UpdateAdviserDetailsDto];
+        (Object.keys(cleanedData) as Array<keyof UpdateAdviserDetailsDto>).forEach(key => {
+          if (cleanedData[key] === null || 
+              cleanedData[key] === '' || 
+              cleanedData[key] === undefined) {
+            delete cleanedData[key];
           }
         });
         
@@ -141,19 +175,26 @@ export const profileApi = createApi({
         };
       },
       invalidatesTags: ["Profile"],
+      transformErrorResponse: (error: ApiErrorResponse) => {
+        console.error("Adviser update failed:", error);
+        return error;
+      },
     }),
 
-    // NEW: Student details update endpoint
-    updateStudentDetails: builder.mutation<StudentResponse, { uuid: string; updateData: UpdateStudentDetailsDto }>({
+    // Student details update endpoint with proper typing
+    updateStudentDetails: builder.mutation<
+      StudentResponse, 
+      { uuid: string; updateData: UpdateStudentDetailsDto }
+    >({
       query: ({ uuid, updateData }) => {
         const cleanedData = { ...updateData };
         
         // Remove null/empty values for partial updates
-        Object.keys(cleanedData).forEach(key => {
-          if (cleanedData[key as keyof UpdateStudentDetailsDto] === null || 
-              cleanedData[key as keyof UpdateStudentDetailsDto] === '' || 
-              cleanedData[key as keyof UpdateStudentDetailsDto] === undefined) {
-            delete cleanedData[key as keyof UpdateStudentDetailsDto];
+        (Object.keys(cleanedData) as Array<keyof UpdateStudentDetailsDto>).forEach(key => {
+          if (cleanedData[key] === null || 
+              cleanedData[key] === '' || 
+              cleanedData[key] === undefined) {
+            delete cleanedData[key];
           }
         });
         
@@ -174,7 +215,7 @@ export const profileApi = createApi({
         console.log("Student update successful:", response);
         return response;
       },
-      transformErrorResponse: (error: any) => {
+      transformErrorResponse: (error: ApiErrorResponse) => {
         console.error("Student update failed:", error);
         return error;
       },

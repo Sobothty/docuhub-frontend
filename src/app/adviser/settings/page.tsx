@@ -1,3 +1,4 @@
+// AdviserSettingsPage.tsx - Fully typed version
 "use client";
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
@@ -48,18 +49,55 @@ import { useState, useRef, useEffect } from "react";
 import { toast } from "react-toastify";
 import ProfileExport from "@/components/profiles/profileExport";
 
-// Enhanced helper function to safely prepare data for backend
-const prepareDataForBackend = (data: any) => {
-  const prepared = { ...data };
+// Type definitions
+interface ApiError {
+  data?:
+    | {
+        message?: string;
+        detail?: string;
+      }
+    | string;
+  status?: number;
+}
+
+interface MediaUploadResponse {
+  data?: {
+    uri?: string;
+    url?: string;
+  };
+  uri?: string;
+  url?: string;
+}
+
+interface ProfileFormState {
+  userName: string;
+  firstName: string;
+  lastName: string;
+  gender: string;
+  email: string;
+  contactNumber: string;
+  address: string;
+  bio: string;
+  telegramId: string;
+}
+
+interface ProfessionalFormState {
+  office: string;
+  experienceYears: number;
+  linkedinUrl: string;
+  socialLinks: string;
+}
+
+// Helper function to safely prepare data for backend
+const prepareDataForBackend = <T extends object>(data: T): Partial<T> => {
+  const prepared: Partial<T> = { ...data };
 
   // Convert empty strings, null, and undefined to be removed
-  Object.keys(prepared).forEach((key) => {
-    if (
-      prepared[key] === "" ||
-      prepared[key] === null ||
-      prepared[key] === undefined
-    ) {
-      delete prepared[key];
+  (Object.keys(prepared) as Array<keyof T>).forEach((key) => {
+    const value = prepared[key];
+    if (value === "" || value === null || value === undefined) {
+      // use a safe cast to allow deletion from the Partial<T> object
+      Reflect.deleteProperty(prepared as object, key as PropertyKey);
     }
   });
 
@@ -67,29 +105,29 @@ const prepareDataForBackend = (data: any) => {
 };
 
 // Enhanced error handler
-const handleApiError = (error: any, defaultMessage: string) => {
+const handleApiError = (error: unknown, defaultMessage: string): string => {
   console.error("API Error Details:", {
-    status: error?.status,
-    data: error?.data,
-    originalError: error,
+    error,
   });
 
-  if (error?.data) {
-    if (typeof error.data === "string") {
-      return error.data;
-    } else if (error.data?.message) {
-      return error.data.message;
-    } else if (error.data?.detail) {
-      return error.data.detail;
+  const apiError = error as ApiError;
+
+  if (apiError?.data) {
+    if (typeof apiError.data === "string") {
+      return apiError.data;
+    } else if (apiError.data?.message) {
+      return apiError.data.message;
+    } else if (apiError.data?.detail) {
+      return apiError.data.detail;
     }
   }
 
-  if (error?.status === 400) return "Bad request - please check your input";
-  if (error?.status === 401) return "Unauthorized - please login again";
-  if (error?.status === 403) return "Forbidden - you don't have permission";
-  if (error?.status === 404) return "Resource not found";
-  if (error?.status === 500) return "Server error - please try again later";
-  if (error?.status === 502)
+  if (apiError?.status === 400) return "Bad request - please check your input";
+  if (apiError?.status === 401) return "Unauthorized - please login again";
+  if (apiError?.status === 403) return "Forbidden - you don't have permission";
+  if (apiError?.status === 404) return "Resource not found";
+  if (apiError?.status === 500) return "Server error - please try again later";
+  if (apiError?.status === 502)
     return "Network error - please check your connection";
 
   return defaultMessage;
@@ -116,7 +154,7 @@ export default function AdviserSettingsPage() {
   const [isEditingProfessional, setIsEditingProfessional] = useState(false);
   const [showExportProfile, setShowExportProfile] = useState(false);
 
-  const [profileForm, setProfileForm] = useState({
+  const [profileForm, setProfileForm] = useState<ProfileFormState>({
     userName: "",
     firstName: "",
     lastName: "",
@@ -128,12 +166,13 @@ export default function AdviserSettingsPage() {
     telegramId: "",
   });
 
-  const [professionalForm, setProfessionalForm] = useState({
-    office: "",
-    experienceYears: 0,
-    linkedinUrl: "",
-    socialLinks: "",
-  });
+  const [professionalForm, setProfessionalForm] =
+    useState<ProfessionalFormState>({
+      office: "",
+      experienceYears: 0,
+      linkedinUrl: "",
+      socialLinks: "",
+    });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -193,17 +232,19 @@ export default function AdviserSettingsPage() {
       toast.info("Uploading image...");
 
       console.log("Step 1: Uploading file to /media endpoint");
-      const uploadResponse = await uploadFile(formData).unwrap();
+      const uploadResponse = (await uploadFile(
+        formData
+      ).unwrap()) as MediaUploadResponse;
 
       // Extract image URL from response
-      let imageUrl;
+      let imageUrl: string;
       if (uploadResponse.data?.uri) {
         imageUrl = uploadResponse.data.uri;
       } else if (uploadResponse.uri) {
         imageUrl = uploadResponse.uri;
-      } else if ("url" in uploadResponse) {
+      } else if (uploadResponse.url) {
         imageUrl = uploadResponse.url;
-      } else if (uploadResponse.data && "url" in uploadResponse.data) {
+      } else if (uploadResponse.data?.url) {
         imageUrl = uploadResponse.data.url;
       } else {
         throw new Error("No image URL returned from upload");
@@ -221,7 +262,7 @@ export default function AdviserSettingsPage() {
       } else {
         throw new Error("User UUID not available");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Image upload error:", error);
       const errorMessage = handleApiError(
         error,
@@ -262,7 +303,7 @@ export default function AdviserSettingsPage() {
       toast.success("Profile updated successfully");
       setIsEditingProfile(false);
       refetch();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Update error:", error);
       const errorMessage = handleApiError(
         error,
@@ -298,7 +339,7 @@ export default function AdviserSettingsPage() {
       toast.success("Professional information updated successfully");
       setIsEditingProfessional(false);
       refetch();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Professional update error:", error);
       const errorMessage = handleApiError(
         error,
@@ -340,7 +381,7 @@ export default function AdviserSettingsPage() {
 
   const { user, adviser } = adviserProfile;
   const socialLinks =
-    adviser?.socialLinks?.split(",").map((link) => link.trim()) || [];
+    adviser?.socialLinks?.split(",").map((link: string) => link.trim()) || [];
 
   return (
     <DashboardLayout
@@ -413,7 +454,7 @@ export default function AdviserSettingsPage() {
             </div>
           </div>
 
-          {/* Add Export Profile Button */}
+          {/* Export Profile Button */}
           <div className="flex justify-center mt-4">
             <Button
               onClick={() => setShowExportProfile(true)}
@@ -434,7 +475,7 @@ export default function AdviserSettingsPage() {
           )}
         </div>
 
-        {/* Two Column Layout for Better Organization */}
+        {/* Two Column Layout */}
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Left Column - Profile Information */}
           <div className="space-y-6">
@@ -891,6 +932,7 @@ export default function AdviserSettingsPage() {
                     </div>
                   )}
                 </div>
+
                 {/* Social Links */}
                 <div className="space-y-2">
                   <Label
@@ -916,7 +958,7 @@ export default function AdviserSettingsPage() {
                   ) : (
                     <div className="space-y-2">
                       {socialLinks.length > 0 ? (
-                        socialLinks.map((link, i) => (
+                        socialLinks.map((link: string, i: number) => (
                           <a
                             key={i}
                             href={link}

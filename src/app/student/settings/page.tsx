@@ -1,4 +1,4 @@
-// StudentSettingsPage.tsx - Responsive version for three devices
+// StudentSettingsPage.tsx - Fully typed version
 "use client";
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
@@ -49,10 +49,46 @@ import {
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 
+// Type definitions
+interface ApiError {
+  data?:
+    | {
+        message?: string;
+        detail?: string;
+      }
+    | string;
+  status?: number;
+}
+
+
+interface MediaUploadResponse {
+  data?: {
+    uri?: string;
+  };
+}
+
+interface ProfileFormState {
+  userName: string;
+  firstName: string;
+  lastName: string;
+  gender: string;
+  email: string;
+  contactNumber: string;
+  address: string;
+  bio: string;
+  telegramId: string;
+}
+
+interface AcademicFormState {
+  university: string;
+  major: string;
+  yearsOfStudy: string;
+}
+
 // Helper functions
-const prepareDataForBackend = (data: any) => {
-  const prepared = { ...data };
-  Object.keys(prepared).forEach((key) => {
+const prepareDataForBackend = <T extends object>(data: T): Partial<T> => {
+  const prepared: Partial<T> = { ...data };
+  (Object.keys(prepared) as Array<keyof T>).forEach((key) => {
     if (
       prepared[key] === "" ||
       prepared[key] === null ||
@@ -64,41 +100,29 @@ const prepareDataForBackend = (data: any) => {
   return prepared;
 };
 
-const handleApiError = (error: any, defaultMessage: string) => {
+const handleApiError = (error: unknown, defaultMessage: string): string => {
   console.error("API Error Details:", error);
 
-  if (error?.data) {
-    if (typeof error.data === "string") {
-      return error.data;
-    } else if (error.data?.message) {
-      return error.data.message;
-    } else if (error.data?.detail) {
-      return error.data.detail;
+  const apiError = error as ApiError;
+
+  if (apiError?.data) {
+    if (typeof apiError.data === "string") {
+      return apiError.data;
+    } else if (apiError.data?.message) {
+      return apiError.data.message;
+    } else if (apiError.data?.detail) {
+      return apiError.data.detail;
     }
   }
 
-  if (error?.status === 400) return "Bad request - please check your input";
-  if (error?.status === 401) return "Unauthorized - please login again";
-  if (error?.status === 403) return "Forbidden - you don't have permission";
-  if (error?.status === 404) return "Resource not found";
-  if (error?.status === 500) return "Server error - please try again later";
+  if (apiError?.status === 400) return "Bad request - please check your input";
+  if (apiError?.status === 401) return "Unauthorized - please login again";
+  if (apiError?.status === 403) return "Forbidden - you don't have permission";
+  if (apiError?.status === 404) return "Resource not found";
+  if (apiError?.status === 500) return "Server error - please try again later";
 
   return defaultMessage;
 };
-
-interface UpdateProfileData {
-  userName?: string;
-  gender?: string;
-  email?: string;
-  fullName?: string;
-  firstName?: string;
-  lastName?: string;
-  bio?: string;
-  address?: string;
-  contactNumber?: string;
-  telegramId?: string;
-  imageUrl?: string;
-}
 
 export default function StudentSettingsPage() {
   const {
@@ -113,7 +137,6 @@ export default function StudentSettingsPage() {
   const [updateStudentDetails, { isLoading: isUpdatingStudent }] =
     useUpdateStudentDetailsMutation();
 
-  // USING mediaSlice for image uploads
   const [updateProfileImage, { isLoading: isUpdatingImage }] =
     useUpdateProfileImageMutation();
   const [uploadFile, { isLoading: isUploadingFile }] = useCreateMediaMutation();
@@ -122,7 +145,7 @@ export default function StudentSettingsPage() {
   const [isEditingAcademic, setIsEditingAcademic] = useState(false);
   const [showExportPopup, setShowExportPopup] = useState(false);
 
-  const [profileForm, setProfileForm] = useState({
+  const [profileForm, setProfileForm] = useState<ProfileFormState>({
     userName: "",
     firstName: "",
     lastName: "",
@@ -134,7 +157,7 @@ export default function StudentSettingsPage() {
     telegramId: "",
   });
 
-  const [academicForm, setAcademicForm] = useState({
+  const [academicForm, setAcademicForm] = useState<AcademicFormState>({
     university: "",
     major: "",
     yearsOfStudy: "",
@@ -167,7 +190,7 @@ export default function StudentSettingsPage() {
     }
   }, [studentProfile]);
 
-  // Image upload handler using mediaSlice
+  // Image upload handler
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -190,34 +213,25 @@ export default function StudentSettingsPage() {
     }
 
     try {
-      // Step 1: Upload the image file to /media endpoint
       const formData = new FormData();
       formData.append("file", file);
 
       toast.info("Uploading image...");
 
       console.log("Step 1: Uploading file to /media endpoint");
-      const uploadResponse = await uploadFile(formData).unwrap();
+      const uploadResponse = (await uploadFile(
+        formData
+      ).unwrap()) as MediaUploadResponse;
       console.log("Upload response:", uploadResponse);
 
-      // Extract image URL from response
-      let imageUrl;
+      let imageUrl: string;
       if (uploadResponse.data?.uri) {
         imageUrl = uploadResponse.data.uri;
-      } else if (uploadResponse.data?.url) {
-        imageUrl = uploadResponse.data.url;
-      } else if (uploadResponse.uri) {
-        imageUrl = uploadResponse.uri;
-      } else if (uploadResponse.url) {
-        imageUrl = uploadResponse.url;
       } else {
         console.error("Unexpected upload response structure:", uploadResponse);
         throw new Error("No image URL returned from upload");
       }
 
-      console.log("Extracted image URL:", imageUrl);
-
-      // Step 2: Update user profile with the image URL using PUT
       if (studentProfile?.user?.uuid) {
         console.log("Step 2: Updating user profile with image URL");
         console.log("UUID:", studentProfile.user.uuid);
@@ -229,20 +243,16 @@ export default function StudentSettingsPage() {
         }).unwrap();
 
         toast.success("Profile image updated successfully");
-
-        // Refresh the profile data to get the new image
         refetch();
       } else {
         throw new Error("User UUID not available");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Image upload error:", error);
-
       const errorMessage = handleApiError(
         error,
         "Failed to upload profile image. Please try again."
       );
-
       toast.error(errorMessage);
     }
   };
@@ -289,14 +299,12 @@ export default function StudentSettingsPage() {
       toast.success("Profile updated successfully");
       setIsEditingProfile(false);
       refetch();
-    } catch (error: any) {
+    } catch (error) {
       console.error("❌ Update error:", error);
-
       const errorMessage = handleApiError(
         error,
         "Failed to update profile. Please check your input and try again."
       );
-
       toast.error(errorMessage);
     }
   };
@@ -325,7 +333,7 @@ export default function StudentSettingsPage() {
       toast.success("Academic information updated successfully");
       setIsEditingAcademic(false);
       refetch();
-    } catch (error: any) {
+    } catch (error) {
       const errorMessage = handleApiError(
         error,
         "Failed to update academic information. Please check your input and try again."
@@ -334,7 +342,6 @@ export default function StudentSettingsPage() {
     }
   };
 
-  // Add this close handler
   const handleCloseExport = () => {
     setShowExportPopup(false);
   };
@@ -381,7 +388,7 @@ export default function StudentSettingsPage() {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-6 sm:space-y-8 max-w-6xl mx-auto px-3 sm:px-4 lg:px-6"
       >
-        {/* Enhanced Header Section - Responsive */}
+        {/* Enhanced Header Section */}
         <div className="text-center space-y-3 sm:space-y-4">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 lg:gap-8">
             {/* Profile Image with Camera Button */}
@@ -420,7 +427,7 @@ export default function StudentSettingsPage() {
               />
             </motion.div>
 
-            {/* Simple Export Button */}
+            {/* Export Button */}
             <div className="flex justify-center">
               <Button
                 onClick={() => setShowExportPopup(true)}
@@ -460,13 +467,12 @@ export default function StudentSettingsPage() {
           </div>
         </div>
 
-        {/* Export Profile Popup/Modal */}
+        {/* Export Profile Popup */}
         {showExportPopup && (
           <ProfileExport userType="student" onClose={handleCloseExport} />
         )}
 
-        {/* Rest of your existing code remains the same */}
-        {/* Responsive Grid Layout */}
+        {/* Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Left Column - Profile Information */}
           <div className="space-y-4 sm:space-y-6">
@@ -528,7 +534,7 @@ export default function StudentSettingsPage() {
                   )}
                 </div>
 
-                {/* Name Fields - Responsive grid */}
+                {/* Name Fields */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName" className="text-sm sm:text-base">
@@ -582,7 +588,7 @@ export default function StudentSettingsPage() {
                   </div>
                 </div>
 
-                {/* Gender and Contact - Responsive grid */}
+                {/* Gender and Contact */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-2">
                     <Label
@@ -904,198 +910,7 @@ export default function StudentSettingsPage() {
                   )}
                 </div>
 
-                {/* Major and Years of Study - Responsive grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="major"
-                      className="flex items-center gap-2 text-sm sm:text-base"
-                    >
-                      <BookOpen className="h-4 w-4 text-muted-foreground" />
-                      Major
-                    </Label>
-                    {isEditingAcademic ? (
-                      <Input
-                        id="major"
-                        value={academicForm.major}
-                        onChange={(e) =>
-                          setAcademicForm({
-                            ...academicForm,
-                            major: e.target.value,
-                          })
-                        }
-                        placeholder="Your major"
-                        className="h-10 sm:h-12"
-                      />
-                    ) : (
-                      <Input
-                        value={student?.major || "Not specified"}
-                        disabled
-                        className="h-10 sm:h-12"
-                      />
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="yearsOfStudy"
-                      className="flex items-center gap-2 text-sm sm:text-base"
-                    >
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      Years of Study
-                    </Label>
-                    {isEditingAcademic ? (
-                      <Input
-                        id="yearsOfStudy"
-                        value={academicForm.yearsOfStudy}
-                        onChange={(e) =>
-                          setAcademicForm({
-                            ...academicForm,
-                            yearsOfStudy: e.target.value,
-                          })
-                        }
-                        placeholder="e.g., 4"
-                        className="h-10 sm:h-12"
-                      />
-                    ) : (
-                      <Input
-                        value={
-                          student?.yearsOfStudy
-                            ? `${student.yearsOfStudy} years`
-                            : "Not specified"
-                        }
-                        disabled
-                        className="h-10 sm:h-12"
-                      />
-                    )}
-                  </div>
-                </div>
-
-                {/* Student Card */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="studentCard"
-                    className="flex items-center gap-2 text-sm sm:text-base"
-                  >
-                    <IdCard className="h-4 w-4 text-muted-foreground" />
-                    Student Card
-                  </Label>
-                  {student?.studentCardUrl ? (
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-                      <Input
-                        value="Student Card Uploaded"
-                        disabled
-                        className="flex-1 h-10 sm:h-12"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          window.open(student.studentCardUrl, "_blank")
-                        }
-                        className="w-full sm:w-auto"
-                      >
-                        View
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="p-3 rounded-md bg-muted/50 text-center">
-                      <p className="text-sm text-muted-foreground">
-                        No student card uploaded
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Save/Cancel Buttons */}
-                {isEditingAcademic && (
-                  <div className="flex flex-col sm:flex-row gap-2 pt-3 sm:pt-4 border-t">
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsEditingAcademic(false)}
-                      disabled={isUpdatingStudent}
-                      className="flex-1"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleAcademicUpdate}
-                      disabled={isUpdatingStudent}
-                      className="flex-1 gap-2"
-                    >
-                      {isUpdatingStudent ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Save className="h-4 w-4" />
-                      )}
-                      {isUpdatingStudent ? "Saving..." : "Save Changes"}
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Status Card */}
-            <Card className="border border-border/30 bg-card/60 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3 sm:pb-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-                  <div className="space-y-1">
-                    <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                      <GraduationCap className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                      Academic Information
-                    </CardTitle>
-                    <CardDescription className="text-sm sm:text-base">
-                      Your university and study details
-                    </CardDescription>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditingAcademic(!isEditingAcademic)}
-                    disabled={isUpdatingStudent}
-                    className="gap-2 w-full sm:w-auto"
-                  >
-                    {isEditingAcademic ? (
-                      <X className="h-3 w-3 sm:h-4 sm:w-4" />
-                    ) : (
-                      <Edit2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                    )}
-                    {isEditingAcademic ? "Cancel" : "Edit"}
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3 sm:space-y-4">
-                {/* University */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="university"
-                    className="flex items-center gap-2 text-sm sm:text-base"
-                  >
-                    <School className="h-4 w-4 text-muted-foreground" />
-                    University
-                  </Label>
-                  {isEditingAcademic ? (
-                    <Input
-                      id="university"
-                      value={academicForm.university}
-                      onChange={(e) =>
-                        setAcademicForm({
-                          ...academicForm,
-                          university: e.target.value,
-                        })
-                      }
-                      placeholder="Your university"
-                      className="h-10 sm:h-12"
-                    />
-                  ) : (
-                    <Input
-                      value={student?.university || "Not specified"}
-                      disabled
-                      className="h-10 sm:h-12"
-                    />
-                  )}
-                </div>
-
-                {/* Major and Years of Study - Responsive grid */}
+                {/* Major and Years of Study */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-2">
                     <Label
@@ -1214,7 +1029,6 @@ export default function StudentSettingsPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  // Download the student card
                                   const url = student?.studentCardUrl;
                                   if (!url) {
                                     toast.error(

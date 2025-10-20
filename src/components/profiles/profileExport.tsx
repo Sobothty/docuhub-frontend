@@ -85,7 +85,6 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
   const [researchCategory, setResearchCategory] = useState("all");
   const [previewContent, setPreviewContent] = useState<string>("");
   const [customColors, setCustomColors] = useState(DEFAULT_COLORS);
-  const [iframeHeight, setIframeHeight] = useState(600);
 
   const categories = [
     { key: "papers", label: "Papers & Publications", icon: BookOpen },
@@ -503,33 +502,6 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
       setPreviewContent(preview);
     }
   }, [exportData, customColors, generatePDFPreview]);
-
-  // Handle iframe height adjustment
-  const handleIframeLoad = (event: React.SyntheticEvent<HTMLIFrameElement>) => {
-    const iframe = event.currentTarget;
-    try {
-      const iframeDocument =
-        iframe.contentDocument || iframe.contentWindow?.document;
-      if (iframeDocument) {
-        setTimeout(() => {
-          const body = iframeDocument.body;
-          const html = iframeDocument.documentElement;
-          const height = Math.max(
-            body?.scrollHeight || 0,
-            body?.offsetHeight || 0,
-            html?.clientHeight || 0,
-            html?.scrollHeight || 0,
-            html?.offsetHeight || 0
-          );
-          const adjustedHeight = Math.max(height * 0.75 + 150, 400);
-          setIframeHeight(adjustedHeight);
-        }, 100);
-      }
-    } catch {
-      console.log("Could not access iframe content for height calculation");
-      setIframeHeight(900);
-    }
-  };
 
   const handleColorChange = (
     colorType: keyof typeof DEFAULT_COLORS,
