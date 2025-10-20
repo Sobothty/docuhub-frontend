@@ -100,6 +100,10 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [isHighlighting, setIsHighlighting] = useState(false);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const [currentDrawingAnnotation, setCurrentDrawingAnnotation] =
+    useState<DrawAnnotation | null>(null);
+  const [currentHighlightAnnotation, setCurrentHighlightAnnotation] =
+    useState<HighlightAnnotation | null>(null);
   const [showTextInput, setShowTextInput] = useState(false);
   const [textInputPos, setTextInputPos] = useState({ x: 0, y: 0 });
   const [textInputScreenPos, setTextInputScreenPos] = useState({ x: 0, y: 0 });
@@ -112,7 +116,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
   const [rotation, setRotation] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [pageInputValue, setPageInputValue] = useState("1");
-  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -126,38 +129,13 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
     Map<number, HTMLCanvasElement>
   >(new Map());
 
-  const forceRedrawCurrentPageOnly = useCallback((pageNumber: number) => {
-    if (!overlayCanvasRef.current) {
-      return;
-    }
-
-    const ctx = overlayCanvasRef.current.getContext("2d");
-    if (!ctx) {
-      return;
-    }
-
-    ctx.clearRect(
-      0,
-      0,
-      overlayCanvasRef.current.width,
-      overlayCanvasRef.current.height
-    );
-
-    const pageAnnotations = annotations.filter(
-      (ann) => ann.page === pageNumber
-    );
-
-    if (pageAnnotations.length === 0) {
-      return;
-    }
-
-    console.log(
-      `Redrawing ${pageAnnotations.length} annotations for page ${pageNumber}`
-    );
-
-    pageAnnotations.forEach((annotation) => {
+  // Draw a single annotation on the canvas
+  const drawAnnotation = useCallback(
+    (
+      ctx: CanvasRenderingContext2D,
+      annotation: DrawAnnotation | HighlightAnnotation
+    ) => {
       ctx.save();
-
       try {
         if (annotation.type === "draw") {
           ctx.strokeStyle = annotation.color;
@@ -181,18 +159,76 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
             annotation.width,
             annotation.height
           );
-        } else if (annotation.type === "text") {
-          ctx.fillStyle = annotation.color || "#000000";
-          ctx.font = `${annotation.fontSize || 16}px Arial`;
-          ctx.fillText(annotation.text, annotation.x, annotation.y);
         }
       } catch (error) {
         console.log(`Error drawing annotation:`, error);
       }
-
       ctx.restore();
-    });
-  }, [annotations]);
+    },
+    []
+  );
+
+  // Redraw only saved annotations (not temporary ones)
+  const redrawSavedAnnotations = useCallback(
+    (pageNumber: number) => {
+      if (!overlayCanvasRef.current) {
+        return;
+      }
+
+      const ctx = overlayCanvasRef.current.getContext("2d");
+      if (!ctx) {
+        return;
+      }
+
+      ctx.clearRect(
+        0,
+        0,
+        overlayCanvasRef.current.width,
+        overlayCanvasRef.current.height
+      );
+
+      const pageAnnotations = annotations.filter(
+        (ann) => ann.page === pageNumber
+      );
+
+      pageAnnotations.forEach((annotation) => {
+        ctx.save();
+        try {
+          if (annotation.type === "draw") {
+            ctx.strokeStyle = annotation.color;
+            ctx.lineWidth = annotation.strokeWidth;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.beginPath();
+
+            if (annotation.points && annotation.points.length > 0) {
+              ctx.moveTo(annotation.points[0].x, annotation.points[0].y);
+              for (let i = 1; i < annotation.points.length; i++) {
+                ctx.lineTo(annotation.points[i].x, annotation.points[i].y);
+              }
+            }
+            ctx.stroke();
+          } else if (annotation.type === "highlight") {
+            ctx.fillStyle = annotation.color + "80";
+            ctx.fillRect(
+              annotation.x,
+              annotation.y,
+              annotation.width,
+              annotation.height
+            );
+          } else if (annotation.type === "text") {
+            ctx.fillStyle = annotation.color || "#000000";
+            ctx.font = `${annotation.fontSize || 16}px Arial`;
+            ctx.fillText(annotation.text, annotation.x, annotation.y);
+          }
+        } catch (error) {
+          console.log(`Error drawing annotation:`, error);
+        }
+        ctx.restore();
+      });
+    },
+    [annotations]
+  );
 
   const renderPageSilent = useCallback(
     async (pageNumber: number): Promise<HTMLCanvasElement> => {
@@ -250,7 +286,10 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
               overlayCtx.beginPath();
 
               if (annotation.points && annotation.points.length > 0) {
-                overlayCtx.moveTo(annotation.points[0].x, annotation.points[0].y);
+                overlayCtx.moveTo(
+                  annotation.points[0].x,
+                  annotation.points[0].y
+                );
                 for (let i = 1; i < annotation.points.length; i++) {
                   overlayCtx.lineTo(
                     annotation.points[i].x,
@@ -339,19 +378,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
               overlayCanvas.width,
               overlayCanvas.height
             );
-            overlayCtx.fillStyle = "rgba(255,255,255,0)";
-            overlayCtx.fillRect(
-              0,
-              0,
-              overlayCanvas.width,
-              overlayCanvas.height
-            );
-            overlayCtx.clearRect(
-              0,
-              0,
-              overlayCanvas.width,
-              overlayCanvas.height
-            );
           }
         }
 
@@ -359,25 +385,25 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
           .promise;
 
         setTimeout(() => {
-          forceRedrawCurrentPageOnly(pageNumber);
-        }, 150);
+          redrawSavedAnnotations(pageNumber);
+        }, 100);
       } catch (error) {
         console.log(`Error rendering page ${pageNumber}:`, error);
         setError(`Failed to render page ${pageNumber}`);
       }
     },
-    [scale, rotation, forceRedrawCurrentPageOnly]
+    [scale, rotation, redrawSavedAnnotations]
   );
 
   const goToPage = useCallback(
     async (pageNumber: number) => {
       if (!pdfDoc || pageNumber < 1 || pageNumber > totalPages) return;
 
-      console.log(`Navigating from page ${currentPage} to page ${pageNumber}`);
-
       setIsDrawing(false);
       setIsHighlighting(false);
       setShowTextInput(false);
+      setCurrentDrawingAnnotation(null);
+      setCurrentHighlightAnnotation(null);
 
       if (overlayCanvasRef.current) {
         const overlayCtx = overlayCanvasRef.current.getContext("2d");
@@ -392,10 +418,9 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
       }
 
       setCurrentPage(pageNumber);
-
       await renderPage({ pdf: pdfDoc, pageNumber });
     },
-    [pdfDoc, totalPages, currentPage, renderPage]
+    [pdfDoc, totalPages, renderPage]
   );
 
   const handleZoomIn = useCallback(() => {
@@ -448,99 +473,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
   }, [currentPage]);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      ) {
-        return;
-      }
-
-      switch (e.key) {
-        case "ArrowRight":
-          e.preventDefault();
-          nextPage();
-          break;
-        case "ArrowLeft":
-          e.preventDefault();
-          prevPage();
-          break;
-        case "Home":
-          e.preventDefault();
-          goToPage(1);
-          break;
-        case "End":
-          e.preventDefault();
-          goToPage(totalPages);
-          break;
-        case "+":
-        case "=":
-          e.preventDefault();
-          handleZoomIn();
-          break;
-        case "-":
-        case "_":
-          e.preventDefault();
-          handleZoomOut();
-          break;
-        case "?":
-          e.preventDefault();
-          setShowKeyboardShortcuts(true);
-          break;
-        case "d":
-        case "D":
-          if (!e.ctrlKey && !e.metaKey) {
-            e.preventDefault();
-            setTool("draw");
-          }
-          break;
-        case "h":
-        case "H":
-          if (!e.ctrlKey && !e.metaKey) {
-            e.preventDefault();
-            setTool("highlight");
-          }
-          break;
-        case "t":
-        case "T":
-          if (!e.ctrlKey && !e.metaKey) {
-            e.preventDefault();
-            setTool("text");
-          }
-          break;
-        case "s":
-        case "S":
-          if (!e.ctrlKey && !e.metaKey) {
-            e.preventDefault();
-            setTool("none");
-          }
-          break;
-        case "Escape":
-          e.preventDefault();
-          setTool("none");
-          setShowTextInput(false);
-          break;
-        case "0":
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            handleResetZoom();
-          }
-          break;
-        case "f":
-        case "F":
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            toggleFullscreen();
-          }
-          break;
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [nextPage, prevPage, handleZoomIn, handleZoomOut, handleResetZoom, toggleFullscreen, totalPages, goToPage]);
-
-  useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
@@ -555,8 +487,7 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
       try {
         if (typeof window !== "undefined") {
           const pdfjs = await import("pdfjs-dist");
-          pdfjs.GlobalWorkerOptions.workerSrc =
-            `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+          pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
           setPdfjsLib(pdfjs);
         }
       } catch (error) {
@@ -566,12 +497,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
     };
     loadPdfjs();
   }, []);
-
-  useEffect(() => {
-    if (overlayCanvasRef.current) {
-      forceRedrawCurrentPageOnly(currentPage);
-    }
-  }, [currentPage, annotations, forceRedrawCurrentPageOnly]);
 
   const loadPdf = useCallback(
     async (pdfUrl: string) => {
@@ -594,27 +519,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
     },
     [pdfjsLib, renderPage]
   );
-
-  const combineCanvases = (): HTMLCanvasElement => {
-    if (!canvasRef.current || !overlayCanvasRef.current) {
-      throw new Error("Canvases not available");
-    }
-
-    const combinedCanvas = document.createElement("canvas");
-    const combinedCtx = combinedCanvas.getContext("2d");
-
-    if (!combinedCtx) {
-      throw new Error("Failed to get canvas context");
-    }
-
-    combinedCanvas.width = canvasRef.current.width;
-    combinedCanvas.height = canvasRef.current.height;
-
-    combinedCtx.drawImage(canvasRef.current, 0, 0);
-    combinedCtx.drawImage(overlayCanvasRef.current, 0, 0);
-
-    return combinedCanvas;
-  };
 
   const createAndUploadPDF = useCallback(async (): Promise<string | null> => {
     const originalPage = currentPage;
@@ -743,9 +647,8 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
 
       const uploadResult = await Promise.race([
         createMedia(formData).unwrap(),
-        new Promise<never>(
-          (_, reject) =>
-            setTimeout(() => reject(new Error("Upload timeout")), 120000)
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Upload timeout")), 120000)
         ),
       ]);
 
@@ -793,7 +696,15 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
       setDownloadProgress(0);
       setDownloadType("");
     }
-  }, [currentPage, pdfDoc, totalPages, renderPageSilent, createMedia, onUploadSuccess, goToPage]);
+  }, [
+    currentPage,
+    pdfDoc,
+    totalPages,
+    renderPageSilent,
+    createMedia,
+    onUploadSuccess,
+    goToPage,
+  ]);
 
   const DownloadProgressModal = () => {
     if (!isDownloading) return null;
@@ -863,15 +774,11 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
       const originalPage = currentPage;
 
       for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-        await goToPage(pageNum);
+        const renderedCanvas = await renderPageSilent(pageNum);
+        const imgData = renderedCanvas.toDataURL("image/jpeg", 0.95);
 
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        const combinedCanvas = combineCanvases();
-        const imgData = combinedCanvas.toDataURL("image/jpeg", 0.95);
-
-        const imgWidth = combinedCanvas.width;
-        const imgHeight = combinedCanvas.height;
+        const imgWidth = renderedCanvas.width;
+        const imgHeight = renderedCanvas.height;
 
         const pdfWidth = 210;
         const pdfHeight = 297;
@@ -903,7 +810,7 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
     } finally {
       setLoading(false);
     }
-  }, [pdfDoc, currentPage, totalPages, goToPage]);
+  }, [pdfDoc, currentPage, totalPages, goToPage, renderPageSilent]);
 
   useEffect(() => {
     if (pdfUri && pdfjsLib) {
@@ -913,159 +820,11 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
 
   useEffect(() => {
     if (showTextInput && textInputRef.current) {
-      console.log("Focusing text input");
       setTimeout(() => {
         textInputRef.current?.focus();
       }, 100);
     }
   }, [showTextInput]);
-
-  const KeyboardShortcutsModal = () => {
-    if (!showKeyboardShortcuts) return null;
-
-    return (
-      <div
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-        onClick={() => setShowKeyboardShortcuts(false)}
-      >
-        <div
-          className="bg-background rounded-xl p-6 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <h3 className="text-sm font-bold mb-6">Keyboard Shortcuts</h3>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Navigation Section */}
-            <div>
-              <h4 className="font-semibold mb-3 text-sm uppercase tracking-wide">
-                Navigation
-              </h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                  <span className="text-sm">Next page</span>
-                  <kbd className="px-3 py-1 bg-background rounded text-xs">
-                    →
-                  </kbd>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-sm">Previous page</span>
-                  <kbd className="px-3 py-1 bg-background rounded text-sm">
-                    ←
-                  </kbd>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-sm">First page</span>
-                  <kbd className="px-3 py-1 bg-background rounded text-sm">
-                    Home
-                  </kbd>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-sm">Last page</span>
-                  <kbd className="px-3 py-1 bg-background rounded text-md">
-                    End
-                  </kbd>
-                </div>
-              </div>
-            </div>
-
-            {/* View Section */}
-            <div>
-              <h4 className="font-semibold mb-3 text-sm uppercase tracking-wide">
-                View
-              </h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                  <span className="text-sm">Zoom in</span>
-                  <kbd className="px-3 py-1 bg-background rounded text-md">
-                    +
-                  </kbd>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                  <span className="text-sm">Zoom out</span>
-                  <kbd className="px-3 py-1 bg-background rounded text-md">
-                    -
-                  </kbd>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                  <span className="text-sm">Reset zoom</span>
-                  <kbd className="px-3 py-1 bg-background rounded text-md">
-                    Ctrl+0
-                  </kbd>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-sm">Fullscreen</span>
-                  <kbd className="px-3 py-1 bg-background rounded text-md">
-                    Ctrl+F
-                  </kbd>
-                </div>
-              </div>
-            </div>
-
-            {/* Tools Section */}
-            <div>
-              <h4 className="font-semibold mb-3 text-sm uppercase tracking-wide">
-                Tools
-              </h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                  <span className="text-sm">Select tool</span>
-                  <kbd className="px-3 py-1 bg-background rounded text-md">
-                    S
-                  </kbd>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                  <span className="text-sm">Draw tool</span>
-                  <kbd className="px-3 py-1 bg-background rounded text-md">
-                    D
-                  </kbd>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                  <span className="text-sm">Highlight tool</span>
-                  <kbd className="px-3 py-1 bg-background rounded text-md">
-                    H
-                  </kbd>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-sm">Text tool</span>
-                  <kbd className="px-3 py-1 bg-background rounded text-md">
-                    T
-                  </kbd>
-                </div>
-              </div>
-            </div>
-
-            {/* General Section */}
-            <div>
-              <h4 className="font-semibold text-sm mb-3 uppercase tracking-wide">
-                General
-              </h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                  <span className="text-sm">Show shortcuts</span>
-                  <kbd className="px-3 py-1 bg-background rounded text-md">
-                    ?
-                  </kbd>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-sm">Cancel/Deselect</span>
-                  <kbd className="px-3 py-1 bg-background rounded text-md">
-                    Esc
-                  </kbd>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <button
-            onClick={() => setShowKeyboardShortcuts(false)}
-            className="mt-6 w-full px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
-          >
-            Got it!
-          </button>
-        </div>
-      </div>
-    );
-  };
 
   const getCanvasCoordinates = (e: React.MouseEvent) => {
     if (!overlayCanvasRef.current) return { x: 0, y: 0 };
@@ -1098,7 +857,7 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
         color: drawColor,
         strokeWidth: strokeWidth,
       };
-      setAnnotations((prev) => [...prev, newAnnotation]);
+      setCurrentDrawingAnnotation(newAnnotation);
     } else if (tool === "highlight") {
       setIsHighlighting(true);
       const newAnnotation: HighlightAnnotation = {
@@ -1111,7 +870,7 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
         height: 0,
         color: highlightColor,
       };
-      setAnnotations((prev) => [...prev, newAnnotation]);
+      setCurrentHighlightAnnotation(newAnnotation);
     } else if (tool === "text") {
       setTextInputPos(coords);
       if (overlayCanvasRef.current) {
@@ -1127,37 +886,146 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    if (!overlayCanvasRef.current) return;
     const coords = getCanvasCoordinates(e);
+    const ctx = overlayCanvasRef.current.getContext("2d");
+    if (!ctx) return;
 
-    if (isDrawing && tool === "draw") {
-      setAnnotations((prev) => {
-        const newAnnotations = [...prev];
-        const lastAnnotation = newAnnotations[newAnnotations.length - 1];
-        if (lastAnnotation && lastAnnotation.type === "draw") {
-          lastAnnotation.points.push(coords);
+    if (isDrawing && tool === "draw" && currentDrawingAnnotation) {
+      // Add point to current drawing
+      currentDrawingAnnotation.points.push(coords);
+
+      // Redraw everything: saved annotations + current drawing
+      ctx.clearRect(
+        0,
+        0,
+        overlayCanvasRef.current.width,
+        overlayCanvasRef.current.height
+      );
+
+      // Draw saved annotations
+      const pageAnnotations = annotations.filter(
+        (ann) => ann.page === currentPage
+      );
+      pageAnnotations.forEach((annotation) => {
+        ctx.save();
+        try {
+          if (annotation.type === "draw") {
+            ctx.strokeStyle = annotation.color;
+            ctx.lineWidth = annotation.strokeWidth;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.beginPath();
+
+            if (annotation.points && annotation.points.length > 0) {
+              ctx.moveTo(annotation.points[0].x, annotation.points[0].y);
+              for (let i = 1; i < annotation.points.length; i++) {
+                ctx.lineTo(annotation.points[i].x, annotation.points[i].y);
+              }
+            }
+            ctx.stroke();
+          } else if (annotation.type === "highlight") {
+            ctx.fillStyle = annotation.color + "80";
+            ctx.fillRect(
+              annotation.x,
+              annotation.y,
+              annotation.width,
+              annotation.height
+            );
+          } else if (annotation.type === "text") {
+            ctx.fillStyle = annotation.color || "#000000";
+            ctx.font = `${annotation.fontSize || 16}px Arial`;
+            ctx.fillText(annotation.text, annotation.x, annotation.y);
+          }
+        } catch (error) {
+          console.log(`Error drawing annotation:`, error);
         }
-        return newAnnotations;
+        ctx.restore();
       });
-    } else if (isHighlighting && tool === "highlight") {
-      setAnnotations((prev) => {
-        const newAnnotations = [...prev];
-        const lastAnnotation = newAnnotations[newAnnotations.length - 1];
-        if (lastAnnotation && lastAnnotation.type === "highlight") {
-          lastAnnotation.width = coords.x - lastAnnotation.x;
-          lastAnnotation.height = coords.y - lastAnnotation.y;
+
+      // Draw current drawing annotation
+      drawAnnotation(ctx, currentDrawingAnnotation);
+    } else if (
+      isHighlighting &&
+      tool === "highlight" &&
+      currentHighlightAnnotation
+    ) {
+      // Update current highlight dimensions
+      currentHighlightAnnotation.width =
+        coords.x - currentHighlightAnnotation.x;
+      currentHighlightAnnotation.height =
+        coords.y - currentHighlightAnnotation.y;
+
+      // Redraw everything: saved annotations + current highlight
+      ctx.clearRect(
+        0,
+        0,
+        overlayCanvasRef.current.width,
+        overlayCanvasRef.current.height
+      );
+
+      // Draw saved annotations
+      const pageAnnotations = annotations.filter(
+        (ann) => ann.page === currentPage
+      );
+      pageAnnotations.forEach((annotation) => {
+        ctx.save();
+        try {
+          if (annotation.type === "draw") {
+            ctx.strokeStyle = annotation.color;
+            ctx.lineWidth = annotation.strokeWidth;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.beginPath();
+
+            if (annotation.points && annotation.points.length > 0) {
+              ctx.moveTo(annotation.points[0].x, annotation.points[0].y);
+              for (let i = 1; i < annotation.points.length; i++) {
+                ctx.lineTo(annotation.points[i].x, annotation.points[i].y);
+              }
+            }
+            ctx.stroke();
+          } else if (annotation.type === "highlight") {
+            ctx.fillStyle = annotation.color + "80";
+            ctx.fillRect(
+              annotation.x,
+              annotation.y,
+              annotation.width,
+              annotation.height
+            );
+          } else if (annotation.type === "text") {
+            ctx.fillStyle = annotation.color || "#000000";
+            ctx.font = `${annotation.fontSize || 16}px Arial`;
+            ctx.fillText(annotation.text, annotation.x, annotation.y);
+          }
+        } catch (error) {
+          console.log(`Error drawing annotation:`, error);
         }
-        return newAnnotations;
+        ctx.restore();
       });
+
+      // Draw current highlight annotation
+      drawAnnotation(ctx, currentHighlightAnnotation);
     }
   };
 
   const handleMouseUp = () => {
+    // Save the current annotation to the main annotations array
+    if (isDrawing && currentDrawingAnnotation) {
+      setAnnotations((prev) => [...prev, currentDrawingAnnotation]);
+      setCurrentDrawingAnnotation(null);
+      // Don't redraw - the annotation is already visible on canvas
+    } else if (isHighlighting && currentHighlightAnnotation) {
+      setAnnotations((prev) => [...prev, currentHighlightAnnotation]);
+      setCurrentHighlightAnnotation(null);
+      // Don't redraw - the annotation is already visible on canvas
+    }
+
     setIsDrawing(false);
     setIsHighlighting(false);
   };
 
   const handleTextSubmit = () => {
-    console.log("Text submit:", textValue, "at position:", textInputPos);
     if (textValue.trim()) {
       const newAnnotation: TextAnnotation = {
         id: Date.now(),
@@ -1169,10 +1037,19 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
         color: drawColor,
         fontSize: 16,
       };
-      setAnnotations((prev) => {
-        const updated = [...prev, newAnnotation];
-        return updated;
-      });
+      setAnnotations((prev) => [...prev, newAnnotation]);
+
+      // Manually draw the text annotation immediately
+      if (overlayCanvasRef.current) {
+        const ctx = overlayCanvasRef.current.getContext("2d");
+        if (ctx) {
+          ctx.save();
+          ctx.fillStyle = drawColor;
+          ctx.font = "16px Arial";
+          ctx.fillText(textValue, textInputPos.x, textInputPos.y + 16);
+          ctx.restore();
+        }
+      }
     }
     setShowTextInput(false);
     setTextValue("");
@@ -1217,7 +1094,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
                       ? "bg-accent text-sm shadow-sm"
                       : "text-gray-600 hover:text-primary"
                   }`}
-                  title="Select tool (S)"
                 >
                   Select
                 </button>
@@ -1228,7 +1104,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
                       ? "bg-white text-blue-600 shadow-sm"
                       : "text-gray-600 hover:text-primary"
                   }`}
-                  title="Draw tool (D)"
                 >
                   <Pen size={14} className="sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Draw</span>
@@ -1240,7 +1115,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
                       ? "bg-white text-yellow-600 shadow-sm"
                       : "text-gray-600 hover:text-primary"
                   }`}
-                  title="Highlight tool (H)"
                 >
                   <Highlighter size={14} className="sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Highlight</span>
@@ -1252,7 +1126,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
                       ? "bg-white text-green-600 shadow-sm"
                       : "text-gray-600 hover:text-primary"
                   }`}
-                  title="Text tool (T)"
                 >
                   <Type size={14} className="sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Text</span>
@@ -1265,7 +1138,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
               <button
                 onClick={clearAnnotations}
                 className="px-2 sm:px-4 py-1.5 sm:py-2 bg-orange-50 text-orange-600 hover:bg-orange-100 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1 sm:gap-2 border border-orange-200"
-                title="Clear current page annotations"
               >
                 <Eraser size={14} className="sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">Clear Page</span>
@@ -1273,17 +1145,9 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
               <button
                 onClick={clearAllAnnotations}
                 className="px-2 sm:px-4 py-1.5 sm:py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1 sm:gap-2 border border-red-200"
-                title="Clear all annotations"
               >
                 <Trash2 size={14} className="sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">Clear All</span>
-              </button>
-              <button
-                onClick={() => setShowKeyboardShortcuts(true)}
-                className="px-2 sm:px-4 py-1.5 sm:py-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-lg text-xs sm:text-sm font-medium transition-all border border-purple-200"
-                title="Keyboard shortcuts (?)"
-              >
-                ?
               </button>
             </div>
           </div>
@@ -1301,7 +1165,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
                 <button
                   onClick={handleZoomOut}
                   className="p-1.5 sm:p-2 text-sm bg-background rounded-lg transition-colors"
-                  title="Zoom out (-)"
                 >
                   <ZoomOut
                     size={16}
@@ -1314,7 +1177,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
                 <button
                   onClick={handleZoomIn}
                   className="p-1.5 sm:p-2 bg-background rounded-lg transition-colors"
-                  title="Zoom in (+)"
                 >
                   <ZoomIn
                     size={16}
@@ -1324,14 +1186,12 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
                 <button
                   onClick={handleResetZoom}
                   className="px-2 sm:px-3 py-1 sm:py-2 bg-background rounded-lg text-xs sm:text-sm transition-colors"
-                  title="Reset zoom (Ctrl+0)"
                 >
                   Fit
                 </button>
                 <button
                   onClick={handleRotate}
                   className="p-1.5 sm:p-2 bg-background rounded-lg transition-colors"
-                  title="Rotate 90°"
                 >
                   <RotateCw
                     size={16}
@@ -1341,7 +1201,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
                 <button
                   onClick={toggleFullscreen}
                   className="p-1.5 sm:p-2 bg-background rounded-lg transition-colors text-sm"
-                  title="Fullscreen (Ctrl+F)"
                 >
                   {isFullscreen ? (
                     <Minimize size={16} className="sm:w-[18px] sm:h-[18px]" />
@@ -1358,7 +1217,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
                 onClick={prevPage}
                 disabled={currentPage <= 1 || loading}
                 className="p-1.5 sm:p-2 bg-background rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Previous page (←)"
               >
                 <ChevronLeft
                   size={16}
@@ -1393,7 +1251,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
                 onClick={nextPage}
                 disabled={currentPage >= totalPages || loading}
                 className="p-1.5 sm:p-2 bg-background rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Next page (→)"
               >
                 <ChevronRight
                   size={16}
@@ -1416,7 +1273,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
                   value={drawColor}
                   onChange={(e) => setDrawColor(e.target.value)}
                   className="w-8 h-8 sm:w-10 sm:h-10 cursor-pointer transition-colors"
-                  title="Select draw color"
                 />
                 <div
                   className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-white shadow-sm"
@@ -1434,7 +1290,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
                   value={highlightColor}
                   onChange={(e) => setHighlightColor(e.target.value)}
                   className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg cursor-pointer transition-colors"
-                  title="Select highlight color"
                 />
                 <div
                   className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-white shadow-sm"
@@ -1456,7 +1311,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
                   value={strokeWidth}
                   onChange={(e) => setStrokeWidth(Number(e.target.value))}
                   className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                  title="Adjust stroke width"
                 />
                 <span className="text-xs sm:text-body-text font-semibold bg-background px-2 sm:px-3 py-1 rounded-lg min-w-[2.5rem] sm:min-w-[3rem] text-center">
                   {strokeWidth}px
@@ -1475,7 +1329,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
             <button
               onClick={createPDFAndDownload}
               className="flex-1 sm:flex-initial px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-1 sm:gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Create PDF with annotations and download"
               disabled={loading || isDownloading}
             >
               <Download size={14} className="sm:w-4 sm:h-4" />
@@ -1484,7 +1337,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
             <button
               onClick={handleUploadAndProcess}
               className="flex-1 sm:flex-initial px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-1 sm:gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Create PDF with annotations and upload to server"
               disabled={loading || isDownloading || isUploading}
             >
               <Download size={14} className="sm:w-4 sm:h-4" />
@@ -1550,7 +1402,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
               onClick={(e) => {
-                console.log("Canvas clicked! Tool:", tool);
                 e.preventDefault();
                 e.stopPropagation();
               }}
@@ -1619,9 +1470,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
       {/* Download Progress Modal */}
       <DownloadProgressModal />
 
-      {/* Keyboard Shortcuts Modal */}
-      <KeyboardShortcutsModal />
-
       {/* Quick Navigation Footer */}
       {totalPages > 0 && (
         <div className="mt-4 sm:mt-6 rounded-xl p-3 sm:p-4">
@@ -1640,14 +1488,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
               >
                 Last
               </button>
-            </div>
-
-            <div className="text-xs sm:text-sm text-gray-600">
-              Press{" "}
-              <kbd className="px-2 py-1 bg-gray-100 rounded border text-xs">
-                ?
-              </kbd>{" "}
-              for shortcuts
             </div>
           </div>
         </div>
