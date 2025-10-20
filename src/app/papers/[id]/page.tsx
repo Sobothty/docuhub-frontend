@@ -39,7 +39,6 @@ import PaperCard from "@/components/card/PaperCard";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import PDFViewer from "@/components/pdf/PDFView";
-import { useRouter } from "next/navigation";
 
 // Add type definitions
 interface Comment {
@@ -475,6 +474,9 @@ export default function PaperDetailPage({
   };
 
   const handleShare = (platform: string) => {
+    // Use window only on client side
+    if (typeof window === 'undefined') return;
+    
     const url = window.location.href;
     const title = paper?.title || "Paper";
     let shareUrl = "";

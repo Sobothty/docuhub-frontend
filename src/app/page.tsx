@@ -164,7 +164,9 @@ export default function Home() {
   const { scrollYProgress } = useScroll();
 
   const handleViewPaper = (paperId: number) => {
-    window.location.href = `/papers/${paperId}`;
+    if (typeof window !== 'undefined') {
+      window.location.href = `/papers/${paperId}`;
+    }
   };
   const handleDownloadPDF = (paperId: number) =>
     console.log("Download PDF:", paperId);

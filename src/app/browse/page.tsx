@@ -570,7 +570,11 @@ export default function BrowsePage() {
                     ⚠️ Error loading papers
                   </div>
                   <button
-                    onClick={() => window.location.reload()}
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        window.location.reload();
+                      }
+                    }}
                     className="mt-4 px-4 py-2 bg-secondary text-white rounded-lg hover:bg-secondary-hover"
                   >
                     Retry
