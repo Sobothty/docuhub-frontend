@@ -1,4 +1,4 @@
-// StudentSettingsPage.tsx - Fully typed version
+// StudentSettingsPage.tsx - Updated with export button in header
 "use client";
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
@@ -59,7 +59,6 @@ interface ApiError {
     | string;
   status?: number;
 }
-
 
 interface MediaUploadResponse {
   data?: {
@@ -143,7 +142,7 @@ export default function StudentSettingsPage() {
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingAcademic, setIsEditingAcademic] = useState(false);
-  const [showExportPopup, setShowExportPopup] = useState(false);
+  const [showExportProfile, setShowExportProfile] = useState(false);
 
   const [profileForm, setProfileForm] = useState<ProfileFormState>({
     userName: "",
@@ -342,10 +341,6 @@ export default function StudentSettingsPage() {
     }
   };
 
-  const handleCloseExport = () => {
-    setShowExportPopup(false);
-  };
-
   if (isLoading) {
     return (
       <div className="p-4 sm:p-6 space-y-6">
@@ -388,89 +383,86 @@ export default function StudentSettingsPage() {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-6 sm:space-y-8 max-w-6xl mx-auto px-3 sm:px-4 lg:px-6"
       >
-        {/* Enhanced Header Section */}
+        {/* Enhanced Header Section - Updated to match adviser layout */}
         <div className="text-center space-y-3 sm:space-y-4">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 lg:gap-8">
-            {/* Profile Image with Camera Button */}
-            <motion.div
-              className="relative inline-block group"
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <div className="relative">
-                <Image
-                  src={user?.imageUrl || "/placeholder.svg"}
-                  alt={user?.fullName || "Profile"}
-                  width={120}
-                  height={120}
-                  className="rounded-full border-4 border-white shadow-lg object-cover w-24 h-24 sm:w-32 sm:h-32 lg:w-36 lg:h-36"
-                  unoptimized
-                />
-                <button
-                  onClick={handleCameraClick}
-                  disabled={isUpdatingImage || isUploadingFile}
-                  className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-primary rounded-full p-1.5 sm:p-2 shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-                >
-                  {isUpdatingImage || isUploadingFile ? (
-                    <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin text-white" />
-                  ) : (
-                    <Camera className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
-                  )}
-                </button>
-              </div>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImageUpload}
-                accept="image/*"
-                className="hidden"
+          <motion.div
+            className="relative inline-block group"
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <div className="relative">
+              <Image
+                src={user?.imageUrl || "/placeholder.svg"}
+                alt={user?.fullName || "Profile"}
+                width={140}
+                height={140}
+                className="rounded-full border-4 border-white shadow-lg object-cover"
+                unoptimized
               />
-            </motion.div>
-
-            {/* Export Button */}
-            <div className="flex justify-center">
-              <Button
-                onClick={() => setShowExportPopup(true)}
-                variant="default"
-                size="lg"
-                className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
+              <button
+                onClick={handleCameraClick}
+                disabled={isUpdatingImage || isUploadingFile}
+                className="absolute bottom-2 right-2 bg-primary rounded-full p-2 shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
-                <Download className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="text-sm sm:text-base font-medium">
-                  Export Profile
-                </span>
-              </Button>
+                {isUpdatingImage || isUploadingFile ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-white" />
+                ) : (
+                  <Camera className="h-4 w-4 text-white" />
+                )}
+              </button>
             </div>
-          </div>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              accept="image/*"
+              className="hidden"
+            />
+          </motion.div>
 
           <div className="space-y-2">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent px-2">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               {user.fullName}
             </h1>
-            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground">
+            <p className="text-lg text-muted-foreground">
               {student?.university || "University Student"}
             </p>
             <div className="flex flex-wrap gap-2 justify-center">
-              <Badge variant="secondary" className="gap-1 text-xs sm:text-sm">
+              <Badge variant="secondary" className="gap-1">
                 <User className="h-3 w-3" />
                 {user.gender || "N/A"}
               </Badge>
-              <Badge variant="outline" className="gap-1 text-xs sm:text-sm">
+              <Badge variant="outline" className="gap-1">
                 <BookOpen className="h-3 w-3" />
                 {student?.major || "Undeclared"}
               </Badge>
-              <Badge variant="default" className="gap-1 text-xs sm:text-sm">
+              <Badge variant="default" className="gap-1">
                 <Shield className="h-3 w-3" />
                 Student
               </Badge>
             </div>
           </div>
-        </div>
 
-        {/* Export Profile Popup */}
-        {showExportPopup && (
-          <ProfileExport userType="student" onClose={handleCloseExport} />
-        )}
+          {/* Export Profile Button - Positioned like adviser page */}
+          <div className="flex justify-center mt-4">
+            <Button
+              onClick={() => setShowExportProfile(true)}
+              className="gap-2 bg-blue-600 hover:bg-blue-600/90"
+              size="lg"
+            >
+              <Download className="h-4 w-4" />
+              Export Profile
+            </Button>
+          </div>
+
+          {/* Export Profile Modal */}
+          {showExportProfile && (
+            <ProfileExport
+              userType="student"
+              onClose={() => setShowExportProfile(false)}
+            />
+          )}
+        </div>
 
         {/* Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
