@@ -218,7 +218,7 @@ export default function Home() {
                 style={{
                     scaleX: scrollYProgress,
                     position: "fixed",
-                    top: 133,
+                    top: 128,
                     left: 0,
                     right: 0,
                     height: 5,
@@ -227,7 +227,7 @@ export default function Home() {
                     zIndex: 9999,
                 }}
             />
-    <div className="min-h-screen flex flex-col">
+    <main className="min-h-screen flex flex-col overflow-x-hidden">
       
       {/* Hero Section */}
       <HeroSection />
@@ -318,7 +318,7 @@ export default function Home() {
           />
         </div>
       </section>
-    </div>
+    </main>
     </>
   );
 }

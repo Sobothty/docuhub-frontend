@@ -369,14 +369,14 @@ export default function MentorResourcesPage() {
           </div>
           <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+              <Button className="bg-gradient-to-r from-blue-600 bg-blue-600 hover:from-blue-700 hover:to-purple-700">
                 <Upload className="h-4 w-4 mr-2" />
-                Upload Resource
+                Upload Resource 
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="text-2xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <DialogTitle className="text-2xl font-semibold bg-gradient-to-r from-blue-600 bg-blue-600 bg-clip-text text-transparent">
                   Upload New Resource
                 </DialogTitle>
                 <DialogDescription className="text-muted-foreground">

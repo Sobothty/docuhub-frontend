@@ -1,18 +1,17 @@
-'use client';
+"use client";
 
-import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import type { Session } from 'next-auth';
-import { Sidebar } from './sidebar';
+import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import type { Session } from "next-auth";
+import { Sidebar } from "./sidebar";
 import {
   SidebarProvider,
   useSidebar,
-} from '@/components/contexts/sidebar-context';
-
+} from "@/components/contexts/sidebar-context";
 interface DashboardLayoutProps {
   children: ReactNode;
-  userRole: 'admin' | 'adviser' | 'student' | 'public';
+  userRole: "admin" | "adviser" | "student" | "public";
   userName?: string;
   userAvatar?: string;
 }
@@ -25,9 +24,9 @@ function DashboardLayoutContent({
 }: DashboardLayoutProps) {
   const [mounted, setMounted] = useState(false);
   const { data: session, status } = useSession();
-  const typedSession = (session as unknown as Session | null);
+  const typedSession = session as unknown as Session | null;
   const user = typedSession?.user;
-  const isLoading = status === 'loading';
+  const isLoading = status === "loading";
   const { isOpen } = useSidebar();
 
   // Avoid SSR/CSR mismatch by waiting until client mount
@@ -56,12 +55,12 @@ function DashboardLayoutContent({
     <div className="min-h-screen bg-background">
       <Sidebar
         userRole={userRole}
-        userName={userName || 'User'} // Fallback to session user name
-        userAvatar={userAvatar || '/placeholder.svg'} // Remove user.avatar reference
+        userName={userName || "User"} // Fallback to session user name
+        userAvatar={userAvatar || "/placeholder.svg"} // Remove user.avatar reference
       />
 
       {/* Main content */}
-      <div className={isOpen ? 'md:pl-64' : 'md:pl-16'}>
+      <div className={isOpen ? "md:pl-64" : "md:pl-16"}>
         <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
           <div className="space-y-6">{children}</div>
         </main>

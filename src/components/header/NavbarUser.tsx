@@ -128,6 +128,16 @@ export default function NavbarUser() {
     }
   };
 
+  const handleProfileSettingClick = () => {
+    if (userRoles.includes("STUDENT") && user?.student && user?.student.isStudent) {
+      router.push(`/student/settings`);
+    } else if (userRoles.includes("ADVISER") && user?.adviser) {
+      router.push("/adviser/settings");
+    } else {
+      router.push("/profile/settings");
+    }
+  };
+
   if (!mounted) return null;
 
   const navLinks = [
@@ -138,7 +148,7 @@ export default function NavbarUser() {
   ];
 
   return (
-    <nav className="fixed top-16 sm:top-13 left-0 w-full z-40 border-b bg-background/95 backdrop-blur-sm border-border py-2 shadow-md transition-all duration-300">
+    <nav className="fixed top-16 sm:top-13 md:top-12 left-0 w-full z-40 border-b bg-background/95 backdrop-blur-sm border-border py-2 shadow-md transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
         <Link href="/" className="inline-block">
           <Image
@@ -235,7 +245,7 @@ export default function NavbarUser() {
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuContent className="w-56 bg-background" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
@@ -252,17 +262,9 @@ export default function NavbarUser() {
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/profile/settings">
+              <DropdownMenuItem onClick={handleProfileSettingClick}>
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/profile/discussions">
-                  <Bell className="mr-2 h-4 w-4" />
-                  <span>Notifications</span>
-                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/profile/downloads">

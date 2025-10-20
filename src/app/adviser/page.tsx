@@ -42,8 +42,6 @@ export default function MentorOverviewPage() {
   }
   // ✅ Fetch adviser profile
   const { data: adviserProfile } = useGetUserProfileQuery();
-
-  // ✅ Fetch adviser assignments
   const { data, error, isLoading } = useGetAssignmentByAdviserQuery();
 
   if (isLoading)
