@@ -160,7 +160,7 @@ const getYear = (paper: { publishedAt?: string | null; createdAt?: string | null
 };
 
 export default function Home() {
-
+  // scroll progress bar
   const { scrollYProgress } = useScroll();
 
   const handleViewPaper = (paperId: number) => {
@@ -227,6 +227,7 @@ export default function Home() {
                     zIndex: 9999,
                 }}
             />
+    
     <div className="min-h-screen flex flex-col">
       
       {/* Hero Section */}

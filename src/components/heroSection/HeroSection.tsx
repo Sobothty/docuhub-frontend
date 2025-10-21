@@ -1,16 +1,67 @@
 'use client';
 
 import Image from 'next/image';
-import { FC } from 'react';
-import { useTranslation } from 'react-i18next';
+import { FC, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';    
+import { gsap } from "gsap";
 
 const HeroSection: FC = () => {
+  const textRef = useRef<HTMLHeadingElement>(null);
   const { t, i18n } = useTranslation('common');
 
   // Language switcher handler
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
   };
+
+  useEffect(() => {
+    if (!textRef.current) return;
+
+    // Split text into characters
+    const text = textRef.current.textContent || '';
+    textRef.current.innerHTML = text
+      .split('')
+      .map((char) => {
+        if (char === ' ') return '<span style="display: inline-block;">&nbsp;</span>';
+        return `<span style="display: inline-block;">${char}</span>`;
+      })
+      .join('');
+
+    // Create infinite looping animation timeline
+    const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.5 });
+
+    tl.fromTo(
+      textRef.current.children,
+      {
+        opacity: 0,
+        x: 0,
+        rotationX: -90,
+      },
+      {
+        opacity: 1,
+        x: 0,
+        rotationX: 0,
+        duration: 0.8,
+        stagger: 0.05,
+        ease: 'back.out(1.7)',
+      }
+    ).to(
+      textRef.current.children,
+      {
+        opacity: 0,
+        x: -50,
+        rotationX: 0,
+        duration: 0.8,
+        stagger: 0.05,
+        ease: 'back.out(1.7)',
+      },
+      '+=1'
+    );
+
+    return () => {
+      tl.kill();
+    };
+  }, []);
 
   return (
     <section className="h-[710px] bg-card px-4 sm:px-6 md:px-10 lg:px-16 py-6 sm:py-8 md:py-12 flex flex-col lg:flex-row items-center justify-between">
@@ -30,8 +81,8 @@ const HeroSection: FC = () => {
 
       {/* Left Content */}
       <div className="mt-20 max-w-xl lg:max-w-md ml-0 sm:ml-4 md:ml-8 lg:ml-20 text-center sm:text-left gap-10">
-        <h1 className="text-hero-subtitle sm:mb-6 text-2xl sm:text-3xl md:text-4xl lg:text-6xl">
-          {t('hero_title', 'Discover, Share & Collaborate on Academic Excellence')}
+        <h1 ref={textRef} style={{ perspective: '#f59e0b' }} className=" text-hero-subtitle sm:mb-6 text-2xl sm:text-3xl md:text-4xl lg:text-8xl tracking-tight leading-normal">
+          {t( 'Discover, Share & Collaborate on Academic Excellence')}
         </h1>
 
         <p className="mb-4 sm:mb-6 text-foreground text-base sm:text-lg">

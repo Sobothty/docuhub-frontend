@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^5.2.2",
     "@iconify-json/material-symbols": "^1.2.33",
     "@iconify/react": "^6.0.0",
