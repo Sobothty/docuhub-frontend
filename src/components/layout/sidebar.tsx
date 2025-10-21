@@ -22,13 +22,13 @@ import {
   Home,
   Upload,
   MessageSquare,
-  Download,
   LogOut,
   User,
   ChevronDown,
   ClipboardList,
   PanelLeftClose,
   PanelLeftOpen,
+  Stars
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { NotificationSystem } from "@/components/ui/notification-system";
@@ -69,11 +69,10 @@ const roleNavigation = {
   ],
   public: [
     { name: "Overview", href: "/profile", icon: Home },
-    { name: "My Downloads", href: "/profile/downloads", icon: Download },
     {
       name: "My Stars",
       href: "/profile/stars",
-      icon: MessageSquare,
+      icon: Stars,
     },
     { name: "Settings", href: "/profile/settings", icon: Settings },
   ],

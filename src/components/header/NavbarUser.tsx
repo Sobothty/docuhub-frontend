@@ -283,12 +283,6 @@ export default function NavbarUser() {
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/profile/discussions">
-                  <Bell className="mr-2 h-4 w-4" />
-                  <span>Notifications</span>
-                </Link>
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleClickStars}>
                   <Heart className="mr-2 h-4 w-4" />
                   <span>Saved Papers</span>

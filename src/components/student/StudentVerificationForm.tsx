@@ -437,7 +437,7 @@ export default function StudentVerificationForm({
             <Button
               type="submit"
               disabled={isLoading || isUploading || isUploadingMedia}
-              className="flex-1"
+              className="flex-1 bg-gray-600 hover:bg-gray-700 flex items-center justify-center"
             >
               {isLoading ? (
                 <>
@@ -446,7 +446,7 @@ export default function StudentVerificationForm({
                 </>
               ) : (
                 <>
-                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <CheckCircle className="h-4 w-4 mr-2 text-white" />
                   Submit Verification
                 </>
               )}

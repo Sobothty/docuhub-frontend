@@ -806,7 +806,7 @@ export default function PublicProfileSettings() {
                 </Label>
                 <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">
                   <Check className="h-3 w-3 mr-1" />
-                  Active
+                  {user.isActive ? "Active" : "Inactive"}
                 </Badge>
               </div>
               <div className="space-y-2">

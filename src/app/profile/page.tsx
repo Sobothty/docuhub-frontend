@@ -132,7 +132,7 @@ export default function ProfilePage() {
               <User className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">Active</div>
+              <div className="text-2xl font-bold text-green-600">{user.isActive ? "Active" : "Inactive"}</div>
               <p className="text-xs text-muted-foreground">
                 Member since {memberSince}
               </p>
@@ -188,7 +188,7 @@ export default function ProfilePage() {
                   Get verified as student
                 </p>
                 <Link href="/profile/verification">
-                  <Button size="sm" className="w-full">
+                  <Button size="sm" className="w-full bg-gray-700 hover:bg-gray-800">
                     <GraduationCap className="w-4 h-4 mr-2" />
                     Promote
                   </Button>

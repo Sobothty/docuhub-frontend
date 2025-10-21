@@ -1,9 +1,11 @@
+"use client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { MessageSquare, Search, Calendar, ThumbsUp, Reply } from "lucide-react"
 import DashboardLayout from "@/components/layout/dashboard-layout"
+import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice"
 
 export default function MyDiscussions() {
   const discussions = [
@@ -47,26 +49,30 @@ export default function MyDiscussions() {
       status: "active",
     },
   ]
-
+  const { data: profileData } = useGetUserProfileQuery();
   return (
-      <DashboardLayout userRole="public">
+      <DashboardLayout
+       userRole="public"
+       userName={profileData?.user.userName|| "User"}
+       userAvatar={profileData?.user.imageUrl || ""}
+       >
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">My Discussions</h1>
-            <p className="text-muted-foreground">Comments and discussions you&apos;ve participated in</p>
+            <h1 className="text-3xl font-bold text-foreground mb-2">My Favorite Papers</h1>
+            <p className="text-muted-foreground">Comments and stars you&apos;ve participated in</p>
           </div>
 
           {/* Search and Filter */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Search Discussions</CardTitle>
+              <CardTitle className="text-lg">Search Favorite</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex gap-4">
                 <div className="flex-1">
                   <div className="relative">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search your comments and discussions..." className="pl-10" />
+                    <Input placeholder="Search your stared papers..." className="pl-10" />
                   </div>
                 </div>
                 <Button variant="outline">Filter</Button>
