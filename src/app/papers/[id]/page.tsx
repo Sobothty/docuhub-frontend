@@ -39,8 +39,6 @@ import PaperCard from "@/components/card/PaperCard";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import PDFViewer from "@/components/pdf/PDFView";
-import { useRouter } from "next/navigation";
-
 // Add type definitions
 interface Comment {
   uuid: string;

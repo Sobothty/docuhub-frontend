@@ -71,8 +71,8 @@ const roleNavigation = {
     { name: "Overview", href: "/profile", icon: Home },
     { name: "My Downloads", href: "/profile/downloads", icon: Download },
     {
-      name: "My Discussions",
-      href: "/profile/discussions",
+      name: "My Stars",
+      href: "/profile/stars",
       icon: MessageSquare,
     },
     { name: "Settings", href: "/profile/settings", icon: Settings },

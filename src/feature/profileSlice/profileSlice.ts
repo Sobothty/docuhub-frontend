@@ -145,7 +145,7 @@ export const profileApi = createApi({
         return response;
       },
       transformErrorResponse: (error: ApiErrorResponse) => {
-        console.error("User update failed:", error);
+        console.log("User update failed:", error);
         return error;
       },
     }),
@@ -176,7 +176,7 @@ export const profileApi = createApi({
       },
       invalidatesTags: ["Profile"],
       transformErrorResponse: (error: ApiErrorResponse) => {
-        console.error("Adviser update failed:", error);
+        console.log("Adviser update failed:", error);
         return error;
       },
     }),
@@ -216,7 +216,7 @@ export const profileApi = createApi({
         return response;
       },
       transformErrorResponse: (error: ApiErrorResponse) => {
-        console.error("Student update failed:", error);
+        console.log("Student update failed:", error);
         return error;
       },
     }),

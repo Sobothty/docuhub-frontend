@@ -11,12 +11,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   BookOpen,
-  MessageSquare,
-  Download,
-  Calendar,
   User,
   GraduationCap,
   Briefcase,
+  Mail,
+  Phone,
+  MapPin,
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
@@ -77,14 +77,6 @@ export default function ProfilePage() {
                 </h2>
                 <p className="text-muted-foreground">Please try again later.</p>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">
-                  You can still proceed with verification.
-                </p>
-                <Link href="/profile/verification">
-                  <Button size="sm">Promote to Student</Button>
-                </Link>
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -102,6 +94,12 @@ export default function ProfilePage() {
       ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
       : user.userName.slice(0, 2).toUpperCase();
 
+  // Format contact number - handle "null" string case
+  const contactNumber =
+    user.contactNumber && user.contactNumber !== "null"
+      ? user.contactNumber
+      : null;
+
   return (
     <DashboardLayout
       userRole="public"
@@ -115,81 +113,79 @@ export default function ProfilePage() {
             My Profile
           </h1>
           <p className="text-muted-foreground">
-            Manage your public profile and activity
+            View your public profile information
           </p>
         </div>
 
         {/* Activity Overview */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Downloads</CardTitle>
-              <Download className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">
+                Account Status
+              </CardTitle>
+              <User className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">Papers downloaded</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Comments</CardTitle>
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold text-green-600">Active</div>
               <p className="text-xs text-muted-foreground">
-                Discussions participated
+                Member since {memberSince}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Saved Papers
-              </CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">User Role</CardTitle>
+              <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">Papers bookmarked</p>
+              <div className="text-2xl font-bold">Basic</div>
+              <p className="text-xs text-muted-foreground">Regular User</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Member Since
+                Profile Completion
               </CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{memberSince}</div>
-              <p className="text-xs text-muted-foreground">Active member</p>
+              <div className="text-2xl font-bold">
+                {
+                  [
+                    user.firstName,
+                    user.lastName,
+                    user.bio,
+                    user.address,
+                    contactNumber,
+                  ].filter(Boolean).length
+                }
+                /5
+              </div>
+              <p className="text-xs text-muted-foreground">Basic info added</p>
             </CardContent>
           </Card>
 
-          {/* Promote to Student CTA */}
+          {/* Student Promotion CTA - Only show if not student */}
           {!user.isStudent && (
-            <Card className="lg:col-span-2">
+            <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Unlock Student Features
+                  Student Features
                 </CardTitle>
                 <GraduationCap className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Get verified as a student to submit papers, access mentorship,
-                  and more.
+                <p className="text-xs text-muted-foreground mb-2">
+                  Get verified as student
                 </p>
                 <Link href="/profile/verification">
-                  <Button size="sm">
+                  <Button size="sm" className="w-full">
                     <GraduationCap className="w-4 h-4 mr-2" />
-                    Promote to Student
+                    Promote
                   </Button>
                 </Link>
               </CardContent>
@@ -203,7 +199,8 @@ export default function ProfilePage() {
             <CardTitle>Profile Information</CardTitle>
             <CardDescription>Your public profile details</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            {/* Profile Header */}
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
                 {user.imageUrl ? (
@@ -223,22 +220,26 @@ export default function ProfilePage() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold">{user.fullName}</h3>
-                <p className="text-muted-foreground">{user.email}</p>
+                <p className="text-muted-foreground">@{user.userName}</p>
                 <div className="flex gap-2 mt-2">
+                  <Badge variant="default" className="text-xs">
+                    <User className="w-3 h-3 mr-1" />
+                    User
+                  </Badge>
                   {user.isStudent && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="secondary" className="text-xs">
                       <GraduationCap className="w-3 h-3 mr-1" />
                       Student
                     </Badge>
                   )}
                   {user.isAdvisor && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="secondary" className="text-xs">
                       <Briefcase className="w-3 h-3 mr-1" />
                       Advisor
                     </Badge>
                   )}
                   {user.isAdmin && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="destructive" className="text-xs">
                       <User className="w-3 h-3 mr-1" />
                       Admin
                     </Badge>
@@ -247,42 +248,137 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* Personal Information Grid */}
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-lg border-b pb-2">
+                  Basic Information
+                </h4>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">Email</p>
+                      <p className="text-muted-foreground">{user.email}</p>
+                    </div>
+                  </div>
+
+                  {user.firstName && (
+                    <div>
+                      <p className="text-sm font-medium">First Name</p>
+                      <p className="text-muted-foreground">{user.firstName}</p>
+                    </div>
+                  )}
+
+                  {user.lastName && (
+                    <div>
+                      <p className="text-sm font-medium">Last Name</p>
+                      <p className="text-muted-foreground">{user.lastName}</p>
+                    </div>
+                  )}
+
+                  {user.gender && (
+                    <div>
+                      <p className="text-sm font-medium">Gender</p>
+                      <p className="text-muted-foreground capitalize">
+                        {user.gender.toLowerCase()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-lg border-b pb-2">
+                  Contact Information
+                </h4>
+
+                <div className="space-y-3">
+                  {contactNumber && (
+                    <div className="flex items-center gap-3">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium">Contact Number</p>
+                        <p className="text-muted-foreground">{contactNumber}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {user.address && (
+                    <div className="flex items-center gap-3">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium">Address</p>
+                        <p className="text-muted-foreground">{user.address}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {user.telegramId && (
+                    <div>
+                      <p className="text-sm font-medium">Telegram ID</p>
+                      <p className="text-muted-foreground">{user.telegramId}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Bio Section */}
             {user.bio && (
-              <div>
+              <div className="border-t pt-4">
                 <h4 className="font-medium mb-2">Bio</h4>
-                <p className="text-muted-foreground">{user.bio}</p>
+                <p className="text-muted-foreground leading-relaxed">
+                  {user.bio}
+                </p>
               </div>
             )}
 
-            {user.address && (
-              <div>
-                <h4 className="font-medium mb-2">Address</h4>
-                <p className="text-muted-foreground">{user.address}</p>
+            {/* Account Information */}
+            <div className="border-t pt-4">
+              <h4 className="font-medium mb-3">Account Information</h4>
+              <div className="grid gap-4 text-sm md:grid-cols-2">
+                <div>
+                  <p className="font-medium">Member Since</p>
+                  <p className="text-muted-foreground">
+                    {new Date(user.createDate).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium">Last Updated</p>
+                  <p className="text-muted-foreground">
+                    {new Date(user.updateDate).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium">User ID</p>
+                  <p className="text-muted-foreground font-mono text-xs">
+                    {user.uuid}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium">Status</p>
+                  <Badge variant={user.isActive ? "default" : "secondary"}>
+                    {user.isActive ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
               </div>
-            )}
-
-            {user.contactNumber && user.contactNumber !== "null" && (
-              <div>
-                <h4 className="font-medium mb-2">Contact Number</h4>
-                <p className="text-muted-foreground">{user.contactNumber}</p>
-              </div>
-            )}
-
-            <div className="flex items-center gap-2">
-              <Button>Edit Profile</Button>
-              {!user.isStudent && (
-                <Link href="/profile/verification" className="inline-block">
-                  <Button variant="secondary">
-                    <GraduationCap className="w-4 h-4 mr-2" />
-                    Promote to Student
-                  </Button>
-                </Link>
-              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Student Information */}
+        {/* Student Information - Only show if student exists */}
         {student && (
           <Card>
             <CardHeader>
@@ -328,7 +424,21 @@ export default function ProfilePage() {
           </Card>
         )}
 
-        {/* End main content */}
+        {/* Empty State for Missing Information */}
+        {!user.bio && !user.address && !contactNumber && !user.telegramId && (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="space-y-2">
+                <BookOpen className="h-12 w-12 text-muted-foreground mx-auto" />
+                <h3 className="text-lg font-semibold">Complete Your Profile</h3>
+                <p className="text-muted-foreground">
+                  Add more information to your profile to get the most out of
+                  our platform.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );

@@ -139,9 +139,9 @@ export default function NavbarUser() {
     ) {
       router.push(`/student/starts`);
     } else if (userRoles.includes("ADVISER") && user?.adviser) {
-      router.push("/adviser");
+      router.push("/adviser/stars");
     } else {
-      router.push("/profile");
+      router.push("/profile/stars");
     }
   };
 
