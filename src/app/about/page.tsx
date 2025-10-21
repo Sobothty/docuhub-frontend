@@ -265,7 +265,7 @@ export default function AboutUsPage() {
                     style={{
                         scaleX: scrollYProgress,
                         position: "fixed",
-                        top: 133,
+                        top: 129,
                         left: 0,
                         right: 0,
                         height: 5,

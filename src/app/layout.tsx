@@ -163,7 +163,7 @@ export default function RootLayout({
         <Providers>
           <StickyBanner />
           <NavbarWrapper />
-          <main className="mt-20">
+          <main className="mt-20 overflow-x-hidden">
             {children}
             <SpeedInsights />
             <Analytics />

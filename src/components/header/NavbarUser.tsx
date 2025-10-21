@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  Star,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import Image from "next/image";
@@ -138,7 +139,7 @@ export default function NavbarUser() {
   ];
 
   return (
-    <nav className="fixed top-16 sm:top-13 left-0 w-full z-40 border-b bg-background/95 backdrop-blur-sm border-border py-2 shadow-md transition-all duration-300">
+    <nav className="fixed top-16 sm:top-13 md:top-12 left-0 w-full z-40 border-b bg-background/95 backdrop-blur-sm border-border py-2 shadow-md transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
         <Link href="/" className="inline-block">
           <Image
@@ -181,12 +182,12 @@ export default function NavbarUser() {
             )}
           </button>
 
-          <button className="p-2 rounded-full hover:bg-muted transition">
+          {/* <button className="p-2 rounded-full hover:bg-muted transition">
             <Bell className="h-5 w-5 text-secondary" />
-          </button>
+          </button> */}
 
           <button className="p-2 rounded-full hover:bg-muted transition">
-            <Heart className="h-5 w-5 text-secondary" />
+            <Star className="h-5 w-5 text-secondary" />
           </button>
 
           <div
