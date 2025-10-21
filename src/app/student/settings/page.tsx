@@ -380,15 +380,15 @@ export default function StudentSettingsPage() {
     >
       <motion.div
         initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
+        animate={{ opacity: 2, y: 0 }}
         className="space-y-6 sm:space-y-8 max-w-6xl mx-auto px-3 sm:px-4 lg:px-6"
       >
         {/* Enhanced Header Section - Updated to match adviser layout */}
         <div className="text-center space-y-3 sm:space-y-4">
           <motion.div
             className="relative inline-block group"
-            whileHover={{ scale: 1.02 }}
-            transition={{ type: "spring", stiffness: 300 }}
+            whileHover={{ scale: 1.12 }}
+            transition={{ type: "spring", stiffness: 400 }}
           >
             <div className="relative">
               <Image
@@ -421,7 +421,7 @@ export default function StudentSettingsPage() {
           </motion.div>
 
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text">
               {user.fullName}
             </h1>
             <p className="text-lg text-muted-foreground">

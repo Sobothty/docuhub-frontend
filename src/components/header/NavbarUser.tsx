@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  Star,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import Image from "next/image";
@@ -212,8 +213,8 @@ export default function NavbarUser() {
             <Bell className="h-5 w-5 text-secondary" />
           </button>
 
-          <button className="p-2 rounded-full hover:bg-muted transition">
-            <Heart className="h-5 w-5 text-secondary" />
+          <button className="p-2 rounded-full hover:text-accent transition">
+            <Star className="h-5 w-5 text-secondary" />
           </button>
 
           <div
@@ -262,7 +263,7 @@ export default function NavbarUser() {
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-background" align="end" forceMount>
+            <DropdownMenuContent className="w-56 bg-background z-10000" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">

@@ -167,9 +167,6 @@ export default function StudentFeedbackDetailPage() {
                     <div className="font-medium">
                       {feedbackData?.advisorName}
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {feedbackData?.adviserImageUrl}
-                    </div>
                   </div>
                   {getStatusBadge(feedbackData?.status || "")}
                 </div>

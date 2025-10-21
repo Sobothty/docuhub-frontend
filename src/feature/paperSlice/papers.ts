@@ -76,6 +76,14 @@ export interface Assignment {
   updateDate: string | null;
 }
 
+export interface updatePaperRequest{
+  title: string;
+  abstractText?: string;
+  fileUrl: string;
+  thumbnailUrl: string;
+  categoryNames: string[];
+}
+
 // Custom base query to handle text responses
 const customBaseQuery = async (
   args: string | FetchArgs,
@@ -141,6 +149,13 @@ export const papersApi = createApi({
       }),
       invalidatesTags: ["Papers"],
     }),
+    updatePaper: builder.mutation<PaperCreateResponse, {uuid: string, paperData: updatePaperRequest}>({
+      query: ({uuid, paperData}) => ({
+        url: `/papers/author/${uuid}`,
+        method: "PUT",
+        body: paperData,
+      }),
+    }),
     getAllPublishedPapers: builder.query<ApiResponse, PaginationParams>({
       queryFn: async (arg, api, extraOptions) => {
         const {
@@ -183,6 +198,12 @@ export const papersApi = createApi({
       query: (uuid) => `/papers/${uuid}`,
       providesTags: (result, error, uuid) => [{ type: "Papers", id: uuid }],
     }),
+    deletePaper: builder.mutation<void, string>({
+      query: (uuid) => ({
+        url: `/papers/author/${uuid}`,
+        method: "DELETE",
+      }),
+    })
   }),
 });
 
@@ -194,6 +215,8 @@ export const {
   useGetAllAssignmentsQuery,
   useGetAllAdviserAssignmentsQuery,
   useGetPaperByUuidQuery,
+  useDeletePaperMutation,
+  useUpdatePaperMutation
 } = papersApi;
 
 // Export reducer

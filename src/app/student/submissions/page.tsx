@@ -52,11 +52,15 @@ import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import {
   useGetPapersByAuthorQuery,
   useGetAllAssignmentsQuery,
+  useDeletePaperMutation,
+  useUpdatePaperMutation,
 } from "@/feature/paperSlice/papers";
 import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
 import { useState, useMemo } from "react";
 import { Paper } from "@/types/paperType";
 import { Assignment } from "@/feature/paperSlice/papers";
+import { useGetCategoryNamesQuery } from "@/feature/categoriesSlice/categoriesSlices";
+import { useCreateMediaMutation } from "@/feature/media/mediaSlice";
 
 interface PaperData {
   assignment: Assignment | undefined;
@@ -136,6 +140,80 @@ export default function StudentSubmissionsPage() {
     }
   };
 
+  const [editOpen, setEditOpen] = useState(false);
+  const [editPaper, setEditPaper] = useState<Paper | null>(null);
+
+  // For edit form fields
+  const [editTitle, setEditTitle] = useState("");
+  const [editAbstract, setEditAbstract] = useState("");
+  const [editFileUrl, setEditFileUrl] = useState("");
+  const [editThumbnailUrl, setEditThumbnailUrl] = useState("");
+  const [editCategories, setEditCategories] = useState<string[]>([]);
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
+
+  const { data: categoryNames = [] } = useGetCategoryNamesQuery();
+  const [updatePaper, { isLoading: isUpdating }] = useUpdatePaperMutation();
+  const [createMedia, { isLoading: isUploading }] = useCreateMediaMutation();
+
+  // Open edit dialog and prefill fields
+  const handleEditClick = (paper: Paper) => {
+    setEditPaper(paper);
+    setEditTitle(paper.title);
+    setEditAbstract(paper.abstractText ?? "");
+    setEditFileUrl(paper.fileUrl ?? "");
+    setEditThumbnailUrl(paper.thumbnailUrl ?? "");
+    setEditCategories(paper.categoryNames ?? []);
+    setEditOpen(true);
+  };
+
+  // Generate preview URL for new file
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setNewFile(file);
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setFilePreviewUrl(url);
+    } else {
+      setFilePreviewUrl(null);
+    }
+  };
+
+  // Handle edit form submit
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editPaper) return;
+    try {
+      let updatedFileUrl = editFileUrl;
+      if (newFile) {
+        const formData = new FormData();
+        formData.append("file", newFile);
+        const res = await createMedia(formData).unwrap();
+        updatedFileUrl = res.data.uri || editFileUrl;
+        // Clean up preview URL
+        if (filePreviewUrl) {
+          URL.revokeObjectURL(filePreviewUrl);
+          setFilePreviewUrl(null);
+        }
+      }
+      await updatePaper({
+        uuid: editPaper.uuid,
+        paperData: {
+          title: editTitle,
+          abstractText: editAbstract,
+          fileUrl: updatedFileUrl,
+          thumbnailUrl: editThumbnailUrl,
+          categoryNames: editCategories,
+        },
+      }).unwrap();
+      setEditOpen(false);
+      setNewFile(null);
+    } catch (err) {
+      // Optionally handle error
+      console.log("Update failed", err);
+    }
+  };
+
   return (
     <DashboardLayout
       userRole="student"
@@ -155,7 +233,7 @@ export default function StudentSubmissionsPage() {
           </div>
           <Dialog>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="text-white">
                 <Upload className="h-4 w-4 mr-2" />
                 Upload New Paper
               </Button>
@@ -198,6 +276,144 @@ export default function StudentSubmissionsPage() {
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* Edit Paper Dialog */}
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Paper</DialogTitle>
+              <DialogDescription>
+                Update your paper details below.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-title">Title</Label>
+                <Input
+                  id="edit-title"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-abstract">Abstract</Label>
+                <Textarea
+                  id="edit-abstract"
+                  value={editAbstract}
+                  onChange={(e) => setEditAbstract(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-file">Paper File</Label>
+                <div className="flex gap-2 items-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      if (editFileUrl) {
+                        const a = document.createElement("a");
+                        a.href = editFileUrl;
+                        a.download =
+                          editTitle
+                            .replace(/[^a-z0-9\-\s]/gi, "")
+                            .replace(/\s+/g, "-") + ".pdf";
+                        a.target = "_blank";
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                      }
+                    }}
+                  >
+                    Deploy Old File
+                  </Button>
+                  <Input
+                    id="edit-file-upload"
+                    type="file"
+                    accept="application/pdf"
+                    onChange={handleFileChange}
+                    disabled={isUploading}
+                  />
+                  {isUploading && (
+                    <span className="text-xs text-muted-foreground">
+                      Uploading...
+                    </span>
+                  )}
+                </div>
+                {/* PDF Preview */}
+                <div className="mt-2">
+                  {filePreviewUrl ? (
+                    <div className="text-sm">
+                      {newFile?.name} :{" "}
+                      <a
+                        href={filePreviewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {filePreviewUrl}
+                      </a>
+                    </div>
+                  ) : (
+                    editFileUrl && (
+                      <div className="text-sm">
+                        {editFileUrl.split("/").pop()} :{" "}
+                        <a
+                          href={editFileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {editFileUrl}
+                        </a>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-thumbnail">Thumbnail URL</Label>
+                <Input
+                  id="edit-thumbnail"
+                  value={editThumbnailUrl}
+                  onChange={(e) => setEditThumbnailUrl(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-categories">Category</Label>
+                <select
+                  id="edit-categories"
+                  className="w-full border rounded px-2 py-1"
+                  value={editCategories[0] || ""}
+                  onChange={(e) => setEditCategories([e.target.value])}
+                >
+                  <option value="">Select category</option>
+                  {categoryNames
+                    .filter((cat) => cat !== "all")
+                    .map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <DialogFooter>
+                <Button type="submit" disabled={isUpdating || isUploading}>
+                  {isUpdating ? "Updating..." : "Update"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setEditOpen(false);
+                    setNewFile(null);
+                    setFilePreviewUrl(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         {/* Search */}
         <Card>
@@ -265,6 +481,7 @@ export default function StudentSubmissionsPage() {
                         assignment={assignment}
                         adviserUuid={adviserUuid}
                         getStatusBadge={getStatusBadge}
+                        onEdit={() => handleEditClick(paper)}
                       />
                     );
                   })}
@@ -284,15 +501,29 @@ function SubmissionRow({
   assignment,
   adviserUuid,
   getStatusBadge,
+  onEdit,
 }: {
   paper: Paper;
   assignment: Assignment | undefined;
   adviserUuid: string | null;
   getStatusBadge: (status: string) => React.ReactNode;
+  onEdit: () => void;
 }) {
   const { data: adviserData } = useGetUserByIdQuery(adviserUuid || "", {
     skip: !adviserUuid,
   });
+
+  // Use RTK mutation hook
+  const [deletePaper, { isLoading: isDeleting }] = useDeletePaperMutation();
+
+  const handleDeletePaper = async () => {
+    try {
+      await deletePaper(paper.uuid).unwrap();
+    } catch (error) {
+      // Optionally handle error
+      console.log("Failed to delete paper:", error);
+    }
+  };
 
   const handleDownload = () => {
     // Create a download link for the paper file
@@ -346,9 +577,12 @@ function SubmissionRow({
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link href={`/student/submissions/${paper.uuid}`}>
+          <DropdownMenuContent align="end" className="bg-background">
+            <DropdownMenuItem>
+              <Link
+                href={`/student/submissions/${paper.uuid}`}
+                className="flex"
+              >
                 <Eye className="h-4 w-4 mr-2" />
                 View Details
               </Link>
@@ -357,18 +591,20 @@ function SubmissionRow({
               <Download className="h-4 w-4 mr-2" />
               Download
             </DropdownMenuItem>
-            {paper.status === "REJECTED" && (
-              <>
-                <DropdownMenuItem>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit & Resubmit
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-red-600">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </DropdownMenuItem>
-              </>
+            {paper.status === "PENDING" && (
+              <DropdownMenuItem onClick={onEdit}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
             )}
+            <DropdownMenuItem
+              className="text-red-600"
+              onClick={handleDeletePaper}
+              disabled={isDeleting}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              {isDeleting ? "Deleting..." : "Delete"}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>

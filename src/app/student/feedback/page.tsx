@@ -18,11 +18,13 @@ import {
   XCircle,
   Eye,
   Download,
+  Loader2Icon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetAllFeedbackByAuthorQuery } from "@/feature/feedbackSlice/feedbackSlice";
 import { useGetPaperByUuidQuery } from "@/feature/paperSlice/papers";
+import DocuhubLoader from "@/components/loader/docuhub-loading";
 
 // Add type definitions
 interface Feedback {
@@ -87,7 +89,6 @@ function FeedbackItem({ feedback, isLast }: FeedbackItemProps) {
       console.log(`Downloaded: ${filename}`);
     } catch (error) {
       console.error("Error downloading file:", error);
-      alert("Failed to download file. Please try again.");
     }
   };
 
@@ -275,8 +276,8 @@ export default function StudentFeedbackPage() {
           </CardHeader>
           <CardContent>
             {feedbackLoading ? (
-              <div className="py-12 text-center">
-                <p className="text-muted-foreground">Loading feedback...</p>
+              <div className="py-12 text-center items-center space-y-4">
+                <DocuhubLoader />
               </div>
             ) : allFeedback.length === 0 ? (
               <div className="py-12 text-center">

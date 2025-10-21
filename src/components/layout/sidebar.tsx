@@ -29,6 +29,7 @@ import {
   ClipboardList,
   PanelLeftClose,
   PanelLeftOpen,
+  Star,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { NotificationSystem } from "@/components/ui/notification-system";
@@ -55,8 +56,8 @@ const roleNavigation = {
     { name: "Overview", href: "/adviser", icon: Home },
     { name: "Assigned Students", href: "/adviser/students", icon: Users },
     { name: "Documents", href: "/adviser/documents", icon: ClipboardList },
-    // { name: "Notifications", href: "/adviser/notifications", icon: Bell },
     { name: "Resources", href: "/adviser/resources", icon: BookOpen },
+    { name: "Favorites", href: "/adviser/favorites", icon: Star },
     { name: "Settings", href: "/adviser/settings", icon: Settings },
   ],
   student: [
@@ -64,6 +65,7 @@ const roleNavigation = {
     { name: "Documents", href: "/student/proposals", icon: ClipboardList },
     { name: "My Submissions", href: "/student/submissions", icon: Upload },
     { name: "Feedback", href: "/student/feedback", icon: MessageSquare },
+    { name: "Favorites", href: "/student/favorites", icon: Star },
     { name: "Mentorship", href: "/student/mentorship", icon: Users },
     { name: "Settings", href: "/student/settings", icon: Settings },
   ],
@@ -75,6 +77,7 @@ const roleNavigation = {
       href: "/profile/discussions",
       icon: MessageSquare,
     },
+    { name: "Favorites", href: "/profile/favorites", icon: Star },
     { name: "Settings", href: "/profile/settings", icon: Settings },
   ],
 };

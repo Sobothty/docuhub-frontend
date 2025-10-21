@@ -22,23 +22,24 @@ import {
   Plus,
   BookOpen,
   TrendingUp,
+  Star,
 } from "lucide-react";
 import Link from "next/link";
-import HorizontalCard from "@/components/card/HorizontalCard";
+import HorizontalCard from "@/components/card/HorizontalCardForAuthor";
 import { useState, useEffect } from "react";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetPapersByAuthorQuery } from "@/feature/paperSlice/papers";
 import { useGetAllStarOfPapersQuery } from "@/feature/star/StarSlice";
 import { useRouter } from "next/navigation";
+import { PaperCardSkeleton } from "./proposals/PaperSkeleton";
 
 export default function StudentOverviewPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<string>("documents");
   const router = useRouter();
-  const { data:user } = useGetUserProfileQuery();
-  const {
-    data: starData,
-    isLoading: starLoading,
-  } = useGetAllStarOfPapersQuery();
+  const { data: user } = useGetUserProfileQuery();
+  const { data: starData, isLoading: starLoading } =
+    useGetAllStarOfPapersQuery();
 
   // Use useEffect to redirect if not a student (prevent SSR issues)
   useEffect(() => {
@@ -62,6 +63,10 @@ export default function StudentOverviewPage() {
   // Extract papers from the response
   const authorPapers = papersData?.papers?.content || [];
 
+  // Helper to get star count for a paper
+  const getStarCount = (paperUuid: string) =>
+    starData?.filter((star) => star.paperUuid === paperUuid).length || 0;
+
   // Filter documents based on search query
   const filteredDocuments = authorPapers
     .filter((paper) =>
@@ -75,8 +80,7 @@ export default function StudentOverviewPage() {
       feedback: paper.isApproved ? "Approved" : "Under review",
       progress: paper.isApproved ? 100 : 75,
       fileSize: "2.4 MB", // You may need to calculate this from fileUrl
-      downloads: 0, // Add this to your backend if needed
-      citations: 0, // Add this to your backend if needed
+      downloads: paper.downloads || 0, // Add this to your backend if needed
       isWishlist: false,
       authors: [paper.authorUuid],
       journal: paper.categoryNames[0] || "N/A",
@@ -86,6 +90,7 @@ export default function StudentOverviewPage() {
       abstract: paper.abstractText,
       tags: paper.categoryNames,
       image: paper.thumbnailUrl || "/placeholder.svg?height=200&width=300",
+      star: getStarCount(paper.uuid), // <-- add star count here
     }));
 
   return (
@@ -180,10 +185,24 @@ export default function StudentOverviewPage() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs
+          defaultValue={activeTab}
+          className="space-y-6"
+          onValueChange={setActiveTab}
+        >
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="documents">My Papers</TabsTrigger>
+            <TabsTrigger
+              value="documents"
+              className="data-[state=active]:bg-accent transition-colors duration-700"
+            >
+              My Papers
+            </TabsTrigger>
+            <TabsTrigger
+              value="overview"
+              className="data-[state=active]:bg-accent transition-colors duration-700"
+            >
+              Overview
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -360,7 +379,7 @@ export default function StudentOverviewPage() {
               </CardHeader>
               <CardContent>
                 {papersLoading ? (
-                  <div className="text-center py-8">Loading your papers...</div>
+                  <PaperCardSkeleton /> 
                 ) : paperError ? (
                   <div className="text-center py-8 text-red-500">
                     Failed to load papers. Please try again.
@@ -376,20 +395,18 @@ export default function StudentOverviewPage() {
                         key={doc.id}
                         id={doc.id}
                         title={doc.title}
-                        authors={doc.authors}
-                        authorImage="/placeholder.svg?height=24&width=24"
                         journal={doc.journal}
                         year={doc.year}
-                        citations={doc.citations.toString()}
+                        downloads={doc.downloads.toString()}
                         abstract={doc.abstract || ""}
                         tags={doc.tags}
                         image={doc.image}
-                        isBookmarked={doc.isWishlist}
+                        star={doc.star.toString()} // <-- pass star count to card
                         onDownloadPDF={() =>
-                          window.open(`/papers/${doc.id}`, "_blank")
-                        }
-                        onToggleBookmark={() =>
-                          console.log(`Toggle bookmark for ${doc.title}`)
+                          window.open(
+                            `/student/submissions/${doc.id}`,
+                            "_blank"
+                          )
                         }
                       />
                     ))}
