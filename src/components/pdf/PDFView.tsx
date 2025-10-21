@@ -32,7 +32,7 @@ const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
           setPdfjsLib(pdfjs);
         }
       } catch (error) {
-        console.error("Failed to load PDF.js:", error);
+        console.log("Failed to load PDF.js:", error);
         setError("Failed to load PDF library");
       }
     };
@@ -60,7 +60,7 @@ const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
 
       console.log(`Page ${pageNumber} rendered successfully`);
     } catch (error) {
-      console.error(`Error rendering page ${pageNumber}:`, error);
+      console.log(`Error rendering page ${pageNumber}:`, error);
       setError(`Failed to render page ${pageNumber}`);
     }
   };
@@ -78,7 +78,7 @@ const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
         setCurrentPage(1);
         await renderPage({ pdf, pageNumber: 1 });
       } catch (error) {
-        console.error("Error loading PDF:", error);
+        console.log("Error loading PDF:", error);
         setError("Failed to load PDF.");
       } finally {
         setLoading(false);
@@ -117,7 +117,7 @@ const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
     return (
       <div className="w-full max-w-6xl mx-auto p-4">
         <div className="flex items-center justify-center p-8">
-          <Loader2 className="mr-2 animate-spin" size={24} />
+          <Loader2 className="mr-2 animate-spin text-accent" size={24} />
           <span>Loading PDF library...</span>
         </div>
       </div>

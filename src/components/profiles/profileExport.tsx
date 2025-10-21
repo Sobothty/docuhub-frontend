@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo,  useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Download,
   User,
@@ -10,6 +10,7 @@ import {
   Palette,
   RotateCcw,
   AlertCircle,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
@@ -23,6 +24,7 @@ import { ExportData } from "@/types/profileExportType";
 
 interface ProfileExportProps {
   userType: "student" | "adviser" | "admin";
+  onClose?: () => void; // Add this prop
 }
 
 const DEFAULT_COLORS = {
@@ -33,7 +35,7 @@ const DEFAULT_COLORS = {
   textSecondary: "#1f2937",
 };
 
-export default function ProfileExport({ userType }: ProfileExportProps) {
+export default function ProfileExport({ userType, onClose }: ProfileExportProps) {
   // Use existing queries with proper error handling
   const {
     data: userProfile,
@@ -83,7 +85,6 @@ export default function ProfileExport({ userType }: ProfileExportProps) {
   const [researchCategory, setResearchCategory] = useState("all");
   const [previewContent, setPreviewContent] = useState<string>("");
   const [customColors, setCustomColors] = useState(DEFAULT_COLORS);
-  const [iframeHeight, setIframeHeight] = useState(600);
 
   const categories = [
     { key: "papers", label: "Papers & Publications", icon: BookOpen },
@@ -180,8 +181,9 @@ export default function ProfileExport({ userType }: ProfileExportProps) {
   };
 
   // ✅ Wrapped with useCallback
-  const generatePDFPreview = useCallback((data: ExportData, colors: typeof DEFAULT_COLORS) => {
-    const styles = `
+  const generatePDFPreview = useCallback(
+    (data: ExportData, colors: typeof DEFAULT_COLORS) => {
+      const styles = `
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { 
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important; 
@@ -375,7 +377,7 @@ export default function ProfileExport({ userType }: ProfileExportProps) {
       }
     `;
 
-    const htmlContent = `
+      const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -488,8 +490,10 @@ export default function ProfileExport({ userType }: ProfileExportProps) {
       </html>
     `;
 
-    return htmlContent;
-  }, [userType]);
+      return htmlContent;
+    },
+    [userType]
+  );
 
   // ✅ Auto-generate preview when colors or data changes - now includes generatePDFPreview
   useEffect(() => {
@@ -498,33 +502,6 @@ export default function ProfileExport({ userType }: ProfileExportProps) {
       setPreviewContent(preview);
     }
   }, [exportData, customColors, generatePDFPreview]);
-
-  // Handle iframe height adjustment
-  const handleIframeLoad = (event: React.SyntheticEvent<HTMLIFrameElement>) => {
-    const iframe = event.currentTarget;
-    try {
-      const iframeDocument =
-        iframe.contentDocument || iframe.contentWindow?.document;
-      if (iframeDocument) {
-        setTimeout(() => {
-          const body = iframeDocument.body;
-          const html = iframeDocument.documentElement;
-          const height = Math.max(
-            body?.scrollHeight || 0,
-            body?.offsetHeight || 0,
-            html?.clientHeight || 0,
-            html?.scrollHeight || 0,
-            html?.offsetHeight || 0
-          );
-          const adjustedHeight = Math.max(height * 0.75 + 150, 400);
-          setIframeHeight(adjustedHeight);
-        }, 100);
-      }
-    } catch {
-      console.log("Could not access iframe content for height calculation");
-      setIframeHeight(900);
-    }
-  };
 
   const handleColorChange = (
     colorType: keyof typeof DEFAULT_COLORS,
@@ -740,233 +717,285 @@ export default function ProfileExport({ userType }: ProfileExportProps) {
   }
 
   return (
-    <>
-      {/* Loading Overlay */}
-      {isExporting && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-8 flex flex-col items-center gap-4 shadow-2xl">
-            <DocuhubLoader />
-            <p className="text-gray-700 font-medium text-lg">
-              Generating your PDF...
-            </p>
-            <p className="text-gray-500 text-sm">
-              Please wait while we prepare your professional CV
-            </p>
-          </div>
+    <div className="fixed inset-0 z-50">
+      {/* Dark overlay with blur */}
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+
+      {/* Main container */}
+      <div className="relative h-screen overflow-auto">
+        {/* Close button - always visible */}
+        <div className="sticky top-4 right-4 z-50 flex justify-end px-4">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors border border-border/50 shadow-lg"
+          >
+            <X className="h-5 w-5" />
+            <span className="sr-only">Close</span>
+          </button>
         </div>
-      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 max-w-7xl mx-auto p-4">
-        {/* Left Column - Controls */}
-        <div className="bg-white rounded-lg p-6 lg:col-span-2">
-          <div className="flex items-center gap-3 mb-6">
-            <Download className="w-6 h-6 text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-800">Export Profile</h2>
-            <div className="ml-auto bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-              PDF
+        {/* Content wrapper */}
+        <div className="min-h-screen p-4 lg:p-6">
+          <div className="max-w-[1400px] mx-auto bg-card rounded-lg shadow-xl border border-border/50">
+            {/* Header */}
+            <div className="sticky top-0 z-40 bg-card/80 backdrop-blur-sm border-b border-border/50 p-4 lg:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">
+                    Export Profile
+                  </h2>
+                  <p className="text-muted-foreground">
+                    Customize and download your professional CV
+                  </p>
+                </div>
+                <span className="inline-flex items-center h-8 px-3 text-sm font-medium rounded border border-border bg-muted/50">
+                  PDF Export
+                </span>
+              </div>
             </div>
-          </div>
 
-          {/* Color Customization */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <label className="block text-sm font-medium text-gray-700">
-                <Palette className="w-4 h-4 inline mr-1" />
-                Customize Colors
-              </label>
-              <button
-                onClick={resetToDefaultColors}
-                className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors px-2 py-1 rounded hover:bg-gray-100"
-              >
-                <RotateCcw className="w-3 h-3" />
-                Reset
-              </button>
-            </div>
-            <div className="space-y-3">
-              {(
-                [
-                  {
-                    key: "primary" as const,
-                    label: "Primary Color",
-                    description: "Headers and sidebar background",
-                  },
-                  {
-                    key: "secondary" as const,
-                    label: "Secondary Color",
-                    description: "Accents and borders",
-                  },
-                  {
-                    key: "accent" as const,
-                    label: "Accent Color",
-                    description: "Highlights and badges",
-                  },
-                  {
-                    key: "textPrimary" as const,
-                    label: "Header Text Color",
-                    description: "Text on colored backgrounds",
-                  },
-                  {
-                    key: "textSecondary" as const,
-                    label: "Body Text Color",
-                    description: "Main content text",
-                  },
-                ] as const
-              ).map(({ key, label, description }) => (
-                <div
-                  key={key}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
-                >
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {label}
+            {/* Main grid layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 p-4 lg:p-6">
+              {/* Controls Column - Make it sticky on desktop */}
+              <div className="lg:col-span-2">
+                <div className="lg:sticky lg:top-[120px] space-y-6">
+                  {/* Color Customization */}
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-sm font-medium text-gray-700">
+                        <Palette className="w-4 h-4 inline mr-1" />
+                        Customize Colors
+                      </label>
+                      <button
+                        onClick={resetToDefaultColors}
+                        className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors px-2 py-1 rounded hover:bg-gray-100"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        Reset
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      {(
+                        [
+                          {
+                            key: "primary" as const,
+                            label: "Primary Color",
+                            description: "Headers and sidebar background",
+                          },
+                          {
+                            key: "secondary" as const,
+                            label: "Secondary Color",
+                            description: "Accents and borders",
+                          },
+                          {
+                            key: "accent" as const,
+                            label: "Accent Color",
+                            description: "Highlights and badges",
+                          },
+                          {
+                            key: "textPrimary" as const,
+                            label: "Header Text Color",
+                            description: "Text on colored backgrounds",
+                          },
+                          {
+                            key: "textSecondary" as const,
+                            label: "Body Text Color",
+                            description: "Main content text",
+                          },
+                        ] as const
+                      ).map(({ key, label, description }) => (
+                        <div
+                          key={key}
+                          className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                        >
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              {label}
+                            </label>
+                            <p className="text-xs text-gray-500">
+                              {description}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="color"
+                              value={customColors[key]}
+                              onChange={(e) =>
+                                handleColorChange(key, e.target.value)
+                              }
+                              className="w-10 h-10 rounded-lg border-2 border-gray-300 cursor-pointer hover:border-gray-400 transition-colors"
+                              title={`Choose ${label.toLowerCase()}`}
+                            />
+                            <input
+                              type="text"
+                              value={customColors[key]}
+                              onChange={(e) =>
+                                handleColorChange(key, e.target.value)
+                              }
+                              className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="#000000"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Research Category Filter */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      <Search className="w-4 h-4 inline mr-1" />
+                      Filter by Research Category
                     </label>
-                    <p className="text-xs text-gray-500">{description}</p>
+                    <select
+                      value={researchCategory}
+                      onChange={(e) => setResearchCategory(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none cursor-pointer"
+                      style={{
+                        backgroundImage:
+                          "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23667'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\")",
+                        backgroundRepeat: "no-repeat",
+                        backgroundPosition: "right 1rem center",
+                        backgroundSize: "1.2em",
+                      }}
+                    >
+                      {categoryNames.map((categoryName) => (
+                        <option
+                          key={categoryName}
+                          value={categoryName}
+                          className="text-sm bg-white text-gray-700"
+                        >
+                          {categoryName === "all"
+                            ? "All Categories"
+                            : categoryName}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={customColors[key]}
-                      onChange={(e) => handleColorChange(key, e.target.value)}
-                      className="w-10 h-10 rounded-lg border-2 border-gray-300 cursor-pointer hover:border-gray-400 transition-colors"
-                      title={`Choose ${label.toLowerCase()}`}
-                    />
-                    <input
-                      type="text"
-                      value={customColors[key]}
-                      onChange={(e) => handleColorChange(key, e.target.value)}
-                      className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="#000000"
-                    />
+
+                  {/* Category Selection */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Select Data to Export
+                    </label>
+                    <div className="grid grid-cols-1 gap-3">
+                      {categories.map(({ key, label, icon: Icon }) => (
+                        <div
+                          key={key}
+                          className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                            selectedCategories[
+                              key as keyof typeof selectedCategories
+                            ]
+                              ? "bg-blue-50 border-blue-300"
+                              : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                          }`}
+                          onClick={() => handleCategoryToggle(key)}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedCategories[
+                                key as keyof typeof selectedCategories
+                              ]
+                            }
+                            onChange={() => handleCategoryToggle(key)}
+                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                          />
+                          <Icon className="w-4 h-4 text-gray-600" />
+                          <span className="text-sm font-medium text-gray-700">
+                            {label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Research Category Filter */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              <Search className="w-4 h-4 inline mr-1" />
-              Filter by Research Category
-            </label>
-            <select
-              value={researchCategory}
-              onChange={(e) => setResearchCategory(e.target.value)}
-              className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none cursor-pointer"
-              style={{
-                backgroundImage:
-                  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23667'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\")",
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "right 1rem center",
-                backgroundSize: "1.2em",
-              }}
-            >
-              {categoryNames.map((categoryName) => (
-                <option
-                  key={categoryName}
-                  value={categoryName}
-                  className="text-sm bg-white text-gray-700"
-                >
-                  {categoryName === "all" ? "All Categories" : categoryName}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Category Selection */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Select Data to Export
-            </label>
-            <div className="grid grid-cols-1 gap-3">
-              {categories.map(({ key, label, icon: Icon }) => (
-                <div
-                  key={key}
-                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
-                    selectedCategories[key as keyof typeof selectedCategories]
-                      ? "bg-blue-50 border-blue-300"
-                      : "bg-gray-50 border-gray-200 hover:bg-gray-100"
-                  }`}
-                  onClick={() => handleCategoryToggle(key)}
-                >
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedCategories[key as keyof typeof selectedCategories]
-                    }
-                    onChange={() => handleCategoryToggle(key)}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                  />
-                  <Icon className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">
-                    {label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Export Button */}
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={handleExport}
-              disabled={isExporting || !hasAnySelectedCategories || !exportData}
-              className="flex items-center justify-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              <Download className="w-5 h-5" />
-              {isExporting ? "Generating PDF..." : "Download as PDF"}
-            </button>
-            <p className="text-xs text-gray-500 text-center">
-              Downloads directly as a PDF file with all colors and formatting
-              preserved.
-            </p>
-          </div>
-        </div>
-
-        {/* Right Column - Live Preview */}
-        <div className="bg-white rounded-lg shadow-lg lg:col-span-3">
-          <div className="p-4 border-b border-gray-200">
-            <h3 className="font-bold text-gray-800">Live Preview</h3>
-            <p className="text-sm text-gray-600">Professional CV Template</p>
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              <span className="text-xs text-gray-500">Colors:</span>
-              {Object.entries(customColors).map(([key, value]) => (
-                <div key={key} className="flex items-center gap-1">
-                  <div
-                    className="w-3 h-3 rounded-full border"
-                    style={{ backgroundColor: value }}
-                    title={key}
-                  />
-                  <span className="text-xs text-gray-400">{key}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="max-h-[100vh] min-h-[600px]">
-            {!previewContent ? (
-              <div className="flex items-center justify-center h-[400px]">
-                <div className="text-center">
-                  <DocuhubLoader />
-                  <p className="text-gray-600 mt-4">Generating preview...</p>
+                  {/* Export Button */}
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={handleExport}
+                      disabled={
+                        isExporting || !hasAnySelectedCategories || !exportData
+                      }
+                      className="flex items-center justify-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
+                      <Download className="w-5 h-5" />
+                      {isExporting ? "Generating PDF..." : "Download as PDF"}
+                    </button>
+                    <p className="text-xs text-gray-500 text-center">
+                      Downloads directly as a PDF file with all colors and
+                      formatting preserved.
+                    </p>
+                  </div>
                 </div>
               </div>
-            ) : (
-              <iframe
-                srcDoc={previewContent}
-                className="w-full border-none transform scale-75 origin-top-left"
-                style={{
-                  width: "133.33%",
-                  height: `${iframeHeight}px`,
-                  minHeight: "400px",
-                }}
-                title="Live Preview"
-                onLoad={handleIframeLoad}
-              />
-            )}
+
+              {/* Preview Column */}
+              <div className="lg:col-span-3 bg-muted rounded-lg border border-border/50">
+                <div className="sticky top-[120px] z-30 bg-muted/80 backdrop-blur-sm border-b border-border/50 p-4">
+                  <h3 className="font-bold text-foreground">Live Preview</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Professional CV Template
+                  </p>
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <span className="text-xs text-gray-500">Colors:</span>
+                    {Object.entries(customColors).map(([key, value]) => (
+                      <div key={key} className="flex items-center gap-1">
+                        <div
+                          className="w-3 h-3 rounded-full border"
+                          style={{ backgroundColor: value }}
+                          title={key}
+                        />
+                        <span className="text-xs text-gray-400">{key}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="h-[calc(100vh-240px)] overflow-auto">
+                  {!previewContent ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center">
+                        <DocuhubLoader />
+                        <p className="text-muted-foreground mt-4">
+                          Generating preview...
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <iframe
+                      srcDoc={previewContent}
+                      className="w-full h-full border-none"
+                      style={{
+                        transform: "scale(0.75)",
+                        transformOrigin: "top left",
+                        width: "133.33%",
+                        height: "133.33%",
+                      }}
+                      title="Live Preview"
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Loading Overlay */}
+        {isExporting && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center">
+            <div className="bg-card rounded-lg p-8 flex flex-col items-center gap-4 shadow-2xl border border-border/50">
+              <DocuhubLoader />
+              <p className="text-foreground font-medium text-lg">
+                Generating your PDF...
+              </p>
+              <p className="text-muted-foreground text-sm">
+                Please wait while we prepare your professional CV
+              </p>
+            </div>
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }

@@ -475,8 +475,8 @@ export default function PaperDetailPage({
 
   const handleShare = (platform: string) => {
     // Use window only on client side
-    if (typeof window === 'undefined') return;
-    
+    if (typeof window === "undefined") return;
+
     const url = window.location.href;
     const title = paper?.title || "Paper";
     let shareUrl = "";
@@ -521,7 +521,6 @@ export default function PaperDetailPage({
         console.log("Comment added successfully");
       } catch (error) {
         console.error("Failed to add comment:", error);
-        alert("Failed to add comment. Please try again.");
       }
     }
   };
@@ -539,7 +538,6 @@ export default function PaperDetailPage({
         console.log("Reply added successfully");
       } catch (error) {
         console.error("Failed to add reply:", error);
-        alert("Failed to add reply. Please try again.");
       }
     }
   };
@@ -567,7 +565,6 @@ export default function PaperDetailPage({
         console.log("Comment updated successfully");
       } catch (error) {
         console.log("Failed to update comment:", error);
-        alert("Failed to update comment. Please try again.");
       }
     }
   };
@@ -579,7 +576,6 @@ export default function PaperDetailPage({
         console.log("Comment deleted successfully");
       } catch (error) {
         console.log("Failed to delete comment:", error);
-        alert("Failed to delete comment. Please try again.");
       }
     }
   };
@@ -593,7 +589,7 @@ export default function PaperDetailPage({
 
   const handleOnClickBack = () => {
     window.history.back();
-  }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -602,7 +598,7 @@ export default function PaperDetailPage({
           {/* Back Button */}
           <div className="flex items-center mt-10 gap-2 text-sm text-muted-foreground">
             <Link
-              href='#'
+              href="#"
               className="hover:text-foreground flex items-center gap-2"
               onClick={handleOnClickBack}
             >
@@ -640,7 +636,7 @@ export default function PaperDetailPage({
                   >
                     <Avatar className="h-6 w-6">
                       <AvatarImage
-                        src="/placeholder.svg"
+                        src={author?.imageUrl || "/placeholder.svg"}
                         alt={authorName || "Author"}
                       />
                       <AvatarFallback className="text-xs">
@@ -765,22 +761,22 @@ export default function PaperDetailPage({
               </DropdownMenu>
             </div>
           </div>
-
+          {/* Content */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <Tabs defaultValue="abstract" className="w-full">
+              <Tabs defaultValue="content" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 bg-muted/30 p-1 rounded-lg gap-1">
-                  <TabsTrigger
-                    value="abstract"
-                    className="font-semibold transition-all duration-300 ease-in-out data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-accent/50 data-[state=inactive]:text-muted-foreground rounded-md"
-                  >
-                    Description
-                  </TabsTrigger>
                   <TabsTrigger
                     value="content"
                     className="font-semibold transition-all duration-300 ease-in-out data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-accent/50 data-[state=inactive]:text-muted-foreground rounded-md"
                   >
                     Content
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="abstract"
+                    className="font-semibold transition-all duration-300 ease-in-out data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-accent/50 data-[state=inactive]:text-muted-foreground rounded-md"
+                  >
+                    Description
                   </TabsTrigger>
                   <TabsTrigger
                     value="comments"

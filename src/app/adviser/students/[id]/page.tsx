@@ -70,7 +70,7 @@ export default function MentorStudentProfilePage() {
 
         {/* Profile Header */}
         <motion.div
-          className="relative bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-500 rounded-2xl text-white overflow-hidden shadow-xl"
+          className="relative bg-gradient-to-r bg-blue-600 rounded-2xl text-white overflow-hidden shadow-xl"
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}

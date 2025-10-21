@@ -219,7 +219,7 @@ export default function Home() {
                 style={{
                     scaleX: scrollYProgress,
                     position: "fixed",
-                    top: 133,
+                    top: 128,
                     left: 0,
                     right: 0,
                     height: 5,
