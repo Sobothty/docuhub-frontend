@@ -6,7 +6,7 @@ import type { NextRequest } from "next/server";
 const protectedRoutes = ["/adviser", "/student", "/profile", "/dashboard"];
 
 // Public routes that don't require authentication
-const publicRoutes = ["/", "/browse", "/directory", "/login", "/register"];
+const publicRoutes = ["/", "/browse", "/directory", "/login", "/register", "/about", "/contact", "/papers", "/papers/[id]", "/users/[id]"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

@@ -1,26 +1,30 @@
-'use client';
+"use client";
 
-import { use } from 'react';
-import { useGetUserByIdQuery } from '@/feature/apiSlice/authApi';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import { 
-  Mail, 
-  Phone, 
+import { use } from "react";
+import { useGetUserByIdQuery } from "@/feature/apiSlice/authApi";
+import { useGetAllPublishedPapersQuery } from "@/feature/paperSlice/papers";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import {
+  Mail,
+  Phone,
   MapPin,
   MessageSquare,
-  User as UserIcon, 
-  GraduationCap, 
-  Shield, 
+  User as UserIcon,
+  GraduationCap,
+  Shield,
   BookOpen,
   ArrowLeft,
-  Globe
-} from 'lucide-react';
-import Link from 'next/link';
-import Loading from '@/app/Loading';
+  Globe,
+  FileText,
+  Car,
+} from "lucide-react";
+import Link from "next/link";
+import Loading from "@/app/Loading";
+import { Paper } from "@/types/paperType";
 
 interface UserProfilePageProps {
   params: Promise<{ id: string }>;
@@ -28,8 +32,16 @@ interface UserProfilePageProps {
 
 export default function UserProfilePage({ params }: UserProfilePageProps) {
   const { id } = use(params);
-  
+
   const { data: user, isLoading, error } = useGetUserByIdQuery(id);
+  const { data: papersData } = useGetAllPublishedPapersQuery({
+    page: 0,
+    size: 10,
+  });
+
+  const userPaper = papersData?.papers.content.filter(
+    paper => paper.authorUuid === id
+  )
 
   if (isLoading) return <Loading />;
 
@@ -37,7 +49,9 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-          <p className="text-red-500 text-center text-lg">Failed to load user profile</p>
+          <p className="text-red-500 text-center text-lg">
+            Failed to load user profile
+          </p>
           <Link href="/users">
             <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -51,9 +65,9 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
 
   const getInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
@@ -74,17 +88,19 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const getRoleDescription = () => {
     if (user.isAdmin) return "Platform Administrator with full system access";
-    if (user.isAdvisor) return "Academic mentor guiding students in their research journey";
-    if (user.isStudent) return "Student researcher working on academic projects";
+    if (user.isAdvisor)
+      return "Academic mentor guiding students in their research journey";
+    if (user.isStudent)
+      return "Student researcher working on academic projects";
     return "Community member";
   };
 
@@ -93,7 +109,10 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
       <div className="space-y-6">
         {/* Back Button */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link href="/users" className="hover:text-foreground flex items-center gap-2">
+          <Link
+            href="/users"
+            className="hover:text-foreground flex items-center gap-2"
+          >
             <ArrowLeft className="h-4 w-4" />
             Back to Users
           </Link>
@@ -106,43 +125,28 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
           <CardHeader>
             <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
               <Avatar className="h-24 w-24">
-                <AvatarImage 
-                  src={user.imageUrl || '/placeholder-avatar.png'} 
-                  alt={user.fullName} 
+                <AvatarImage
+                  src={user.imageUrl || "/placeholder-avatar.png"}
+                  alt={user.fullName}
                 />
                 <AvatarFallback className="bg-primary text-primary-foreground text-lg">
                   {getInitials(user.fullName)}
                 </AvatarFallback>
               </Avatar>
-              
+
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-3">
                   <h1 className="text-2xl font-bold">{user.fullName}</h1>
                   {getRoleIcon()}
                 </div>
-                
+
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <span>@{user.userName}</span>
                   <span>•</span>
                   {getRoleBadge()}
                 </div>
-                
-                <p className="text-muted-foreground">
-                  {getRoleDescription()}
-                </p>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button size="sm" className="gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Message
-                </Button>
-                <Button size="sm" variant="outline" className="gap-2" asChild>
-                  <Link href={`/profile/${user.uuid}`}>
-                    <Globe className="h-4 w-4" />
-                    View Public Profile
-                  </Link>
-                </Button>
+
+                <p className="text-muted-foreground">{getRoleDescription()}</p>
               </div>
             </div>
           </CardHeader>
@@ -172,17 +176,19 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
                     <p className="text-muted-foreground">{user.email}</p>
                   </div>
                 </div>
-                
-                {user.contactNumber && user.contactNumber !== 'null' && (
+
+                {user.contactNumber && user.contactNumber !== "null" && (
                   <div className="flex items-center gap-3">
                     <Phone className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="font-medium">Phone</p>
-                      <p className="text-muted-foreground">{user.contactNumber}</p>
+                      <p className="text-muted-foreground">
+                        {user.contactNumber}
+                      </p>
                     </div>
                   </div>
                 )}
-                
+
                 {user.address && (
                   <div className="flex items-center gap-3">
                     <MapPin className="h-5 w-5 text-muted-foreground" />
@@ -201,16 +207,67 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
                 <CardTitle>Activity</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-muted rounded-lg">
-                    <p className="text-2xl font-bold text-primary">0</p>
-                    <p className="text-sm text-muted-foreground">Papers Published</p>
+                {/* Papers List */}
+                {userPaper && (
+                  <div className="space-y-3">
+                    <Separator />
+                    <div className="space-y-2">
+                      {userPaper
+                        .slice(0, 5)
+                        .map((paper: Paper) => (
+                          <Link
+                            key={paper.uuid}
+                            href={`/papers/${paper.uuid}`}
+                            className="block p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm line-clamp-1">
+                                  {paper.title}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {new Date(
+                                    paper.publishedAt || paper.createdAt
+                                  ).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                  })}
+                                </p>
+                              </div>
+                              <Badge
+                                variant={
+                                  paper.isPublished ? "default" : "secondary"
+                                }
+                                className="shrink-0"
+                              >
+                                {paper.isPublished ? "Published" : "Draft"}
+                              </Badge>
+                            </div>
+                          </Link>
+                        ))}
+                    </div>
+                    {userPaper.length > 5 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full mt-2"
+                        asChild
+                      >
+                        <Link href={`/users/${id}/papers`}>
+                          View All Papers ({userPaper.length})
+                        </Link>
+                      </Button>
+                    )}
                   </div>
-                  <div className="text-center p-4 bg-muted rounded-lg">
-                    <p className="text-2xl font-bold text-primary">0</p>
-                    <p className="text-sm text-muted-foreground">Collaborations</p>
+                )}
+
+                {papersData && papersData.papers.content.length === 0 && (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No papers published yet</p>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -223,60 +280,29 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <p className="font-medium text-sm text-muted-foreground">Member Since</p>
+                  <p className="font-medium text-sm text-muted-foreground">
+                    Member Since
+                  </p>
                   <p className="text-sm">{formatDate(user.createDate)}</p>
                 </div>
-                
-                <div>
-                  <p className="font-medium text-sm text-muted-foreground">Last Updated</p>
-                  <p className="text-sm">{formatDate(user.updateDate)}</p>
-                </div>
-                
+                {/* Gender */}
                 {user.gender && (
                   <div>
-                    <p className="font-medium text-sm text-muted-foreground">Gender</p>
+                    <p className="font-medium text-sm text-muted-foreground">
+                      Gender
+                    </p>
                     <p className="text-sm">{user.gender}</p>
                   </div>
                 )}
-                
+                {/* Telegram */}
                 {user.telegramId && (
                   <div>
-                    <p className="font-medium text-sm text-muted-foreground">Telegram</p>
+                    <p className="font-medium text-sm text-muted-foreground">
+                      Telegram
+                    </p>
                     <p className="text-sm">@{user.telegramId}</p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Roles & Permissions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">User Access</span>
-                  <Badge variant={user.isUser ? "default" : "secondary"}>
-                    {user.isUser ? "Granted" : "Not Granted"}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Admin Access</span>
-                  <Badge variant={user.isAdmin ? "destructive" : "secondary"}>
-                    {user.isAdmin ? "Granted" : "Not Granted"}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Student Status</span>
-                  <Badge variant={user.isStudent ? "outline" : "secondary"}>
-                    {user.isStudent ? "Active" : "Not Active"}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Mentor Status</span>
-                  <Badge variant={user.isAdvisor ? "secondary" : "outline"}>
-                    {user.isAdvisor ? "Active" : "Not Active"}
-                  </Badge>
-                </div>
               </CardContent>
             </Card>
           </div>

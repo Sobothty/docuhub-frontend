@@ -58,7 +58,7 @@ export default function NavbarGuest() {
   ];
 
   return (
-      <nav className="fixed top-16 md:top-12 left-0 w-full z-40 border-b bg-background border-border shadow-md">
+      <nav className="fixed top-16 sm:top-13 md:top-12 left-0 w-full z-40 border-b bg-background border-border shadow-md">
         <div className="max-w-7xl mx-auto px-2 md:px-4 flex justify-between items-center">
           <Link href="/" className="inline-block sm:w-auto w-24 ">
             <Image

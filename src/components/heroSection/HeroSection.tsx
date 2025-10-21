@@ -66,7 +66,7 @@ const HeroSection: FC = () => {
   return (
     <section className="h-[710px] bg-card px-4 sm:px-6 md:px-10 lg:px-16 py-6 sm:py-8 md:py-12 flex flex-col lg:flex-row items-center justify-between">
       {/* Language Switcher */}
-      <div className="absolute top-4 right-4 z-20">
+      {/* <div className="absolute top-4 right-4 z-20">
         <select
           onChange={(e) => changeLanguage(e.target.value)}
           className="bg-blue-500 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-lg text-sm sm:text-base"
@@ -77,7 +77,7 @@ const HeroSection: FC = () => {
           </option>
           <option value="km">Khmer</option>
         </select>
-      </div>
+      </div> */}
 
       {/* Left Content */}
       <div className="mt-20 max-w-xl lg:max-w-md ml-0 sm:ml-4 md:ml-8 lg:ml-20 text-center sm:text-left gap-10">
