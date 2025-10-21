@@ -6,6 +6,7 @@ import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 // Define types
 interface Student {
@@ -37,11 +38,18 @@ export default function MentorOverviewPage() {
   const router = useRouter();
 
   const token = useSession();
-  if (!token.data?.accessToken) {
-    router.push("/login");
-  }
+  
   // ✅ Fetch adviser profile
   const { data: adviserProfile } = useGetUserProfileQuery();
+
+  // Use useEffect to redirect if not authenticated (prevent SSR issues)
+  useEffect(() => {
+    if (token.status === "unauthenticated" || !token.data?.accessToken) {
+      router.push("/login");
+    }
+  }, [token.status, token.data?.accessToken, router]);
+
+  // ✅ Fetch adviser assignments
   const { data, error, isLoading } = useGetAssignmentByAdviserQuery();
 
   if (isLoading)

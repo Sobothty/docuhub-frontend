@@ -5,7 +5,7 @@ const DiscussionForumSection: React.FC = () => {
   return (
     <section className="bg-background flex flex-col md:flex-row justify-center md:justify-around items-center gap-8 md:gap-12 lg:gap-30 py-10 md:py-4 lg:py-6 px-6 sm:px-10 md:px-12 lg:px-20 mx-auto max-w-7xl">
       {/* Left side: Image container with blue blob */}
-      <div className="relative w-48 h-[340px] sm:w-56 sm:h-[400px] md:w-60 md:h-[440px] lg:w-64 lg:h-[460px] flex-shrink-0">
+      <div className="relative w-48 h-[340px] hidden md:block sm:w-56 sm:h-[400px] md:w-60 md:h-[440px] lg:w-64 lg:h-[460px] flex-shrink-0">
         {/* Blue blob background with blur */}
         <div
           className="absolute mt-4 -top-8 -left-8 sm:-top-10 sm:-left-10 md:-top-12 md:-left-12 w-56 h-[340px] sm:w-64 sm:h-[400px] md:w-68 md:h-[440px] lg:w-72 lg:h-[460px] bg-blue-600 rounded-[80%_44%_44%_70%/_100%_100%_100%_100%]"

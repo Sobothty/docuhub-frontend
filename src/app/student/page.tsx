@@ -25,22 +25,27 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import HorizontalCard from "@/components/card/HorizontalCard";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetPapersByAuthorQuery } from "@/feature/paperSlice/papers";
 import { useGetAllStarOfPapersQuery } from "@/feature/star/StarSlice";
+import { useRouter } from "next/navigation";
 
 export default function StudentOverviewPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
   const { data:user } = useGetUserProfileQuery();
   const {
     data: starData,
     isLoading: starLoading,
   } = useGetAllStarOfPapersQuery();
 
-  if (user?.user.isStudent === false) {
-    window.location.href = "/";
-  }
+  // Use useEffect to redirect if not a student (prevent SSR issues)
+  useEffect(() => {
+    if (user?.user.isStudent === false) {
+      router.push("/");
+    }
+  }, [user?.user.isStudent, router]);
 
   // Fetch author's papers with pagination
   const {
@@ -56,7 +61,6 @@ export default function StudentOverviewPage() {
 
   // Extract papers from the response
   const authorPapers = papersData?.papers?.content || [];
-  console.log(authorPapers);
 
   // Filter documents based on search query
   const filteredDocuments = authorPapers

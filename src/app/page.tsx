@@ -160,11 +160,13 @@ const getYear = (paper: { publishedAt?: string | null; createdAt?: string | null
 };
 
 export default function Home() {
-
+  // scroll progress bar
   const { scrollYProgress } = useScroll();
 
   const handleViewPaper = (paperId: number) => {
-    window.location.href = `/papers/${paperId}`;
+    if (typeof window !== 'undefined') {
+      window.location.href = `/papers/${paperId}`;
+    }
   };
   const handleDownloadPDF = (paperId: number) =>
     console.log("Download PDF:", paperId);
@@ -175,7 +177,6 @@ export default function Home() {
   const { data: papersData, isLoading, error } = useGetAllPublishedPapersQuery({});
 
   const papers = papersData?.papers.content ?? [];
-  console.log("Papers : ", papersData)
 
   type PaperType = {
     uuid: string;
@@ -227,7 +228,8 @@ export default function Home() {
                     zIndex: 9999,
                 }}
             />
-    <main className="min-h-screen flex flex-col overflow-x-hidden">
+    
+    <div className="min-h-screen flex flex-col">
       
       {/* Hero Section */}
       <HeroSection />
@@ -318,7 +320,7 @@ export default function Home() {
           />
         </div>
       </section>
-    </main>
+      </div>
     </>
   );
 }
