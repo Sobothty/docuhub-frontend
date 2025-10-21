@@ -554,7 +554,7 @@ function PaperCard({
             <Button
               className="bg-green-500 hover:bg-green-600"
               onClick={() =>
-                console.log(`Viewing progress for ${proposal.uuid}`)
+                window.open(`/student/submissions/${proposal.uuid}`, "_blank")
               }
             >
               <FileText className="w-4 h-4 mr-2" />

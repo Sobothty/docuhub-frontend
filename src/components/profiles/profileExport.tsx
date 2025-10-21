@@ -722,7 +722,7 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
 
       {/* Main container */}
-      <div className="relative h-screen overflow-auto">
+      <div className="relative h-[90%] overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {/* Close button - always visible */}
         <div className="sticky top-4 right-4 z-50 flex justify-end px-4">
           <button
@@ -738,7 +738,7 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
         <div className="min-h-screen p-4 lg:p-6">
           <div className="max-w-[1400px] mx-auto bg-card rounded-lg shadow-xl border border-border/50">
             {/* Header */}
-            <div className="sticky top-0 z-40 bg-card/80 backdrop-blur-sm border-b border-border/50 p-4 lg:p-6">
+            <div className="sticky top-0 z-40 bg-card backdrop-blur-sm border-b border-border/50 p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-foreground">
@@ -932,27 +932,8 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
 
               {/* Preview Column */}
               <div className="lg:col-span-3 bg-muted rounded-lg border border-border/50">
-                <div className="sticky top-[120px] z-30 bg-muted/80 backdrop-blur-sm border-b border-border/50 p-4">
-                  <h3 className="font-bold text-foreground">Live Preview</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Professional CV Template
-                  </p>
-                  <div className="flex items-center gap-2 mt-2 flex-wrap">
-                    <span className="text-xs text-gray-500">Colors:</span>
-                    {Object.entries(customColors).map(([key, value]) => (
-                      <div key={key} className="flex items-center gap-1">
-                        <div
-                          className="w-3 h-3 rounded-full border"
-                          style={{ backgroundColor: value }}
-                          title={key}
-                        />
-                        <span className="text-xs text-gray-400">{key}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
 
-                <div className="h-[calc(100vh-240px)] overflow-auto">
+                <div className="h-full w-full bg-white overflow-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {!previewContent ? (
                     <div className="flex items-center justify-center h-full">
                       <div className="text-center">
@@ -965,7 +946,7 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
                   ) : (
                     <iframe
                       srcDoc={previewContent}
-                      className="w-full h-full border-none"
+                      className="w-full h-full "
                       style={{
                         transform: "scale(0.75)",
                         transformOrigin: "top left",

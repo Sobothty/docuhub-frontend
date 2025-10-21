@@ -68,14 +68,9 @@ export default function PaperCard({
                 <div className="text-4xl text-gray-400">📄</div>
               </div>
             )}
-            <div className="absolute top-2 right-2">
-              <Badge variant={paper.isApproved ? 'default' : 'secondary'}>
-                {paper.status}
-              </Badge>
-            </div>
           </div>
           
-          <CardTitle className="line-clamp-2 text-lg leading-tight">
+          <CardTitle className="text-lg leading-tight line-clamp-1">
             {paper.title}
           </CardTitle>
           
@@ -87,7 +82,7 @@ export default function PaperCard({
       </Link>
 
       <CardContent className="space-y-4">
-        <CardDescription className="line-clamp-3">
+        <CardDescription className="line-clamp-1 text-sm text-gray-700">
           {paper.abstractText}
         </CardDescription>
 
