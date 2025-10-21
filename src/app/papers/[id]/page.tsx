@@ -474,6 +474,9 @@ export default function PaperDetailPage({
   };
 
   const handleShare = (platform: string) => {
+    // Use window only on client side
+    if (typeof window === 'undefined') return;
+    
     const url = window.location.href;
     const title = paper?.title || "Paper";
     let shareUrl = "";
@@ -588,6 +591,10 @@ export default function PaperDetailPage({
     }));
   };
 
+  const handleOnClickBack = () => {
+    window.history.back();
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 sm:py-8 max-w-6xl">
@@ -595,8 +602,9 @@ export default function PaperDetailPage({
           {/* Back Button */}
           <div className="flex items-center mt-10 gap-2 text-sm text-muted-foreground">
             <Link
-              href="/papers"
+              href='#'
               className="hover:text-foreground flex items-center gap-2"
+              onClick={handleOnClickBack}
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Papers

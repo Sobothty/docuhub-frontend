@@ -24,14 +24,19 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useEffect } from "react";
 
 export default function ProfilePage() {
   const router = useRouter();
 
   const token = useSession();
-  if (!token.data?.accessToken) {
-    router.push("/login");
-  }
+  
+  // Use useEffect to redirect if not authenticated (prevent SSR issues)
+  useEffect(() => {
+    if (token.status === "unauthenticated" || !token.data?.accessToken) {
+      router.push("/login");
+    }
+  }, [token.status, token.data?.accessToken, router]);
 
   const { status } = useSession();
   const { data: profileData, isLoading } = useGetUserProfileQuery();

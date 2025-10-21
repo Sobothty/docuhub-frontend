@@ -164,7 +164,9 @@ export default function Home() {
   const { scrollYProgress } = useScroll();
 
   const handleViewPaper = (paperId: number) => {
-    window.location.href = `/papers/${paperId}`;
+    if (typeof window !== 'undefined') {
+      window.location.href = `/papers/${paperId}`;
+    }
   };
   const handleDownloadPDF = (paperId: number) =>
     console.log("Download PDF:", paperId);
@@ -175,7 +177,6 @@ export default function Home() {
   const { data: papersData, isLoading, error } = useGetAllPublishedPapersQuery({});
 
   const papers = papersData?.papers.content ?? [];
-  console.log("Papers : ", papersData)
 
   type PaperType = {
     uuid: string;

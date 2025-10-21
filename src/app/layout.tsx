@@ -7,6 +7,8 @@ import ContactFooter from "@/components/footer/ContactFooter";
 import { Providers } from "./providers";
 import { Poppins } from "next/font/google";
 import localFont from "next/font/local";
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Analytics } from '@vercel/analytics/next';
 
 // English: Poppins
 const poppins = Poppins({
@@ -48,6 +50,9 @@ export const metadata: Metadata = {
     "mentorship",
     "Khmer education",
     "academic collaboration",
+    "research sharing",
+    "student resources",
+    "adviser connections",
   ],
   authors: [
     {
@@ -86,7 +91,7 @@ export const metadata: Metadata = {
     description:
       "Explore academic papers, share research, and connect with mentors on DocuHub.",
     images: [
-      "https://scontent.fpnh8-3.fna.fbcdn.net/v/t39.30808-6/489823128_674025992044571_2949088916256174211_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=f727a1&_nc_eui2=AeFa7nVgzrAwkXIitmMZqKA4ParLbrbCR0A9qstutsJHQFBOWAyZhwaaAfHvQV-2zamdQi6AgOpgDSFHy7J9RirY&_nc_ohc=AT7WUSnv1DYQ7kNvwHFD_s2&_nc_oc=AdlF_iA4-_JQRstkBGVeLl-wHLqDwGuYP1TOu8HcQns_56FjWaQPGqeWBrxdGmTQNZU&_nc_zt=23&_nc_ht=scontent.fpnh8-3.fna&_nc_gid=y07fOjx8uMHUnaDinm8gRw&oh=00_AfaoXg6IsNgRnn4jmaBfWaicVe_ZlQOiZDBQ-PyaBueogg&oe=68C6FB9D",
+      "/banner/homepage.png",
     ],
     creator: "@DocuHubTeam",
   },
@@ -159,8 +164,10 @@ export default function RootLayout({
           <StickyBanner />
           <NavbarWrapper />
           <main className="mt-20">
-          
-            {children}</main>
+            {children}
+            <SpeedInsights />
+            <Analytics />
+          </main>
           <ContactFooter />
         </Providers>
       </body>

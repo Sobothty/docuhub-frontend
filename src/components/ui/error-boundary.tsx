@@ -48,7 +48,11 @@ export class ErrorBoundary extends Component<Props, State> {
                 We encountered an unexpected error. Please try refreshing the page.
               </p>
               <div className="space-y-2">
-                <Button onClick={() => window.location.reload()} className="w-full">
+                <Button onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.location.reload();
+                  }
+                }} className="w-full">
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Refresh Page
                 </Button>
