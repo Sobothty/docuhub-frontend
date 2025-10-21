@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { useGetAllPublishedPapersQuery } from "@/feature/paperSlice/papers";
 import { Paper } from "@/types/paperType";
 import PaperCard from "@/components/card/PaperCard";
-import Loading from "@/app/Loading";
 import { Button } from "@/components/ui/button";
 import DocuhubLoader from "@/components/loader/docuhub-loading";
 

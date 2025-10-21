@@ -18,7 +18,6 @@ import {
   XCircle,
   Eye,
   Download,
-  Loader2Icon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
