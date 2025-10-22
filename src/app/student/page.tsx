@@ -22,7 +22,6 @@ import {
   Plus,
   BookOpen,
   TrendingUp,
-  Star,
 } from "lucide-react";
 import Link from "next/link";
 import HorizontalCard from "@/components/card/HorizontalCardForAuthor";

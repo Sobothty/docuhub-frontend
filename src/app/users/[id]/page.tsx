@@ -12,15 +12,12 @@ import {
   Mail,
   Phone,
   MapPin,
-  MessageSquare,
   User as UserIcon,
   GraduationCap,
   Shield,
   BookOpen,
   ArrowLeft,
-  Globe,
   FileText,
-  Car,
 } from "lucide-react";
 import Link from "next/link";
 import Loading from "@/app/Loading";

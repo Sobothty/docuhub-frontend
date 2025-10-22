@@ -5,7 +5,6 @@ import Image from "next/image";
 import {
   BookOpen,
   Calendar,
-  Award,
   Star,
   Download,
   Eye,

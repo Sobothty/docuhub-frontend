@@ -7,12 +7,7 @@ import { gsap } from "gsap";
 
 const HeroSection: FC = () => {
   const textRef = useRef<HTMLHeadingElement>(null);
-  const { t, i18n } = useTranslation('common');
-
-  // Language switcher handler
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
-  };
+  const { t } = useTranslation('common');
 
   useEffect(() => {
     if (!textRef.current) return;
