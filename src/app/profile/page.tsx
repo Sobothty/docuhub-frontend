@@ -51,8 +51,7 @@ export default function ProfilePage() {
   // Check if student promotion is pending
   const {
     data: pendingStudentData,
-    isLoading: isPendingCheckLoading,
-    error: pendingError,
+    isLoading: isPendingCheckLoading
   } = useCheckPendingStudentQuery(userUuid!, {
     skip: !userUuid, // Skip the query if no UUID is available
   });
@@ -156,7 +155,7 @@ export default function ProfilePage() {
     );
   }
 
-  const { user, student } = profileData;
+  const { user } = profileData;
   const memberSince = new Date(user.createDate).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
