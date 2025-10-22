@@ -53,7 +53,9 @@ interface FrontendUserData {
   bio?: string;
   telegramId?: string;
 }
-
+ export interface PendingStudentResponse {
+  isStudent: boolean;
+}
 // Helper function to transform frontend data to backend format
 const transformUserDataForBackend = (data: FrontendUserData): UpdateUserDto => {
   const transformed: UpdateUserDto = {};
@@ -106,7 +108,7 @@ export const profileApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ["Profile"],
+  tagTypes: ["Profile", "PendingStudent"],
   endpoints: (builder) => ({
     getUserProfile: builder.query<UserProfileResponse, void>({
       query: () => ({
@@ -220,6 +222,23 @@ export const profileApi = createApi({
         return error;
       },
     }),
+
+    // checkPendingStudent endpoint with proper typing
+     checkPendingStudent: builder.query<PendingStudentResponse, string>({
+      query: (userUuid) => ({
+        url: `/user-promote/pending/student/${userUuid}`,
+        method: "GET",
+      }),
+      providesTags: ["PendingStudent"],
+      transformResponse: (response: PendingStudentResponse) => {
+        console.log("Pending student check response:", response);
+        return response;
+      },
+      transformErrorResponse: (error: ApiErrorResponse) => {
+        console.log("Pending student check failed:", error);
+        return error;
+      },
+    }),
   }),
 });
 
@@ -227,5 +246,6 @@ export const {
   useGetUserProfileQuery, 
   useUpdateUserProfileMutation,
   useUpdateAdviserDetailsMutation,
-  useUpdateStudentDetailsMutation
+  useUpdateStudentDetailsMutation,
+  useCheckPendingStudentQuery 
 } = profileApi;
