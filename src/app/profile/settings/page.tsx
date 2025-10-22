@@ -30,7 +30,6 @@ import {
   Phone,
   MapPin,
   User,
-  Edit2,
   Save,
   X,
   Camera,
@@ -41,6 +40,7 @@ import {
   Shield,
   Check,
   AlertCircle,
+  Edit,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "react-toastify";
@@ -427,13 +427,13 @@ export default function PublicProfileSettings() {
                 </CardDescription>
               </div>
               <Button
-                variant={isEditingProfile ? "outline" : "default"}
+                variant={isEditingProfile ? "outline" : "outline"}
                 size="sm"
                 onClick={() => 
                   isEditingProfile ? handleCancelEdit() : setIsEditingProfile(true)
                 }
                 disabled={isUpdatingUser}
-                className="gap-2"
+                className="flex items-center gap-2"
               >
                 {isEditingProfile ? (
                   <>
@@ -442,7 +442,7 @@ export default function PublicProfileSettings() {
                   </>
                 ) : (
                   <>
-                    <Edit2 className="h-4 w-4" />
+                    <Edit className="h-4 w-4" />
                     Edit Profile
                   </>
                 )}
