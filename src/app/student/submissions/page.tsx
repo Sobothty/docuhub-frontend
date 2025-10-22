@@ -65,6 +65,7 @@ import {
   useDeleteMediaMutation,
 } from "@/feature/media/mediaSlice";
 import Image from "next/image";
+import { toast } from "sonner";
 
 interface PaperData {
   assignment: Assignment | undefined;
@@ -213,6 +214,7 @@ export default function StudentSubmissionsPage() {
       }).unwrap();
       setEditOpen(false);
       setNewFile(null);
+      toast.success("Paper updated successfully");
     } catch (err) {
       // Optionally handle error
       console.log("Update failed", err);
