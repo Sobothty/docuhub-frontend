@@ -60,7 +60,11 @@ import { useState, useMemo } from "react";
 import { Paper } from "@/types/paperType";
 import { Assignment } from "@/feature/paperSlice/papers";
 import { useGetCategoryNamesQuery } from "@/feature/categoriesSlice/categoriesSlices";
-import { useCreateMediaMutation } from "@/feature/media/mediaSlice";
+import {
+  useCreateMediaMutation,
+  useDeleteMediaMutation,
+} from "@/feature/media/mediaSlice";
+import Image from "next/image";
 
 interface PaperData {
   assignment: Assignment | undefined;
@@ -155,6 +159,7 @@ export default function StudentSubmissionsPage() {
   const { data: categoryNames = [] } = useGetCategoryNamesQuery();
   const [updatePaper, { isLoading: isUpdating }] = useUpdatePaperMutation();
   const [createMedia, { isLoading: isUploading }] = useCreateMediaMutation();
+  const [deleteMedia] = useDeleteMediaMutation();
 
   // Open edit dialog and prefill fields
   const handleEditClick = (paper: Paper) => {
@@ -286,7 +291,9 @@ export default function StudentSubmissionsPage() {
                 Update your paper details below.
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleEditSubmit} className="space-y-4">
+
+            <form onSubmit={handleEditSubmit} className="space-y-5">
+              {/* Title */}
               <div className="space-y-2">
                 <Label htmlFor="edit-title">Title</Label>
                 <Input
@@ -296,39 +303,67 @@ export default function StudentSubmissionsPage() {
                   required
                 />
               </div>
+
+              {/* Abstract */}
               <div className="space-y-2">
                 <Label htmlFor="edit-abstract">Abstract</Label>
                 <Textarea
                   id="edit-abstract"
                   value={editAbstract}
                   onChange={(e) => setEditAbstract(e.target.value)}
+                  className="min-h-[120px]"
                 />
               </div>
+
+              {/* Thumbnail Upload + Preview */}
               <div className="space-y-2">
-                <Label htmlFor="edit-file">Paper File</Label>
-                <div className="flex gap-2 items-center">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      if (editFileUrl) {
-                        const a = document.createElement("a");
-                        a.href = editFileUrl;
-                        a.download =
-                          editTitle
-                            .replace(/[^a-z0-9\-\s]/gi, "")
-                            .replace(/\s+/g, "-") + ".pdf";
-                        a.target = "_blank";
-                        document.body.appendChild(a);
-                        a.click();
-                        a.remove();
+                <Label htmlFor="edit-thumbnail">Thumbnail</Label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    id="edit-thumbnail"
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const formData = new FormData();
+                        formData.append("file", file);
+                        const res = await createMedia(formData).unwrap();
+                        setEditThumbnailUrl(res.data.uri); // update to server URL
                       }
                     }}
-                  >
-                    Deploy Old File
-                  </Button>
+                  />
+                  {editThumbnailUrl && (
+                    <div className="relative w-40 h-20">
+                      <Image
+                        src={editThumbnailUrl}
+                        alt="thumbnail preview"
+                        width={500}
+                        height={500}
+                        unoptimized
+                        className="w-full h-full object-cover rounded-md border"
+                      />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await deleteMedia(editThumbnailUrl);
+                          setEditThumbnailUrl("");
+                        }}
+                        className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* File Upload (PDF) */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-file">Paper File</Label>
+                <div className="flex items-center gap-3">
                   <Input
-                    id="edit-file-upload"
+                    id="edit-file"
                     type="file"
                     accept="application/pdf"
                     onChange={handleFileChange}
@@ -340,43 +375,46 @@ export default function StudentSubmissionsPage() {
                     </span>
                   )}
                 </div>
-                {/* PDF Preview */}
-                <div className="mt-2">
-                  {filePreviewUrl ? (
-                    <div className="text-sm">
-                      {newFile?.name} :{" "}
-                      <a
-                        href={filePreviewUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {filePreviewUrl}
-                      </a>
-                    </div>
-                  ) : (
-                    editFileUrl && (
-                      <div className="text-sm">
-                        {editFileUrl.split("/").pop()} :{" "}
+
+                {/* File Info + Delete Button */}
+                <div className="mt-2 flex items-center justify-between text-sm border rounded-md px-3 py-2 bg-muted/50">
+                  {filePreviewUrl || editFileUrl ? (
+                    <>
+                      <span className="truncate w-[75%]">
+                        {newFile?.name || editFileUrl.split("/").pop()}
+                      </span>
+                      <div className="flex items-center gap-2">
                         <a
-                          href={editFileUrl}
+                          href={filePreviewUrl || editFileUrl}
                           target="_blank"
                           rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline text-xs"
                         >
-                          {editFileUrl}
+                          Preview
                         </a>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await deleteMedia(editFileUrl);
+                            setEditFileUrl("");
+                            setNewFile(null);
+                            setFilePreviewUrl(null);
+                          }}
+                          className="text-red-500 hover:text-red-700 text-xs"
+                        >
+                          Delete
+                        </button>
                       </div>
-                    )
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">
+                      No file selected
+                    </span>
                   )}
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-thumbnail">Thumbnail URL</Label>
-                <Input
-                  id="edit-thumbnail"
-                  value={editThumbnailUrl}
-                  onChange={(e) => setEditThumbnailUrl(e.target.value)}
-                />
-              </div>
+
+              {/* Category */}
               <div className="space-y-2">
                 <Label htmlFor="edit-categories">Category</Label>
                 <select
@@ -395,6 +433,8 @@ export default function StudentSubmissionsPage() {
                     ))}
                 </select>
               </div>
+
+              {/* Footer Buttons */}
               <DialogFooter>
                 <Button type="submit" disabled={isUpdating || isUploading}>
                   {isUpdating ? "Updating..." : "Update"}
