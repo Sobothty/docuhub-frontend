@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { getSession, useSession } from "next-auth/react";
 import {
   CreateStudentDetailRequest,
   useCreateStudentDetailMutation,
@@ -38,6 +38,17 @@ import { StudentFormData, StudentFormErrors } from "@/types/studentType";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import Image from "next/image";
 
+import SockJS from "sockjs-client";
+import {
+  Client,
+  IMessage,
+  IStompSocket,
+  StompSubscription,
+} from "@stomp/stompjs";
+import { useGetAllUsersQuery } from "@/feature/users/usersSlice";
+import { UserProfile, UserResponse } from "@/types/userType";
+import { Message } from "@/types/message";
+
 interface StudentVerificationFormProps {
   userUuid?: string;
   onSuccess?: () => void;
@@ -61,6 +72,14 @@ export default function StudentVerificationForm({
   userUuid,
   onSuccess,
 }: StudentVerificationFormProps) {
+  const [email, setEmail] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const stompClientRef = useRef<Client | null>(null);
+  const subscriptionRef = useRef<StompSubscription | null>(null);
+  // const [allUsers, setAllUsers] = useState<KeycloakUser[]>([]);
+  // const [selectedUser, setSelectedUser] = useState<KeycloakUser | null>(null);
+  const [message, setMessage] = useState<string>("");
+
   const router = useRouter();
   const { data: session } = useSession();
   const [createStudentDetail, { isLoading, error }] =
@@ -85,6 +104,7 @@ export default function StudentVerificationForm({
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [uploadedMediaName, setUploadedMediaName] = useState<string>("");
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [allChats, setAllChats] = useState<Record<string, Message[]>>({});
 
   const validateForm = (): boolean => {
     const errors: StudentFormErrors = {};
@@ -188,6 +208,96 @@ export default function StudentVerificationForm({
     }
   };
 
+  // webSocket
+  useEffect(() => {
+    (async () => {
+      const session = await getSession();
+      setEmail(session?.user?.email ?? null);
+    })();
+  }, []);
+
+  const { data: allUser } = useGetAllUsersQuery();
+
+  useEffect(() => {
+    if (!allUser || !session?.user?.email) return;
+    const user = allUser.find((u) => u.email === session.user.email);
+    setCurrentUser(user as UserProfile);
+  }, [allUser, session]);
+
+  // 4) Connect WebSocket ONCE and subscribe to *my* topic
+  useEffect(() => {
+    if (!currentUser?.uuid || !session?.accessToken) return;
+
+    const socket = new SockJS("https://api.docuhub.me/ws-chat");
+
+    const stompClient = new Client({
+      webSocketFactory: () => socket,
+      connectHeaders: {
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+      reconnectDelay: 3000,
+      onConnect: () => {
+        console.log("Connected to WebSocket");
+
+        const myTopic = `/topic/user.${currentUser.uuid}`;
+        subscriptionRef.current = stompClient.subscribe(
+          myTopic,
+          (msg: IMessage) => {
+            const payload = JSON.parse(msg.body);
+            const otherUserId =
+              payload.senderUuid === currentUser.uuid
+                ? payload.receiverUuid
+                : payload.senderUuid;
+
+            setAllChats((prev) => {
+              const conv = prev[otherUserId] || [];
+              if (payload.id && conv.some((m) => m.id === payload.id))
+                return prev;
+
+              return { ...prev, [otherUserId]: [...conv, payload] };
+            });
+          }
+        );
+      },
+    });
+
+    stompClient.activate();
+    stompClientRef.current = stompClient;
+
+    return () => {
+      subscriptionRef.current?.unsubscribe();
+      stompClient.deactivate();
+    };
+  }, [currentUser?.uuid, session?.accessToken]);
+
+  // 5) Load conversation history when user is selected
+
+  //websocket
+
+  console.log("currentUser :>> ", currentUser?.uuid);
+
+  const sendPrivateMessage = (message: string) => {
+    if (!stompClientRef.current?.connected || !message.trim() || !currentUser) {
+      return;
+    }
+    const tempMessage: Message = {
+      id: null,
+      senderUuid: currentUser.uuid,
+      message: message,
+      receiverUuid: "8f4dc8f0-007e-408c-a562-e7709d75a3a8",
+      timestamp: new Date().toISOString(),
+      isRead: false,
+    };
+    console.log("tempMessage :>> ", tempMessage);
+
+    stompClientRef.current.publish({
+      destination: "/app/private-message",
+      body: JSON.stringify(tempMessage),
+    });
+
+    setMessage("");
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -210,6 +320,9 @@ export default function StudentVerificationForm({
         userUuid: currentUserUuid,
       }).unwrap();
 
+      //send to websock
+      sendPrivateMessage(result.message);
+
       setSubmitSuccess(true);
       console.log("Student verification submitted successfully:", result);
 
@@ -222,17 +335,19 @@ export default function StudentVerificationForm({
       }, 2000);
     } catch (error) {
       console.log("Failed to submit student verification:", error);
-      
+
       // Handle the case where the request was successful but parsing failed
-      const err = error as FetchBaseQueryError & { 
-        originalStatus?: number; 
+      const err = error as FetchBaseQueryError & {
+        originalStatus?: number;
         status?: string | number;
       };
-      
+
       if (err.originalStatus === 201 || err.status === "PARSING_ERROR") {
         setSubmitSuccess(true);
-        console.log("Student verification submitted successfully (parsing error ignored)");
-        
+        console.log(
+          "Student verification submitted successfully (parsing error ignored)"
+        );
+
         setTimeout(() => {
           if (onSuccess) {
             onSuccess();
