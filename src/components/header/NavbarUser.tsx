@@ -342,12 +342,12 @@ export default function NavbarUser() {
               </span>
             </div>
             <div className="flex gap-3 items-center">
-              <button className="p-2 rounded-full hover:bg-muted transition">
+              {/* <button className="p-2 rounded-full hover:bg-muted transition">
                 <Bell className="h-5 w-5 text-secondary" />
               </button>
               <button className="p-2 rounded-full hover:bg-muted transition">
                 <Heart className="h-5 w-5 text-secondary" />
-              </button>
+              </button> */}
               <div className="flex items-center space-x-2">
                 <Avatar className="h-8 w-8">
                   <AvatarImage
