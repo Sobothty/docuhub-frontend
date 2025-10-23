@@ -54,7 +54,6 @@ import {
   useGetAllAssignmentsQuery,
   useDeletePaperMutation,
   useUpdatePaperMutation,
-  useCreatePublicDownloadMutation,
   usePublishedPaperMutation,
 } from "@/feature/paperSlice/papers";
 import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
