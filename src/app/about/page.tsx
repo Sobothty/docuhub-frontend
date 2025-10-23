@@ -336,9 +336,9 @@ export default function AboutUsPage() {
                 <div className="absolute -bottom-4 -right-4 size-20 md:size-40 bg-accent rounded-br-2xl z-0"></div>
                 <div className="relative bg-card rounded-lg shadow-lg p-4 max-w-md z-10 animate-float">
                   <Image
-                    src="https://www.cstad.edu.kh/_next/image?url=https%3A%2F%2Flms-api.istad.co%2Fapi%2Fv1%2Fmedias%2Fview%2F6a4e078a-b8d0-46d6-ada4-a9565c328b92.png&w=1920&q=75"
+                    src="https://res.cloudinary.com/diakcg1yq/image/upload/v1761185717/director_m6sq9o.jpg"
                     alt={t('vision_image_alt', {
-                      defaultValue: 'Main content image',
+                      defaultValue: 'Director image',
                     })}
                     width={400}
                     height={300}
@@ -575,7 +575,7 @@ export default function AboutUsPage() {
             <div className="flex justify-center relative">
               <div className="animate-float">
                 <Image
-                  src="/img/westand.jpg"
+                  src="https://res.cloudinary.com/diakcg1yq/image/upload/v1761186072/3nk_zin_shb635.jpg"
                   alt={t('values_image_alt', {
                     defaultValue: 'Our Values illustration',
                   })}
@@ -756,8 +756,8 @@ export default function AboutUsPage() {
                     <Image
                       src={member.image}
                       alt={t(member.nameKey, { defaultValue: member.nameKey })}
-                      width={120}
-                      height={120}
+                      width={1000}
+                      height={1000}
                       className="size-32 md:size-42 rounded-lg object-cover -mt-20 mb-4 hover:scale-110 transition-transform duration-300 ease-in-out"
                     />
                     <h3 className="text-subheadings font-bold text-foreground mb-2 transition-colors duration-300">

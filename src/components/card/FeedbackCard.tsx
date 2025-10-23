@@ -60,7 +60,7 @@ const FeedbackCard: React.FC<FeedbackCardProps> = ({
         {/* Profile section */}
         <div className="flex items-center" suppressHydrationWarning>
           {feedback.userImage ? (
-            <div className="relative h-16 w-16 rounded-full overflow-hidden mr-4" suppressHydrationWarning>
+            <div className="relative size-12 md:size-16 rounded-full overflow-hidden mr-4" suppressHydrationWarning>
               <Image
                 src={feedback.userImage}
                 alt={feedback.userName}

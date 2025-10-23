@@ -504,6 +504,7 @@ export default function StudentSubmissionsPage() {
                   <TableRow>
                     <TableHead>Title</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Publish</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Mentor</TableHead>
                     <TableHead>Submitted</TableHead>
@@ -582,6 +583,25 @@ function SubmissionRow({
     }
   };
 
+  const getStatusPublication = (isPublished: boolean) => {
+    switch (isPublished) {
+      case true:
+        return (
+          <Badge variant="default" className="capitalize bg-green-500">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Published
+          </Badge>
+        );
+      case false:
+        return (
+          <Badge variant="secondary" className="capitalize">
+            <Clock className="h-3 w-3 mr-1" />
+            Draft
+          </Badge>
+        );
+    }
+  };
+
   return (
     <TableRow>
       <TableCell>
@@ -597,6 +617,7 @@ function SubmissionRow({
         </div>
       </TableCell>
       <TableCell>{getStatusBadge(paper.status)}</TableCell>
+      <TableCell>{getStatusPublication(paper.isPublished)}</TableCell>
       <TableCell>
         {Array.isArray(paper.categoryNames)
           ? paper.categoryNames.join(", ")
