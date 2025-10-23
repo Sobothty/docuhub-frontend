@@ -46,7 +46,7 @@ import {
   StompSubscription,
 } from "@stomp/stompjs";
 import { useGetAllUsersQuery } from "@/feature/users/usersSlice";
-import { UserProfile, UserResponse } from "@/types/userType";
+import { UserProfile} from "@/types/userType";
 import { Message } from "@/types/message";
 
 interface StudentVerificationFormProps {

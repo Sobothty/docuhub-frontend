@@ -21,15 +21,15 @@ interface ResearchPaper {
 interface HorizontalCardCarouselProps {
   papers: ResearchPaper[];
   onViewPaper?: (paperId: number) => void;
-  onDownloadPDF?: (paperId: string) => void;
-  onStarToggleBookmark?: (paperId: string) => void;
+  onDownloadPDF?: (paperId: number) => void;
+  onToggleBookmark?: (paperId: number) => void;
 }
 
 export default function HorizontalCardCarousel({
   papers,
   onViewPaper,
   onDownloadPDF,
-  onStarToggleBookmark,
+  onToggleBookmark,
 }: HorizontalCardCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [bookmarkedPapers, setBookmarkedPapers] = useState<Set<string>>(
@@ -66,7 +66,7 @@ export default function HorizontalCardCarousel({
       else newSet.add(paperId);
       return newSet;
     });
-    onStarToggleBookmark?.(paperId);
+    onToggleBookmark?.(Number(paperId));
   };
 
   useEffect(() => {
@@ -95,7 +95,7 @@ export default function HorizontalCardCarousel({
                 {...paper}
                 isBookmarked={bookmarkedPapers.has(paper.id)}
                 onViewPaper={() => onViewPaper?.(Number(paper.id))}
-                onDownloadPDF={() => onDownloadPDF?.(paper.id)}
+                onDownloadPDF={() => onDownloadPDF?.(Number(paper.id))}
                 onToggleBookmark={() => handleToggleBookmark(paper.id)}
               />
             </div>

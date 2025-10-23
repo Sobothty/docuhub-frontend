@@ -1,13 +1,8 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { BookOpen, Calendar, Award, Star, Download, Eye } from "lucide-react";
-import {
-  useCreateStarMutation,
-  useDeleteStarMutation,
-} from "@/feature/star/StarSlice";
-import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { BookOpen, Calendar, Award, Star, Download, Eye } from 'lucide-react';
 
 interface VerticalCardProps {
   title: string;
@@ -22,7 +17,7 @@ interface VerticalCardProps {
   isBookmarked?: boolean;
   paperId: string;
   onDownloadPDF?: () => void;
-  onStarToggleBookmark?: () => void;
+  onToggleBookmark?: () => void;
   className?: string;
 }
 
@@ -39,57 +34,22 @@ export default function VerticalCard({
   isBookmarked = false,
   paperId,
   onDownloadPDF,
-  onStarToggleBookmark,
-  className = "",
+  onToggleBookmark,
+  className = '',
 }: VerticalCardProps) {
   const router = useRouter();
   const displayAuthors =
-    authors.length > 2 ? [...authors.slice(0, 2), "..."] : authors;
+    authors.length > 2 ? [...authors.slice(0, 2), '...'] : authors;
 
   // Truncate abstract to 150 characters with ... if longer
   const displayAbstract = abstract
     ? abstract.length > 150
       ? `${abstract.slice(0, 150).trim()}...`
       : abstract
-    : "";
+    : '';
 
   const handleViewPaper = () => {
     router.push(`/papers/${paperId}`);
-  };
-
-  const { data: userProfile } = useGetUserProfileQuery();
-  const [createStar, { isLoading: isCreating }] = useCreateStarMutation();
-  const [deleteStar, { isLoading: isDeleting }] = useDeleteStarMutation();
-
-  const userUuid = userProfile?.user?.uuid;
-
-  // USE THE PROP - the parent component calculates this correctly
-  const starred = isBookmarked;
-
-  // DEBUG: Log the values
-  console.log('VerticalCard Debug:', {
-    paperId,
-    title: title.substring(0, 30),
-    isBookmarked,
-    starred,
-    userUuid
-  });
-
-  const handleStarClick = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!userUuid) return;
-    
-    // Use the onStarToggleBookmark callback from parent
-    if (onStarToggleBookmark) {
-      onStarToggleBookmark();
-    } else {
-      // Fallback if callback not provided
-      if (starred) {
-        await deleteStar(paperId);
-      } else {
-        await createStar(paperId);
-      }
-    }
   };
 
   return (
@@ -123,7 +83,7 @@ export default function VerticalCard({
           {authorImage && (
             <Image
               src={authorImage}
-              alt={authors[0] || "Author"}
+              alt={authors[0] || 'Author'}
               width={24}
               height={24}
               className="w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2 sm:mr-3 flex-shrink-0"
@@ -132,7 +92,7 @@ export default function VerticalCard({
             />
           )}
           <span className="text-sm sm:text-base text-foreground truncate">
-            {displayAuthors.join(", ")}
+            {displayAuthors.join(', ')}
           </span>
         </div>
 
@@ -157,20 +117,15 @@ export default function VerticalCard({
             </div>
           )}
           <button
-            onClick={handleStarClick}
+            onClick={onToggleBookmark}
             className="flex items-center space-x-1 hover:text-secondary transition-colors"
-            aria-label={starred ? "Remove bookmark" : "Add bookmark"}
-            disabled={isCreating || isDeleting}
+            aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
           >
-            {isCreating || isDeleting ? (
-              <span className="w-3 h-3 sm:w-4 sm:h-4 animate-spin border-b-2 border-accent rounded-full inline-block"></span>
-            ) : (
-              <Star
-                className={`w-3 h-3 sm:w-4 sm:h-4 ${
-                  starred ? "fill-accent text-accent" : "text-foreground"
-                }`}
-              />
-            )}
+            <Star
+              className={`w-3 h-3 sm:w-4 sm:h-4 ${
+                isBookmarked ? 'fill-accent text-accent' : 'text-foreground'
+              }`}
+            />
           </button>
         </div>
 
