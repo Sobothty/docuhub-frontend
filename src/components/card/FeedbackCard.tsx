@@ -64,8 +64,9 @@ const FeedbackCard: React.FC<FeedbackCardProps> = ({
               <Image
                 src={feedback.userImage}
                 alt={feedback.userName}
-                fill
                 className="object-cover transition-transform duration-300 ease-in-out scale-150 hover:scale-170"
+                width={250}
+                height={250}
               />
             </div>
           ) : (

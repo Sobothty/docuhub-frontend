@@ -59,20 +59,7 @@ const HeroSection: FC = () => {
   }, []);
 
   return (
-    <section className="h-[710px] bg-card px-4 sm:px-6 md:px-10 lg:px-16 py-6 sm:py-8 md:py-12 flex flex-col lg:flex-row items-center justify-between">
-      {/* Language Switcher */}
-      {/* <div className="absolute top-4 right-4 z-20">
-        <select
-          onChange={(e) => changeLanguage(e.target.value)}
-          className="bg-blue-500 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-lg text-sm sm:text-base"
-          aria-label="Select Language"
-        >
-          <option value="en">
-            English
-          </option>
-          <option value="km">Khmer</option>
-        </select>
-      </div> */}
+    <div className="h-[710px] bg-card px-4 sm:px-6 md:px-10 lg:px-16 py-6 sm:py-8 md:py-12 flex flex-col lg:flex-row items-center justify-between">
 
       {/* Left Content */}
       <div className="mt-20 max-w-xl lg:max-w-md ml-0 sm:ml-4 md:ml-8 lg:ml-20 text-center sm:text-left gap-10">
@@ -213,7 +200,7 @@ const HeroSection: FC = () => {
           <path d="M20.52 3.48A11.883 11.883 0 0 0 12 0C5.377 0 0 5.377 0 12c0 2.115.552 4.099 1.518 5.865L0 24l6.327-1.63a11.893 11.893 0 0 0 5.66 1.424c6.623 0 12-5.377 12-12 0-3.2-1.247-6.202-3.48-8.52zM12 21.6a9.59 9.59 0 0 1-4.859-1.429l-.348-.207-3.75.966.995-3.651-.226-.374A9.604 9.604 0 0 1 2.4 12c0-5.313 4.287-9.6 9.6-9.6 2.566 0 4.978 1 6.785 2.814a9.54 9.54 0 0 1 2.816 6.786c0 5.313-4.288 9.6-9.6 9.6z" />
         </svg>
       </div>
-    </section>
+    </div>
   );
 };
 
