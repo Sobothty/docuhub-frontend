@@ -170,7 +170,6 @@ export const papersApi = createApi({
           api,
           extraOptions
         );
-
         if (result.data) {
           return { data: result.data as ApiResponse };
         } else {
@@ -184,6 +183,23 @@ export const papersApi = createApi({
       },
       providesTags: ["Papers"],
     }),
+    createPublicDownload: builder.mutation<void, string>({
+      async queryFn(paperUuid, api, extraOptions) {
+        const result = await publicBaseQuery(
+          {
+            url: `/papers/download/${paperUuid}`,
+            method: "POST",
+          },
+          api,
+          extraOptions
+        );
+        if (result.error) {
+          return { error: result.error };
+        }
+        return { data: result.data as void };
+      },
+    }),
+    
     getAllAssignments: builder.query<Assignment[], void>({
       query: () => ({
         url: "/paper/assignments/author",
@@ -216,7 +232,8 @@ export const {
   useGetAllAdviserAssignmentsQuery,
   useGetPaperByUuidQuery,
   useDeletePaperMutation,
-  useUpdatePaperMutation
+  useUpdatePaperMutation,
+  useCreatePublicDownloadMutation,
 } = papersApi;
 
 // Export reducer

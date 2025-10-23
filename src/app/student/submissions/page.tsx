@@ -586,11 +586,21 @@ function SubmissionRow({
   const getStatusPublication = (isPublished: boolean) => {
     switch (isPublished) {
       case true:
-        return "Published";
+        return (
+          <Badge variant="default" className="capitalize bg-green-500">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Published
+          </Badge>
+        );
       case false:
-        return "Unpublished";
+        return (
+          <Badge variant="secondary" className="capitalize">
+            <Clock className="h-3 w-3 mr-1" />
+            Draft
+          </Badge>
+        );
     }
-  }
+  };
 
   return (
     <TableRow>
@@ -607,7 +617,7 @@ function SubmissionRow({
         </div>
       </TableCell>
       <TableCell>{getStatusBadge(paper.status)}</TableCell>
-      <TableCell></TableCell>
+      <TableCell>{getStatusPublication(paper.isPublished)}</TableCell>
       <TableCell>
         {Array.isArray(paper.categoryNames)
           ? paper.categoryNames.join(", ")
