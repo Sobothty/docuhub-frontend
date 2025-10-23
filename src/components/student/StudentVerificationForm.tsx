@@ -42,7 +42,6 @@ import SockJS from "sockjs-client";
 import {
   Client,
   IMessage,
-  IStompSocket,
   StompSubscription,
 } from "@stomp/stompjs";
 import { useGetAllUsersQuery } from "@/feature/users/usersSlice";
