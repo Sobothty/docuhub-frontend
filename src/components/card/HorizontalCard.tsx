@@ -40,10 +40,10 @@ export default function HorizontalCard({
   const router = useRouter();
 
   return (
-    <div className="w-full bg-card overflow-hidden rounded-lg flex flex-col md:flex-row shadow-md h-full">
+    <div className="w-full bg-card overflow-hidden rounded-lg flex flex-col md:flex-row shadow-md h-[90%]">
       {/* Left Section - Image */}
       <div className="relative w-full md:w-1/3 h-56 md:h-auto flex-shrink-0">
-        <Image src={image} alt={title} fill className="object-cover" priority />
+        <Image src={image} alt={title} fill className="object-cover" priority unoptimized />
       </div>
 
       {/* Right Section */}

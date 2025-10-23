@@ -149,6 +149,24 @@ const feedbacksData = [
     rating: 4,
     userImage: "/memberTeam/KrySobothty.JPG",
   },
+  {
+    id: "5",
+    userName: "SIM PENGSEANG",
+    userTitle: "ISTAD’s Student",
+    content:
+      "Docuhub AcademicHub has been a game-changer for my research journey. The resources and support available are unparalleled.",
+    rating: 4,
+    userImage: "/memberTeam/PengSeangSim.JPG",
+  },
+  {
+    id: "6",
+    userName: "PHO HONGLEAP",
+    userTitle: "ISTAD’s Student",
+    content:
+      "I highly recommend IPUB AcademicHub to any student or researcher looking to elevate their work and connect with a vibrant academic community.",
+    rating: 4,
+    userImage: "/memberTeam/PhoHongleap.JPG",
+  },
 ];
 
 const getYear = (paper: { publishedAt?: string | null; createdAt?: string | null }) => {

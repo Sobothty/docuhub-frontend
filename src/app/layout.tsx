@@ -162,7 +162,7 @@ export default function RootLayout({
         <Providers>
           <StickyBanner />
           <NavbarWrapper />
-          <main className="mt-20">
+          <main className="mt-20 overflow-hidden mx-auto">
             <Suspense fallback={<DocuhubLoader />}>{children}</Suspense>
             <SpeedInsights />
             <Analytics />
