@@ -340,6 +340,7 @@ export default function AboutUsPage() {
                     alt={t('vision_image_alt', {
                       defaultValue: 'Director image',
                     })}
+                    unoptimized
                     width={400}
                     height={300}
                     className="rounded-lg w-full"
