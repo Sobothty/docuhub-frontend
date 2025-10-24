@@ -17,12 +17,13 @@ import {
   CheckCircle,
   XCircle,
   Edit,
-  MessageSquare
+  MessageSquare,
 } from "lucide-react";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetFeedbackByPaperUuidQuery } from "@/feature/feedbackSlice/feedbackSlice";
 import { useGetPaperByUuidQuery } from "@/feature/paperSlice/papers";
 import PDFViewer from "@/components/pdf/PDFView";
+import FeedbackDetailsPlaceholder from "@/components/card/FeedbackCardPlaceHolderByUuid";
 
 export default function StudentFeedbackDetailPage() {
   const params = useParams();
@@ -32,18 +33,18 @@ export default function StudentFeedbackDetailPage() {
   console.log("Paper UUID:", paperUuid);
 
   // Fetch user profile
-  const { data: userProfile } = useGetUserProfileQuery();
-
-  const { data: feedbackData } =
+  const { data: userProfile, isLoading: isUserProfileLoading } =
+    useGetUserProfileQuery();
+  const { data: feedbackData, isLoading: isFeedbackLoading } =
     useGetFeedbackByPaperUuidQuery(paperUuid);
-    console.log("Feedback Data:", feedbackData);
+  const { data: paperData, isLoading: isPaperLoading } =
+    useGetPaperByUuidQuery(paperUuid);
 
-  const { data: paperData } = useGetPaperByUuidQuery(paperUuid);
-  console.log("Paper Data:", paperData);
+  const isLoading = isUserProfileLoading || isFeedbackLoading || isPaperLoading;
 
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
-      case "APPROVED":
+      case "approved":
         return (
           <Badge variant="default" className="bg-green-500">
             <CheckCircle className="w-3 h-3 mr-1" />
@@ -83,6 +84,18 @@ export default function StudentFeedbackDetailPage() {
         return <MessageSquare className="h-4 w-4" />;
     }
   };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout
+        userRole="student"
+        userAvatar={userProfile?.user.imageUrl}
+        userName={userProfile?.user.fullName}
+      >
+        <FeedbackDetailsPlaceholder />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout
@@ -151,9 +164,7 @@ export default function StudentFeedbackDetailPage() {
                 <div className="flex items-start gap-3">
                   <Avatar className="h-10 w-10">
                     <AvatarImage
-                      src={
-                        feedbackData?.adviserImageUrl || "/placeholder.svg"
-                      }
+                      src={feedbackData?.adviserImageUrl || "/placeholder.svg"}
                       alt={feedbackData?.advisorName}
                     />
                     <AvatarFallback>
@@ -174,8 +185,7 @@ export default function StudentFeedbackDetailPage() {
                 <div>
                   <h4 className="font-medium mb-2">Feedback</h4>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    {feedbackData?.feedbackText ||
-                      "No feedback text provided."}
+                    {feedbackData?.feedbackText || "No feedback text provided."}
                   </p>
                 </div>
               </CardContent>
@@ -190,23 +200,17 @@ export default function StudentFeedbackDetailPage() {
                   <div className="text-sm text-muted-foreground">
                     Document Title
                   </div>
-                  <div className="font-medium">
-                    {paperData?.paper.title}
-                  </div>
+                  <div className="font-medium">{paperData?.paper.title}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Mentor</div>
-                  <div className="font-medium">
-                    {feedbackData?.advisorName}
-                  </div>
+                  <div className="font-medium">{feedbackData?.advisorName}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">
                     Review Date
                   </div>
-                  <div className="font-medium">
-                    {feedbackData?.createdAt}
-                  </div>
+                  <div className="font-medium">{feedbackData?.createdAt}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Status</div>

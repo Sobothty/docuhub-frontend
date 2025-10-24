@@ -8,6 +8,7 @@ import { Poppins } from "next/font/google";
 import localFont from "next/font/local";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
+import { LoadingBar } from "@/components/ui/LoadingBar";
 
 // English: Poppins
 const poppins = Poppins({
@@ -161,6 +162,7 @@ export default function RootLayout({
           <StickyBanner />
           <NavbarWrapper />
           <main className="mt-20 overflow-x-hidden">
+            <LoadingBar />
             {children}
             <SpeedInsights />
             <Analytics />

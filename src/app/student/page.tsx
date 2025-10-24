@@ -20,8 +20,8 @@ import {
   Search,
   Filter,
   Plus,
-  BookOpen,
   TrendingUp,
+  Star,
 } from "lucide-react";
 import Link from "next/link";
 import HorizontalCard from "@/components/card/HorizontalCardForAuthor";
@@ -30,7 +30,7 @@ import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetPapersByAuthorQuery } from "@/feature/paperSlice/papers";
 import { useGetAllStarOfPapersQuery } from "@/feature/star/StarSlice";
 import { useRouter } from "next/navigation";
-import { PaperCardSkeleton } from "./proposals/PaperSkeleton";
+import ProposalCardPlaceholder from "./proposals/PaperSkeleton";
 
 export default function StudentOverviewPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -113,7 +113,7 @@ export default function StudentOverviewPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button asChild>
+            <Button asChild className="text-white">
               <Link href="/student/proposals">
                 <Plus className="h-4 w-4 mr-2" />
                 New Documents
@@ -172,7 +172,7 @@ export default function StudentOverviewPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Star</CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
+              <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -231,7 +231,7 @@ export default function StudentOverviewPage() {
                             </h4>
                             <Badge
                               variant={
-                                paper.isApproved ? "default" : "secondary"
+                                paper.isApproved ? "approved" : "pending"
                               }
                               className="capitalize"
                             >
@@ -378,7 +378,7 @@ export default function StudentOverviewPage() {
               </CardHeader>
               <CardContent>
                 {papersLoading ? (
-                  <PaperCardSkeleton /> 
+                  <ProposalCardPlaceholder /> 
                 ) : paperError ? (
                   <div className="text-center py-8 text-red-500">
                     Failed to load papers. Please try again.
@@ -400,7 +400,7 @@ export default function StudentOverviewPage() {
                         abstract={doc.abstract || ""}
                         tags={doc.tags}
                         image={doc.image}
-                        star={doc.star.toString()} // <-- pass star count to card
+                        star={doc.star.toString()} 
                         onDownloadPDF={() =>
                           window.open(
                             `/student/submissions/${doc.id}`,

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -79,14 +79,37 @@ const roleNavigation = {
 export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
   const { isOpen, toggleSidebar } = useSidebar();
   const pathname = usePathname();
+  const router = useRouter();
   const navigation = roleNavigation[userRole] || [];
-  // Using NextAuth signOut function
+
+  // Function to handle navigation with loading bar
+  const handleNavigation = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string
+  ) => {
+    if (pathname === href) return; // Don't navigate if already on the page
+
+    e.preventDefault();
+
+    // Trigger loading bar
+    window.dispatchEvent(new Event("startLoading"));
+
+    // Navigate
+    router.push(href);
+
+    // Close sidebar on mobile
+    if (window.innerWidth < 768) {
+      toggleSidebar();
+    }
+  };
 
   const handleLogout = async () => {
     try {
+      window.dispatchEvent(new Event("startLoading"));
       await signOut({ callbackUrl: "/" });
     } catch (error) {
       console.error("Logout failed:", error);
+      window.dispatchEvent(new Event("completeLoading"));
     }
   };
 
@@ -126,7 +149,11 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
               <BookOpen className="h-6 w-6 text-primary" />
               {isOpen && (
                 <div>
-                  <Link href="/" className="inline-block">
+                  <Link
+                    href="/"
+                    className="inline-block"
+                    onClick={(e) => handleNavigation(e, "/")}
+                  >
                     <Image
                       src="/logo/Docohub.png"
                       alt="DocuHub Logo"
@@ -196,6 +223,14 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                     href={`/${
                       userRole === "public" ? "profile" : userRole
                     }/settings`}
+                    onClick={(e) =>
+                      handleNavigation(
+                        e,
+                        `/${
+                          userRole === "public" ? "profile" : userRole
+                        }/settings`
+                      )
+                    }
                     className="flex items-center gap-2"
                   >
                     <User className="h-4 w-4 text-foreground" />
@@ -205,7 +240,11 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/browse" className="flex items-center gap-2">
+                  <Link
+                    href="/browse"
+                    onClick={(e) => handleNavigation(e, "/browse")}
+                    className="flex items-center gap-2"
+                  >
                     <BookOpen className="h-4 w-4 text-foreground" />
                     <span className="text-sm font-medium">
                       Browse Publications
@@ -239,11 +278,12 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                 <Link
                   key={item.name}
                   href={item.href}
+                  onClick={(e) => handleNavigation(e, item.href)}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200",
                     isActive
                       ? "bg-primary text-foreground"
-                      : "text-foreground hover:bg-gray-300 hover:text-accent-foreground"
+                      : "text-foreground hover:bg-slate-800 hover:text-accent-foreground"
                   )}
                   title={!isOpen ? item.name : undefined}
                 >
@@ -251,7 +291,7 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                     className={cn(
                       "h-5 w-5 transition-colors duration-200",
                       isActive
-                        ? "text-primary-foreground"
+                        ? "text-white"
                         : "text-muted-foreground hover:text-accent-foreground"
                     )}
                   />
@@ -285,7 +325,10 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                   )}
                   asChild
                 >
-                  <Link href="/browse">
+                  <Link
+                    href="/browse"
+                    onClick={(e) => handleNavigation(e, "/browse")}
+                  >
                     <BookOpen className="h-4 w-4 mr-2 text-foreground" />
                     Browse Papers
                   </Link>
@@ -301,49 +344,11 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                   )}
                   asChild
                 >
-                  <Link href="/directory">
+                  <Link href="" onClick={() => handleLogout()}>
                     <Users className="h-4 w-4 mr-2 text-foreground" />
-                    Directory
+                    Sign Out
                   </Link>
                 </Button>
-                {userRole !== "public" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={cn(
-                      "w-full justify-start text-sm font-medium transition-all duration-200 border-border",
-                      pathname.startsWith(
-                        `/${
-                          userRole === "admin"
-                            ? "admin/users"
-                            : userRole === "adviser"
-                            ? "adviser/students"
-                            : "student/mentorship"
-                        }`
-                      )
-                        ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-                        : "bg-background text-foreground hover:bg-accent/20 hover:border-accent"
-                    )}
-                    asChild
-                  >
-                    <Link
-                      href={`/${
-                        userRole === "admin"
-                          ? "admin/users"
-                          : userRole === "adviser"
-                          ? "adviser/students"
-                          : "student/mentorship"
-                      }`}
-                    >
-                      <Users className="h-4 w-4 mr-2 text-foreground" />
-                      {userRole === "admin"
-                        ? "Manage Users"
-                        : userRole === "adviser"
-                        ? "My Students"
-                        : "Find Mentors"}
-                    </Link>
-                  </Button>
-                )}
               </div>
             </div>
           )}

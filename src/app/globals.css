@@ -167,3 +167,16 @@
 ::-webkit-scrollbar {
   display: none; /* For Chrome, Safari, and Edge */
 }
+
+@keyframes loading-bar {
+  0% {
+    transform: scaleX(0);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+.animate-loading-bar {
+  animation: loading-bar 1.8s ease-out forwards;
+}
