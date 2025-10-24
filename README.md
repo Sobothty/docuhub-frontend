@@ -149,6 +149,49 @@ For questions, support, or collaboration opportunities:
 - Email: tong24772@gmail.com
 - GitHub: [ButSeavThong](https://github.com/ButSeavThong)
 
----
+## Our Members 👥
 
-_Built with ❤️ by the DocuHub Team_
+Meet the talented individuals behind DocuHub. Our team is dedicated to creating a seamless platform for academic collaboration and knowledge sharing.
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+<div style="border: 1px solid #ddd; border-radius: 10px; padding: 20px; width: 250px; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+  <img src="/memberTeam/BUTSEAVTHONG.jpg" alt="But Seav Thong" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 10px;">
+  <h3 style="margin: 10px 0;">But Seav Thong</h3>
+  <p style="color: #555;">Team Lead </p>
+</div>
+<div style="border: 1px solid #ddd; border-radius: 10px; padding: 20px; width: 250px; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+  <img src="/memberTeam/krysobothty.jpg" alt="kry sobothty" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 10px;">
+  <h3 style="margin: 10px 0;">Kry Sobothty</h3>
+  <p style="color: #555;">Full Stack</p>
+</div>
+<div style="border: 1px solid #ddd; border-radius: 10px; padding: 20px; width: 250px; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+  <img src="/memberTeam/pengseangsim.jpg" alt="sim pengseang" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 10px;">
+  <h3 style="margin: 10px 0;">Sim PengSeang</h3>
+  <p style="color: #555;">Full Stack</p>
+</div>
+<div style="border: 1px solid #ddd; border-radius: 10px; padding: 20px; width: 250px; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+  <img src="/memberTeam/phohongleap.jpg" alt="pho hongleap" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 10px;">
+  <h3 style="margin: 10px 0;">Pho Hongleap</h3>
+  <p style="color: #555;">Frontend / Representor</p>
+</div>
+<div style="border: 1px solid #ddd; border-radius: 10px; padding: 20px; width: 250px; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+  <img src="/memberTeam/chimtheara.jpg" alt="chim theara" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 10px;">
+  <h3 style="margin: 10px 0;">Chim Theara</h3>
+  <p style="color: #555;">UX/UI Lead / Frontend</p>
+</div>
+<div style="border: 1px solid #ddd; border-radius: 10px; padding: 20px; width: 250px; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+  <img src="/memberTeam/sornsophamarinet.jpg" alt="Sorn Sophamarinet" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 10px;">
+  <h3 style="margin: 10px 0;">Sorn Sophamarinet</h3>
+  <p style="color: #555;">Frontend</p>
+</div>
+<div style="border: 1px solid #ddd; border-radius: 10px; padding: 20px; width: 250px; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+  <img src="/memberTeam/vannarithVr.jpg" alt="Vira Vannarith" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 10px;">
+  <h3 style="margin: 10px 0;">Vira Vannarith</h3>
+  <p style="color: #555;">Backend</p>
+</div>
+<div style="border: 1px solid #ddd; border-radius: 10px; padding: 20px; width: 250px; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+  <img src="/memberTeam/khimsokha.jpg" alt="Khim Sokha" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 10px;">
+  <h3 style="margin: 10px 0;">Khim Sokha</h3>
+  <p style="color: #555;">UX/UI</p>
+</div>
+</div>
