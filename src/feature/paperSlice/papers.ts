@@ -199,7 +199,12 @@ export const papersApi = createApi({
         return { data: result.data as void };
       },
     }),
-    
+    publishedPaper: builder.mutation<void, string>({
+      query: (uuid) => ({
+        url: `/papers/publish/${uuid}`,
+        method: "POST",
+      }),
+    }),
     getAllAssignments: builder.query<Assignment[], void>({
       query: () => ({
         url: "/paper/assignments/author",
@@ -234,6 +239,7 @@ export const {
   useDeletePaperMutation,
   useUpdatePaperMutation,
   useCreatePublicDownloadMutation,
+  usePublishedPaperMutation,
 } = papersApi;
 
 // Export reducer

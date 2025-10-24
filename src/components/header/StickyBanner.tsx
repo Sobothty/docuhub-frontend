@@ -64,7 +64,7 @@ export default function StickyBanner() {
           </span>
 
           {/* Social Media Icons */}
-          <div className="flex gap-2 sm:gap-3">
+          <div className="flex gap-2 sm:gap-3 ">
             {/* Facebook */}
             <div className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 transition">
               <a href="#" className="text-gray-400 hover:text-white">

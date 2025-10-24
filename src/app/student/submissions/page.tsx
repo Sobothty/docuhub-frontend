@@ -54,6 +54,7 @@ import {
   useGetAllAssignmentsQuery,
   useDeletePaperMutation,
   useUpdatePaperMutation,
+  usePublishedPaperMutation,
 } from "@/feature/paperSlice/papers";
 import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
 import { useState, useMemo } from "react";
@@ -558,12 +559,12 @@ function SubmissionRow({
 
   // Use RTK mutation hook
   const [deletePaper, { isLoading: isDeleting }] = useDeletePaperMutation();
+  const [createPublishedPaper] = usePublishedPaperMutation();
 
   const handleDeletePaper = async () => {
     try {
       await deletePaper(paper.uuid).unwrap();
     } catch (error) {
-      // Optionally handle error
       console.log("Failed to delete paper:", error);
     }
   };
@@ -582,6 +583,10 @@ function SubmissionRow({
       a.remove();
     }
   };
+
+  const handlePublish = async () => {
+    await createPublishedPaper(paper.uuid).unwrap();
+  }
 
   const getStatusPublication = (isPublished: boolean) => {
     switch (isPublished) {
@@ -654,6 +659,12 @@ function SubmissionRow({
               <Download className="h-4 w-4 mr-2" />
               Download
             </DropdownMenuItem>
+            {paper.status === "APPROVED" && !paper.isPublished && (
+              <DropdownMenuItem onClick={handlePublish}>
+                <Edit className="h-4 w-4 mr-2" />
+                Publish
+              </DropdownMenuItem>
+            )}
             {paper.status === "PENDING" && (
               <DropdownMenuItem onClick={onEdit}>
                 <Edit className="h-4 w-4 mr-2" />

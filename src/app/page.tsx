@@ -10,11 +10,8 @@ import AdventureSection from "@/components/ctaBanner/CtaBanner";
 import WorksCardGrid from "@/components/cardGrid/WorksCardGrid";
 import DiscussionForumSection from "@/components/ctaBanner/DiscussionForumSection";
 import FeedbackCardCarousel from "@/components/carousel/FeedbackCarousel";
-
 import { motion, useScroll } from "motion/react"
-
 import { useGetAllPublishedPapersQuery } from "@/feature/paperSlice/papers";
-
 import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
 
 
@@ -204,7 +201,7 @@ export default function Home() {
     publishedAt?: string | null;
     createdAt?: string | null;
     abstractText?: string;
-    thumbnailUrl?: string | null; // allow null
+    thumbnailUrl?: string | null;
     citations?: string;
     fileUrl?: string;
   };
@@ -233,21 +230,21 @@ export default function Home() {
   return (
     <>
     <motion.div
-                id="scroll-indicator"
-                style={{
-                    scaleX: scrollYProgress,
-                    position: "fixed",
-                    top: 128,
-                    left: 0,
-                    right: 0,
-                    height: 5,
-                    originX: 0,
-                    backgroundColor: "#f59e0b",
-                    zIndex: 9999,
+              id="scroll-indicator"
+              style={{
+                  scaleX: scrollYProgress,
+                  position: "fixed",
+                  top: 127,
+                  left: 0,
+                  right: 0,
+                  height: 5,
+                  originX: 0,
+                  backgroundColor: "#f59e0b",
+                  zIndex: 9999,
                 }}
             />
     
-    <div className="min-h-screen flex flex-col">
+    <div  className="min-h-screen flex flex-col">
       
       {/* Hero Section */}
       <HeroSection />

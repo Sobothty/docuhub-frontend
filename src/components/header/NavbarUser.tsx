@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import {
   Moon,
   Sun,
-  Bell,
   Heart,
   User,
   Settings,
@@ -220,11 +219,11 @@ export default function NavbarUser() {
             )}
           </button>
 
-          <button className="p-2 rounded-full hover:bg-muted transition">
+          {/* <button className="p-2 rounded-full hover:bg-muted transition">
             <Bell className="h-5 w-5 text-secondary" />
-          </button>
+          </button> */}
 
-          <button className="p-2 rounded-full hover:text-accent transition">
+          <button className="p-2 rounded-full hover:bg-muted transition">
             <Star className="h-5 w-5 text-secondary" />
           </button>
 
@@ -374,76 +373,29 @@ export default function NavbarUser() {
               </span>
             </div>
             <div className="flex gap-3 items-center">
-              <button className="p-2 rounded-full hover:bg-muted transition">
+              {/* <button className="p-2 rounded-full hover:bg-muted transition">
                 <Bell className="h-5 w-5 text-secondary" />
               </button>
               <button className="p-2 rounded-full hover:bg-muted transition">
                 <Heart className="h-5 w-5 text-secondary" />
-              </button>
-
-              {/* Mobile User Profile Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="relative h-auto p-0 hover:bg-transparent"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage
-                          src={user?.user.imageUrl || "/avatar.png"}
-                          alt={user?.user.slug || "User"}
-                        />
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                          {user ? getInitials(user.user.firstName) : "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col items-start">
-                        <span className="text-xs font-medium">
-                          {user?.user.fullName || "User"}
-                        </span>
-                        {getRoleBadge()}
-                      </div>
-                      <ChevronDown className="h-4 w-4 opacity-50" />
-                    </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="w-56 bg-background z-10000"
-                  align="end"
-                  forceMount
-                >
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {user?.user.fullName || "User"}
-                      </p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user?.user.email || "user@example.com"}
-                      </p>
-                      <div className="mt-1">{getRoleBadge()}</div>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleProfileClick}>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleProfileSettingClick}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleClickStars}>
-                    <Heart className="mr-2 h-4 w-4" />
-                    <span>Saved Papers</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              </button> */}
+              <div className="flex items-center space-x-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage
+                    src={user?.user.imageUrl || "/avatar.png"}
+                    alt={user?.user.slug || "User"}
+                  />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {user ? getInitials(user.user.firstName) : "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium">
+                    {user?.user.fullName || "User"}
+                  </span>
+                  {getRoleBadge()}
+                </div>
+              </div>
             </div>
           </div>
         </div>
