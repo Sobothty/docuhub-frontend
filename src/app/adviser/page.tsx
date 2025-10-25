@@ -3,10 +3,7 @@ import DashboardLayout from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGetAssignmentByAdviserQuery } from "@/feature/adviserAssignment/AdviserAssignmentSlice";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
-import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 // Define types
 interface Student {
@@ -35,19 +32,10 @@ interface StudentData {
 }
 
 export default function MentorOverviewPage() {
-  const router = useRouter();
-
-  const token = useSession();
   
   // ✅ Fetch adviser profile
   const { data: adviserProfile } = useGetUserProfileQuery();
 
-  // Use useEffect to redirect if not authenticated (prevent SSR issues)
-  useEffect(() => {
-    if (token.status === "unauthenticated" || !token.data?.accessToken) {
-      router.push("/login");
-    }
-  }, [token.status, token.data?.accessToken, router]);
 
   // ✅ Fetch adviser assignments
   const { data, error, isLoading } = useGetAssignmentByAdviserQuery();

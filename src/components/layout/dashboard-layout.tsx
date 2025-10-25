@@ -22,34 +22,8 @@ function DashboardLayoutContent({
   userName,
   userAvatar,
 }: DashboardLayoutProps) {
-  const [mounted, setMounted] = useState(false);
-  const { data: session, status } = useSession();
-  const typedSession = session as unknown as Session | null;
-  const user = typedSession?.user;
-  const isLoading = status === "loading";
   const { isOpen } = useSidebar();
 
-  // Avoid SSR/CSR mismatch by waiting until client mount
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-background">

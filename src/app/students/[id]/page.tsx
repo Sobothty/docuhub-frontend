@@ -3,10 +3,9 @@
 import { StudentPublicProfile } from "@/components/profiles/student-public-profile";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetPapersByAuthorQuery } from "@/feature/paperSlice/papers";
-import Loading from "@/app/Loading";
+import Loading from "@/app/loading";
 
 export default function StudentProfilePage() {
-
   // Fetch complete user profile data
   const {
     data: userProfile,

@@ -27,20 +27,9 @@ import {
 } from "@/feature/profileSlice/profileSlice";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { useEffect } from "react";
 
 export default function ProfilePage() {
-  const router = useRouter();
-  const token = useSession();
-
-  // Use useEffect to redirect if not authenticated (prevent SSR issues)
-  useEffect(() => {
-    if (token.status === "unauthenticated" || !token.data?.accessToken) {
-      router.push("/login");
-    }
-  }, [token.status, token.data?.accessToken, router]);
 
   const { status } = useSession();
   const { data: profileData, isLoading, error } = useGetUserProfileQuery();
@@ -99,27 +88,6 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  // Authentication error state
-  if (status === "unauthenticated") {
-    return (
-      <DashboardLayout userRole="public">
-        <div className="space-y-6">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <h2 className="text-xl font-semibold mb-2">Please sign in</h2>
-              <p className="text-muted-foreground">
-                You need to be authenticated to view your profile.
-              </p>
-              <Button onClick={() => router.push("/login")} className="mt-4">
-                Sign In
-              </Button>
-            </div>
-          </div>
         </div>
       </DashboardLayout>
     );

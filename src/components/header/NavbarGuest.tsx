@@ -7,37 +7,25 @@ import { Moon, Sun } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../ui/button";
 import Image from "next/image";
+import { useTheme } from "next-themes";
 
 export default function NavbarGuest() {
   const pathname = usePathname();
   const { t, i18n } = useTranslation("common");
 
   const [mounted, setMounted] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const [currentLang, setCurrentLang] = useState<"en" | "kh">("en");
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const { setTheme, resolvedTheme } = useTheme();
+
   useEffect(() => {
     setMounted(true);
-
-    const savedDarkMode = localStorage.getItem("darkMode");
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches;
-    const initialDarkMode = savedDarkMode
-      ? savedDarkMode === "true"
-      : prefersDark;
-    setIsDarkMode(initialDarkMode);
-    document.documentElement.classList.toggle("dark", initialDarkMode);
-
     if (i18n?.language) setCurrentLang(i18n.language as "en" | "kh");
   }, [i18n]);
 
   const toggleDarkMode = () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    document.documentElement.classList.toggle("dark", newMode);
-    localStorage.setItem("darkMode", newMode.toString());
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
   };
 
   const toggleLanguage = async () => {
@@ -97,7 +85,7 @@ export default function NavbarGuest() {
             onClick={toggleDarkMode}
             className="p-2 rounded-full hover:bg-muted transition"
           >
-            {isDarkMode ? (
+            {resolvedTheme === "dark" ? (
               <Sun className="h-5 w-5 text-secondary" />
             ) : (
               <Moon className="h-5 w-5 text-secondary" />
@@ -175,7 +163,7 @@ export default function NavbarGuest() {
               onClick={toggleDarkMode}
               className="p-2 rounded-full hover:bg-muted transition"
             >
-              {isDarkMode ? (
+              {resolvedTheme === "dark" ? (
                 <Sun className="h-5 w-5 text-secondary" />
               ) : (
                 <Moon className="h-5 w-5 text-secondary" />

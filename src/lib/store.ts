@@ -25,8 +25,6 @@ export const store = configureStore({
     [feedbackApi.reducerPath]: feedbackApi.reducer, // REMOVED DUPLICATE
     [usersApi.reducerPath]: usersApi.reducer,
     [studentApi.reducerPath]: studentApi.reducer, // REMOVED DUPLICATE
-
-    // by thong
     [assignmentApi.reducerPath]: assignmentApi.reducer,
     [commentsApi.reducerPath]: commentsApi.reducer,
   },

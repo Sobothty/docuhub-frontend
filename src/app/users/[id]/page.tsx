@@ -20,7 +20,7 @@ import {
   FileText,
 } from "lucide-react";
 import Link from "next/link";
-import Loading from "@/app/Loading";
+import Loading from "@/app/loading";
 import { Paper } from "@/types/paperType";
 
 interface UserProfilePageProps {
@@ -37,8 +37,8 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
   });
 
   const userPaper = papersData?.papers.content.filter(
-    paper => paper.authorUuid === id
-  )
+    (paper) => paper.authorUuid === id
+  );
 
   if (isLoading) return <Loading />;
 
@@ -209,40 +209,38 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
                   <div className="space-y-3">
                     <Separator />
                     <div className="space-y-2">
-                      {userPaper
-                        .slice(0, 5)
-                        .map((paper: Paper) => (
-                          <Link
-                            key={paper.uuid}
-                            href={`/papers/${paper.uuid}`}
-                            className="block p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm line-clamp-1">
-                                  {paper.title}
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {new Date(
-                                    paper.publishedAt || paper.createdAt
-                                  ).toLocaleDateString("en-US", {
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                  })}
-                                </p>
-                              </div>
-                              <Badge
-                                variant={
-                                  paper.isPublished ? "default" : "secondary"
-                                }
-                                className="shrink-0"
-                              >
-                                {paper.isPublished ? "Published" : "Draft"}
-                              </Badge>
+                      {userPaper.slice(0, 5).map((paper: Paper) => (
+                        <Link
+                          key={paper.uuid}
+                          href={`/papers/${paper.uuid}`}
+                          className="block p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm line-clamp-1">
+                                {paper.title}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {new Date(
+                                  paper.publishedAt || paper.createdAt
+                                ).toLocaleDateString("en-US", {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                })}
+                              </p>
                             </div>
-                          </Link>
-                        ))}
+                            <Badge
+                              variant={
+                                paper.isPublished ? "default" : "secondary"
+                              }
+                              className="shrink-0"
+                            >
+                              {paper.isPublished ? "Published" : "Draft"}
+                            </Badge>
+                          </div>
+                        </Link>
+                      ))}
                     </div>
                     {userPaper.length > 5 && (
                       <Button

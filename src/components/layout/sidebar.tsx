@@ -32,7 +32,6 @@ import {
   Stars,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
-import { NotificationSystem } from "@/components/ui/notification-system";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { useSidebar } from "@/components/contexts/sidebar-context";
@@ -169,11 +168,6 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                 </div>
               )}
             </div>
-            {isOpen && userRole !== "public" && (
-              <div className="flex items-center gap-2">
-                <NotificationSystem />
-              </div>
-            )}
           </div>
 
           {/* User Profile with Dropdown */}

@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { use } from 'react';
-import { useGetUserByIdQuery } from '@/feature/users/usersSlice';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
+import { use } from "react";
+import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 import {
   Mail,
   Phone,
@@ -18,15 +18,17 @@ import {
   BookOpen,
   ArrowLeft,
   Globe,
-} from 'lucide-react';
-import Link from 'next/link';
-import Loading from '@/app/Loading';
+} from "lucide-react";
+import Link from "next/link";
+import Loading from "@/app/loading";
 
 interface UserProfilePageProps {
   params: Promise<{ id: string }>;
 }
 
-export default function PublicUserProfilePage({ params }: UserProfilePageProps) {
+export default function PublicUserProfilePage({
+  params,
+}: UserProfilePageProps) {
   const { id } = use(params);
 
   const { data: user, isLoading, error } = useGetUserByIdQuery(id);
@@ -37,7 +39,9 @@ export default function PublicUserProfilePage({ params }: UserProfilePageProps) 
     return (
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-          <p className="text-red-500 text-center text-lg">Failed to load user profile</p>
+          <p className="text-red-500 text-center text-lg">
+            Failed to load user profile
+          </p>
           <Link href="/users">
             <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -51,9 +55,9 @@ export default function PublicUserProfilePage({ params }: UserProfilePageProps) 
 
   const getInitials = (name: string) => {
     return name
-      .split(' ')
+      .split(" ")
       .map((n) => n[0])
-      .join('')
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
@@ -74,18 +78,20 @@ export default function PublicUserProfilePage({ params }: UserProfilePageProps) 
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const getRoleDescription = () => {
-    if (user.isAdmin) return 'Platform Administrator with full system access';
-    if (user.isAdvisor) return 'Academic mentor guiding students in their research journey';
-    if (user.isStudent) return 'Student researcher working on academic projects';
-    return 'Community member';
+    if (user.isAdmin) return "Platform Administrator with full system access";
+    if (user.isAdvisor)
+      return "Academic mentor guiding students in their research journey";
+    if (user.isStudent)
+      return "Student researcher working on academic projects";
+    return "Community member";
   };
 
   return (
@@ -93,7 +99,10 @@ export default function PublicUserProfilePage({ params }: UserProfilePageProps) 
       <div className="space-y-6">
         {/* Back Button */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link href="/users" className="hover:text-foreground flex items-center gap-2">
+          <Link
+            href="/users"
+            className="hover:text-foreground flex items-center gap-2"
+          >
             <ArrowLeft className="h-4 w-4" />
             Back to Users
           </Link>
@@ -106,7 +115,10 @@ export default function PublicUserProfilePage({ params }: UserProfilePageProps) 
           <CardHeader>
             <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={user.imageUrl || '/placeholder-avatar.png'} alt={user.fullName} />
+                <AvatarImage
+                  src={user.imageUrl || "/placeholder-avatar.png"}
+                  alt={user.fullName}
+                />
                 <AvatarFallback className="bg-primary text-primary-foreground text-lg">
                   {getInitials(user.fullName)}
                 </AvatarFallback>
@@ -145,7 +157,9 @@ export default function PublicUserProfilePage({ params }: UserProfilePageProps) 
           {user.bio && (
             <CardContent className="pt-0">
               <Separator className="mb-4" />
-              <p className="text-muted-foreground leading-relaxed">{user.bio}</p>
+              <p className="text-muted-foreground leading-relaxed">
+                {user.bio}
+              </p>
             </CardContent>
           )}
         </Card>
@@ -166,12 +180,14 @@ export default function PublicUserProfilePage({ params }: UserProfilePageProps) 
                   </div>
                 </div>
 
-                {user.contactNumber && user.contactNumber !== 'null' && (
+                {user.contactNumber && user.contactNumber !== "null" && (
                   <div className="flex items-center gap-3">
                     <Phone className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="font-medium">Phone</p>
-                      <p className="text-muted-foreground">{user.contactNumber}</p>
+                      <p className="text-muted-foreground">
+                        {user.contactNumber}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -197,11 +213,15 @@ export default function PublicUserProfilePage({ params }: UserProfilePageProps) 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center p-4 bg-muted rounded-lg">
                     <p className="text-2xl font-bold text-primary">0</p>
-                    <p className="text-sm text-muted-foreground">Papers Published</p>
+                    <p className="text-sm text-muted-foreground">
+                      Papers Published
+                    </p>
                   </div>
                   <div className="text-center p-4 bg-muted rounded-lg">
                     <p className="text-2xl font-bold text-primary">0</p>
-                    <p className="text-sm text-muted-foreground">Collaborations</p>
+                    <p className="text-sm text-muted-foreground">
+                      Collaborations
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -216,25 +236,33 @@ export default function PublicUserProfilePage({ params }: UserProfilePageProps) 
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <p className="font-medium text-sm text-muted-foreground">Member Since</p>
+                  <p className="font-medium text-sm text-muted-foreground">
+                    Member Since
+                  </p>
                   <p className="text-sm">{formatDate(user.createDate)}</p>
                 </div>
 
                 <div>
-                  <p className="font-medium text-sm text-muted-foreground">Last Updated</p>
+                  <p className="font-medium text-sm text-muted-foreground">
+                    Last Updated
+                  </p>
                   <p className="text-sm">{formatDate(user.updateDate)}</p>
                 </div>
 
                 {user.gender && (
                   <div>
-                    <p className="font-medium text-sm text-muted-foreground">Gender</p>
+                    <p className="font-medium text-sm text-muted-foreground">
+                      Gender
+                    </p>
                     <p className="text-sm">{user.gender}</p>
                   </div>
                 )}
 
                 {user.telegramId && (
                   <div>
-                    <p className="font-medium text-sm text-muted-foreground">Telegram</p>
+                    <p className="font-medium text-sm text-muted-foreground">
+                      Telegram
+                    </p>
                     <p className="text-sm">@{user.telegramId}</p>
                   </div>
                 )}
@@ -248,26 +276,26 @@ export default function PublicUserProfilePage({ params }: UserProfilePageProps) 
               <CardContent className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">User Access</span>
-                  <Badge variant={user.isUser ? 'default' : 'secondary'}>
-                    {user.isUser ? 'Granted' : 'Not Granted'}
+                  <Badge variant={user.isUser ? "default" : "secondary"}>
+                    {user.isUser ? "Granted" : "Not Granted"}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Admin Access</span>
-                  <Badge variant={user.isAdmin ? 'destructive' : 'secondary'}>
-                    {user.isAdmin ? 'Granted' : 'Not Granted'}
+                  <Badge variant={user.isAdmin ? "destructive" : "secondary"}>
+                    {user.isAdmin ? "Granted" : "Not Granted"}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Student Status</span>
-                  <Badge variant={user.isStudent ? 'outline' : 'secondary'}>
-                    {user.isStudent ? 'Active' : 'Not Active'}
+                  <Badge variant={user.isStudent ? "outline" : "secondary"}>
+                    {user.isStudent ? "Active" : "Not Active"}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Mentor Status</span>
-                  <Badge variant={user.isAdvisor ? 'secondary' : 'outline'}>
-                    {user.isAdvisor ? 'Active' : 'Not Active'}
+                  <Badge variant={user.isAdvisor ? "secondary" : "outline"}>
+                    {user.isAdvisor ? "Active" : "Not Active"}
                   </Badge>
                 </div>
               </CardContent>

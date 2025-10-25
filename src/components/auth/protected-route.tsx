@@ -26,30 +26,19 @@ export default function ProtectedRoute({
   const user = session?.user;
 
   useEffect(() => {
-    if (!isLoading) {
-      if (!isAuthenticated) {
-        router.push(redirectTo);
-        return;
-      }
+    if (isLoading) return;
 
-      if (requiredRole && user?.roles) {
-        const roles = user.roles as string[];
-        const hasRequiredRole =
-          requiredRole === "public" ||
-          roles.includes(requiredRole.toUpperCase());
+    if (!isAuthenticated) {
+      router.replace(redirectTo);
+      return;
+    }
 
-        if (!hasRequiredRole) {
-          // Redirect to appropriate dashboard based on user role
-          if (roles.includes("ADMIN")) {
-            router.push("/admin");
-          } else if (roles.includes("ADVISER")) {
-            router.push("/adviser");
-          } else if (roles.includes("STUDENT")) {
-            router.push("/student");
-          } else {
-            router.push("/profile");
-          }
-        }
+    if (requiredRole && user?.roles) {
+      const roles = user.roles as string[];
+      const hasRequiredRole = roles.includes(requiredRole.toUpperCase());
+
+      if (!hasRequiredRole) {
+        router.replace("/unauthorized");
       }
     }
   }, [user, isLoading, isAuthenticated, requiredRole, router, redirectTo]);
