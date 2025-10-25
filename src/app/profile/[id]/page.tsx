@@ -20,7 +20,7 @@ import {
   Globe,
 } from "lucide-react";
 import Link from "next/link";
-import Loading from "@/app/loading";
+import Loading from "@/app/Loading";
 
 interface UserProfilePageProps {
   params: Promise<{ id: string }>;

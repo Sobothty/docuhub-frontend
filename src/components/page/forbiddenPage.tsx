@@ -34,7 +34,7 @@ export default function ForbiddenPage() {
             Access Denied
           </h2>
           <p className="text-lg text-muted-foreground max-w-md mx-auto text-pretty leading-relaxed">
-            You don't have permission to access this resource. If you believe
+            You don&apos;t have permission to access this resource. If you believe
             this is an error, please contact your administrator.
           </p>
         </div>

@@ -20,7 +20,7 @@ import {
   FileText,
 } from "lucide-react";
 import Link from "next/link";
-import Loading from "@/app/loading";
+import Loading from "@/app/Loading";
 import { Paper } from "@/types/paperType";
 
 interface UserProfilePageProps {

@@ -3,7 +3,7 @@
 import { StudentPublicProfile } from "@/components/profiles/student-public-profile";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetPapersByAuthorQuery } from "@/feature/paperSlice/papers";
-import Loading from "@/app/loading";
+import Loading from "@/app/Loading";
 
 export default function StudentProfilePage() {
   // Fetch complete user profile data

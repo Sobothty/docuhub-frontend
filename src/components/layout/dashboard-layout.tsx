@@ -1,9 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
-import type { Session } from "next-auth";
 import { Sidebar } from "./sidebar";
 import {
   SidebarProvider,

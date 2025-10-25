@@ -7,7 +7,6 @@ interface FeedbackCardCarouselProps {
   feedbacks: Feedback[];
   autoPlay?: boolean;
   autoPlayInterval?: number;
-  showControls?: boolean;
   showIndicators?: boolean;
 }
 
@@ -15,7 +14,6 @@ const FeedbackCardCarousel: React.FC<FeedbackCardCarouselProps> = ({
   feedbacks,
   autoPlay = true,
   autoPlayInterval = 5000,
-  showControls = true,
   showIndicators = true,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);

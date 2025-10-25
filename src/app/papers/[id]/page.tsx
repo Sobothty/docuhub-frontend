@@ -34,7 +34,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
-import Loading from "@/app/loading";
+import Loading from "@/app/Loading";
 import PaperCard from "@/components/card/PaperCard";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
