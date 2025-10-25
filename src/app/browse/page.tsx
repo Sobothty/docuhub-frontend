@@ -861,67 +861,97 @@ export default function BrowsePage() {
             {featuredResearchers.map((researcher) => (
               <div
                 key={researcher.id}
-                className="bg-card rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow border border-border"
+                className="group bg-card hover:bg-card/80 rounded-lg p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-border hover:border-border/50"
               >
-                <div className="flex items-center mb-4">
-                  <div className="relative w-24 h-24">
-                    <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-secondary to-accent border-4 border-secondary/20">
+                <div className="flex items-center space-x-4 mb-6">
+                  <div className="relative flex-shrink-0">
+                    <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-secondary to-accent border-4 border-secondary/20 group-hover:border-secondary/40 transition-all duration-300">
                       <Image
                         src={researcher.avatar}
                         alt={researcher.name}
-                        width={96}
-                        height={96}
-                        className="w-full h-full object-cover"
+                        fill
+                        sizes="96px"
+                        className="object-cover transition-transform duration-300 group-hover:scale-110"
+                        quality={100}
+                        priority
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.style.display = "none";
                           const parent = target.parentElement;
                           if (parent) {
-                            parent.innerHTML = `<div class="w-full h-full flex items-center justify-center text-white font-bold text-2xl">
-                              ${researcher.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </div>`;
+                            const initials = researcher.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("");
+                            parent.innerHTML = `
+                  <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-secondary to-accent animate-gradient">
+                    <span class="text-white font-bold text-2xl">${initials}</span>
+                  </div>
+                `;
                           }
                         }}
-                        priority
                       />
                     </div>
-                    <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 rounded-full border-2 border-white"></div>
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-card shadow-md group-hover:scale-110 transition-transform duration-300"></div>
                   </div>
-                  <div className="ml-4">
-                    <h3 className="text-body-text font-bold text-foreground line-clamp-1">
+
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-subheadings font-semibold text-foreground group-hover:text-secondary truncate transition-colors duration-300">
                       {researcher.name}
                     </h3>
-                    <p className="text-sm text-foreground">
+                    <p className="text-small-text text-foreground/80 truncate">
                       {researcher.field}
                     </p>
-                    <p className="text-small-text text-foreground">
+                    <p className="text-small-text text-foreground/60 truncate">
                       {researcher.institution}
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-center mb-4">
-                  <div>
-                    <div className="text-xl font-bold text-secondary">
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="bg-muted/30 rounded-lg p-3 group-hover:bg-muted/50 transition-colors duration-300">
+                    <div className="text-xl font-bold text-secondary group-hover:text-secondary/80 transition-colors duration-300">
                       {researcher.papers}
                     </div>
-                    <div className="text-small-text text-foreground">
+                    <div className="text-small-text text-foreground/70">
                       {t("papers") || "Papers"}
                     </div>
                   </div>
-                  <div>
-                    <div className="text-xl font-bold text-accent">
+                  <div className="bg-muted/30 rounded-lg p-3 group-hover:bg-muted/50 transition-colors duration-300">
+                    <div className="text-xl font-bold text-accent group-hover:text-accent/80 transition-colors duration-300">
                       {researcher.citations}
                     </div>
-                    <div className="text-small-text text-foreground">
+                    <div className="text-small-text text-foreground/70">
                       {t("citations") || "Citations"}
                     </div>
                   </div>
                 </div>
-                <button className="w-full bg-muted hover:bg-muted/80 text-foreground py-2 px-4 rounded-lg text-small-text font-medium transition-colors">
-                  {t("viewProfile") || "View Profile"}
+
+                <button
+                  className="w-full bg-muted hover:bg-secondary text-foreground hover:text-white py-2.5 px-4 rounded-lg text-small-text font-medium transition-all duration-300 group-hover:shadow-md"
+                  onClick={() => {
+                    // Handle profile view
+                    console.log(`Viewing profile of ${researcher.name}`);
+                  }}
+                >
+                  <span className="relative inline-flex items-center">
+                    <span className="mr-2">
+                      {t("viewProfile") || "View Profile"}
+                    </span>
+                    <svg
+                      className="w-4 h-4 transform transition-transform duration-300 group-hover:translate-x-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </span>
                 </button>
               </div>
             ))}

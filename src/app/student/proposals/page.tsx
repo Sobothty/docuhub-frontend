@@ -21,7 +21,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Clock, CheckCircle, XCircle, FileText, Send, X } from "lucide-react";
+import {
+  Clock,
+  CheckCircle,
+  XCircle,
+  FileText,
+  Send,
+  X,
+  RefreshCwOff,
+  ScanSearch,
+} from "lucide-react";
 import { useGetAllCategoriesQuery } from "@/feature/categoriesSlice/categoriesSlices";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useCreateMediaMutation } from "@/feature/media/mediaSlice";
@@ -554,7 +563,7 @@ function PaperCard({
             <Button
               className="bg-green-500 hover:bg-green-600"
               onClick={() =>
-                console.log(`Viewing progress for ${proposal.uuid}`)
+                window.open(`/student/submissions/${proposal.uuid}`, "_blank")
               }
             >
               <FileText className="w-4 h-4 mr-2" />
@@ -564,15 +573,31 @@ function PaperCard({
         )}
         {proposal.status === "PENDING" && (
           <div className="mt-4 p-3 bg-yellow-300 rounded-lg w-fit">
-            <p className="text-sm font-semibold text-white flex items-center gap-2">
+            <p className="text-sm font-semibold text-primary flex items-center gap-2">
               <Clock className="w-4 h-4" />
               <span>Awaiting admin review. Check back soon!</span>
             </p>
           </div>
         )}
-        {proposal.status === "REJECTED" && (
+        {proposal.status === "REVISION" && (
           <div className="mt-4 text-sm text-destructive">
+            <p className="text-sm font-semibold flex items-center gap-2">
+              <RefreshCwOff className="w-4 h-4" />
+              <span>Please revise and resubmit based on feedback.</span>
+            </p>
+          </div>
+        )}
+        {proposal.status === "ADMIN_REJECTED" && (
+          <div className="mt-4 text-sm text-destructive bg-red-700">
             Rejected. Please revise and resubmit based on feedback.
+          </div>
+        )}
+        {proposal.status === "UNDER_REVIEW" && (
+          <div className="mt-4 p-3 bg-blue-600 rounded-lg w-fit">
+            <p className="text-sm font-semibold flex items-center gap-2">
+              <ScanSearch className="w-4 h-4 mr-2" />
+              <span>Under review by adviser. Please check back later.</span>
+            </p>
           </div>
         )}
       </CardContent>

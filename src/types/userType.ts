@@ -55,6 +55,7 @@ export interface UserResponse {
   isAdmin: boolean;
   isStudent: boolean;
   isAdvisor: boolean;
+  isActive: boolean;
 }
 
 export interface UpdateUserDto {

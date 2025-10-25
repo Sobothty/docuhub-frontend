@@ -112,13 +112,13 @@ const WorksCardGrid: React.FC = () => {
             <div
               className={`w-20 h-20 rounded-full border-2 flex items-center justify-center text-3xl mb-2 ${
                 selectedUser === user.type
-                  ? 'border-secondary text-secondary'
+                  ? 'border-accent text-accent'
                   : 'border-text-dark text-text-dark'
               }`}
             >
               {user.icon}
             </div>
-            <span className="text-gray-700 font-medium">{t(user.type)}</span>
+            <span className="text-foreground font-medium">{t(user.type)}</span>
           </div>
         ))}
       </div>

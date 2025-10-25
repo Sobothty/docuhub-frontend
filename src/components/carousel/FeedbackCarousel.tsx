@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import FeedbackCard, { Feedback } from '@/components/card/FeedbackCard';
+import React, { useState, useEffect, useCallback } from "react";
+import FeedbackCard, { Feedback } from "@/components/card/FeedbackCard";
 
 interface FeedbackCardCarouselProps {
   feedbacks: Feedback[];
@@ -15,7 +15,6 @@ const FeedbackCardCarousel: React.FC<FeedbackCardCarouselProps> = ({
   feedbacks,
   autoPlay = true,
   autoPlayInterval = 5000,
-  showControls = true,
   showIndicators = true,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -30,8 +29,8 @@ const FeedbackCardCarousel: React.FC<FeedbackCardCarouselProps> = ({
     };
     setCardsPerView(getCardsPerView());
     const handleResize = () => setCardsPerView(getCardsPerView());
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Handle next slide
@@ -93,8 +92,8 @@ const FeedbackCardCarousel: React.FC<FeedbackCardCarouselProps> = ({
   const handleTouchEnd = () => {
     if (touchStart && touchEnd) {
       const distance = touchStart - touchEnd;
-      const isSwipeLeft = distance > 50; // Swipe left threshold
-      const isSwipeRight = distance < -50; // Swipe right threshold
+      const isSwipeLeft = distance > 25; // Swipe left threshold
+      const isSwipeRight = distance < -25; // Swipe right threshold
       if (isSwipeLeft) nextSlide();
       if (isSwipeRight) prevSlide();
     }
@@ -119,47 +118,6 @@ const FeedbackCardCarousel: React.FC<FeedbackCardCarouselProps> = ({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Navigation controls */}
-      {showControls && feedbacks.length > cardsPerView && (
-        <div className="absolute -top-12 right-4 flex space-x-2 z-10 sm:right-6 lg:right-8">
-          <button
-            onClick={prevSlide}
-            className="focus:outline-none"
-            aria-label="Previous feedback"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="44"
-              height="44"
-              viewBox="0 0 24 24"
-              className="-scale-x-100 w-10 h-10 sm:w-11 sm:h-11 text-accent"
-            >
-              <path
-                fill="currentColor"
-                d="M11.8 13H15q.425 0 .713-.288T16 12t-.288-.712T15 11h-3.2l.9-.9q.275-.275.275-.7t-.275-.7t-.7-.275t-.7.275l-2.6 2.6q-.3.3-.3.7t.3.7l2.6 2.6q.275.275.7.275t.7-.275t.275-.7t-.275-.7zm.2 9q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8"
-              />
-            </svg>
-          </button>
-          <button
-            onClick={nextSlide}
-            className="focus:outline-none"
-            aria-label="Next feedback"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="44"
-              height="44"
-              viewBox="0 0 24 24"
-              className="w-10 h-10 sm:w-11 sm:h-11 text-accent"
-            >
-              <path
-                fill="currentColor"
-                d="M11.8 13H15q.425 0 .713-.288T16 12t-.288-.712T15 11h-3.2l.9-.9q.275-.275.275-.7t-.275-.7t-.7-.275t-.7.275l-2.6 2.6q-.3.3-.3.7t.3.7l2.6 2.6q.275.275.7.275t.7-.275t.275-.7t-.275-.7zm.2 9q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8"
-              />
-            </svg>
-          </button>
-        </div>
-      )}
 
       {/* Carousel slides */}
       <div className="overflow-hidden">
@@ -185,7 +143,10 @@ const FeedbackCardCarousel: React.FC<FeedbackCardCarouselProps> = ({
 
       {/* Indicators */}
       {showIndicators && feedbacks.length > cardsPerView && (
-        <div className="flex justify-center mt-4 sm:mt-6 space-x-2" suppressHydrationWarning>
+        <div
+          className="flex justify-center mt-4 sm:mt-6 space-x-2"
+          suppressHydrationWarning
+        >
           {Array.from({
             length: Math.ceil(feedbacks.length / cardsPerView),
           }).map((_, index) => (
@@ -194,8 +155,8 @@ const FeedbackCardCarousel: React.FC<FeedbackCardCarouselProps> = ({
               onClick={() => goToSlide(index * cardsPerView)}
               className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${
                 currentIndex === index * cardsPerView
-                  ? 'bg-blue-600'
-                  : 'bg-gray-300'
+                  ? "bg-blue-600"
+                  : "bg-gray-300"
               }`}
               aria-label={`Go to feedback ${index + 1}`}
             />

@@ -76,6 +76,14 @@ export interface Assignment {
   updateDate: string | null;
 }
 
+export interface updatePaperRequest{
+  title: string;
+  abstractText?: string;
+  fileUrl: string;
+  thumbnailUrl: string;
+  categoryNames: string[];
+}
+
 // Custom base query to handle text responses
 const customBaseQuery = async (
   args: string | FetchArgs,
@@ -141,6 +149,13 @@ export const papersApi = createApi({
       }),
       invalidatesTags: ["Papers"],
     }),
+    updatePaper: builder.mutation<PaperCreateResponse, {uuid: string, paperData: updatePaperRequest}>({
+      query: ({uuid, paperData}) => ({
+        url: `/papers/author/${uuid}`,
+        method: "PUT",
+        body: paperData,
+      }),
+    }),
     getAllPublishedPapers: builder.query<ApiResponse, PaginationParams>({
       queryFn: async (arg, api, extraOptions) => {
         const {
@@ -155,7 +170,6 @@ export const papersApi = createApi({
           api,
           extraOptions
         );
-
         if (result.data) {
           return { data: result.data as ApiResponse };
         } else {
@@ -168,6 +182,28 @@ export const papersApi = createApi({
         }
       },
       providesTags: ["Papers"],
+    }),
+    createPublicDownload: builder.mutation<void, string>({
+      async queryFn(paperUuid, api, extraOptions) {
+        const result = await publicBaseQuery(
+          {
+            url: `/papers/download/${paperUuid}`,
+            method: "POST",
+          },
+          api,
+          extraOptions
+        );
+        if (result.error) {
+          return { error: result.error };
+        }
+        return { data: result.data as void };
+      },
+    }),
+    publishedPaper: builder.mutation<void, string>({
+      query: (uuid) => ({
+        url: `/papers/publish/${uuid}`,
+        method: "POST",
+      }),
     }),
     getAllAssignments: builder.query<Assignment[], void>({
       query: () => ({
@@ -183,6 +219,12 @@ export const papersApi = createApi({
       query: (uuid) => `/papers/${uuid}`,
       providesTags: (result, error, uuid) => [{ type: "Papers", id: uuid }],
     }),
+    deletePaper: builder.mutation<void, string>({
+      query: (uuid) => ({
+        url: `/papers/author/${uuid}`,
+        method: "DELETE",
+      }),
+    })
   }),
 });
 
@@ -194,6 +236,10 @@ export const {
   useGetAllAssignmentsQuery,
   useGetAllAdviserAssignmentsQuery,
   useGetPaperByUuidQuery,
+  useDeletePaperMutation,
+  useUpdatePaperMutation,
+  useCreatePublicDownloadMutation,
+  usePublishedPaperMutation,
 } = papersApi;
 
 // Export reducer

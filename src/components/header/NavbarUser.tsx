@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import {
   Moon,
   Sun,
-  Bell,
   Heart,
   User,
   Settings,
@@ -120,13 +119,51 @@ export default function NavbarUser() {
   };
 
   const handleProfileClick = () => {
-    if (userRoles.includes("STUDENT") && user?.student && user?.student.isStudent) {
+    if (
+      userRoles.includes("STUDENT") &&
+      user?.student &&
+      user?.student.isStudent
+    ) {
       router.push(`/student`);
     } else if (userRoles.includes("ADVISER") && user?.adviser) {
       router.push("/adviser");
     } else {
       router.push("/profile");
     }
+    setIsUserMenuOpen(false);
+    setMobileOpen(false);
+  };
+
+  const handleClickStars = () => {
+    if (
+      userRoles.includes("STUDENT") &&
+      user?.student &&
+      user?.student.isStudent
+    ) {
+      router.push(`/student/starts`);
+    } else if (userRoles.includes("ADVISER") && user?.adviser) {
+      router.push("/adviser/stars");
+    } else {
+      router.push("/profile/stars");
+    }
+    setIsUserMenuOpen(false);
+    setMobileOpen(false);
+  };
+
+  const handleProfileSettingClick = () => {
+    if (
+      userRoles.includes("STUDENT") &&
+      user?.student &&
+      user?.student.isStudent
+    ) {
+      router.push(`/student/settings`);
+    } else if (userRoles.includes("ADVISER") && user?.adviser) {
+      router.push("/adviser/settings");
+    } else {
+      router.push("/profile/settings");
+    }
+    setIsUserMenuOpen(false);
+    setMobileOpen(false);
   };
 
   if (!mounted) return null;
@@ -236,7 +273,11 @@ export default function NavbarUser() {
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuContent
+              className="w-56 bg-background z-10000"
+              align="end"
+              forceMount
+            >
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
@@ -253,23 +294,13 @@ export default function NavbarUser() {
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/profile/settings">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </Link>
+              <DropdownMenuItem onClick={handleProfileSettingClick}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/profile/discussions">
-                  <Bell className="mr-2 h-4 w-4" />
-                  <span>Notifications</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/profile/downloads">
-                  <Heart className="mr-2 h-4 w-4" />
-                  <span>Saved Papers</span>
-                </Link>
+              <DropdownMenuItem onClick={handleClickStars}>
+                <Heart className="mr-2 h-4 w-4" />
+                <span>Saved Papers</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>

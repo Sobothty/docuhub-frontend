@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { ChevronDown, Moon, Sun } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../ui/button';
 import Image from 'next/image';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@radix-ui/react-dropdown-menu';
 
 export default function NavbarGuest() {
   const pathname = usePathname();
@@ -57,8 +58,9 @@ export default function NavbarGuest() {
     { path: '/contact', name: t('contact', 'Contact') },
   ];
 
+
   return (
-      <nav className="fixed top-16 md:top-12 left-0 w-full z-40 border-b bg-background border-border shadow-md">
+      <nav className="fixed top-16 sm:top-13 md:top-12 left-0 w-full z-40 border-b bg-background border-border shadow-md">
         <div className="max-w-7xl mx-auto px-2 md:px-4 flex justify-between items-center">
           <Link href="/" className="inline-block sm:w-auto w-24 ">
             <Image
@@ -116,21 +118,25 @@ export default function NavbarGuest() {
               {currentLang.toUpperCase()}
             </span>
             </div>
-
-            <Button
-                asChild
-                variant="outline"
-                className="font-semibold"
-            >
-              <Link href="/login?force=true">{t('login', 'Login')}</Link>
-            </Button>
-
-            <Button
-                asChild
-                className="bg-accent text-white hover:bg-accent/90 font-semibold"
-            >
-              <Link href="/register">{t('signup', 'Sign Up')}</Link>
-            </Button>
+              <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="bg-accent text-white hover:text-accent hover:bg-accent/30 font-semibold">
+                      Get Started
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-28 rounded-sm mt-1 bg-accent grid grid-cols-1 gap-2 text-white py-2 text-center ">
+                    <DropdownMenuItem asChild>
+                      <Link href="/login?force=true" className="cursor-pointer font-semibold hover:border-none">
+                        {t('login', 'Login')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/register" className="cursor-pointer font-semibold">
+                        {t('signup', 'Sign Up')}
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
           </div>
 
           {/* Mobile hamburger */}
@@ -193,16 +199,17 @@ export default function NavbarGuest() {
                   <Button
                       asChild
                       variant="outline"
-                      className="font-semibold"
+                      className="font-semibold bg-accent text-white hover:text-accent hover:bg-accent/30"
                   >
                     <Link href="/login?force=true">{t('login', 'Login')}</Link>
                   </Button>
                   <Button
                       asChild
-                      className="bg-accent text-white hover:bg-accent/90 font-semibold"
+                      className="bg-accent text-white hover:text-accent hover:bg-accent/30 font-semibold"
                   >
                     <Link href="/register">{t('signup', 'Sign Up')}</Link>
                   </Button>
+        
                 </div>
               </div>
         </div>
