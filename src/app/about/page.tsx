@@ -285,7 +285,7 @@ export default function AboutUsPage() {
         />
         <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
-          <h1 className="text-hero-title text-white mb-6">
+          <h1 className="text-hero-subtitle text-white mb-6">
             {t('about_us', { defaultValue: 'About Us' })}
           </h1>
           <p className="text-xl md:text-2xl mb-8 leading-relaxed text-white">
@@ -305,25 +305,29 @@ export default function AboutUsPage() {
       {/* Our Vision */}
       <section className="py-5 md:py-20 px-6 bg-background">
         <div className="text-center md:mb-6 lg:mb-12">
-          <h1 className="text-3xl font-bold text-foreground dark:card dark:px-6 dark:py-4 dark:rounded-lg dark:mx-auto dark:max-w-4xl dark:text-center">
+          <h1 className="text-hero-subtitle font-bold text-foreground dark:card dark:px-6 dark:py-4 dark:rounded-lg dark:mx-auto dark:max-w-4xl dark:text-center">
             {t('about_us', { defaultValue: 'About Us' })}
           </h1>
         </div>
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 gap-6 lg:gap-12 p-10 items-center">
             <div className='space-y-4'>
+              
+              <div className="inline-block bg-accent hover:bg-[#D97706] text-white px-4 py-2 rounded-full text-small-text font-semibold mb-4">
+                {t('our_vision', { defaultValue: 'Our Vision' })}
+              </div>
               <h2 className="text-section-headings text-center  md:text-start dark:px-6 dark:py-4 dark:rounded-lg dark:max-w-2xl">
                 {t('vision_title', {
                   defaultValue: 'The Vision Behind DocuHub',
                 })}
               </h2>
-              <p className="text-sm md:text-md lg:text-body-text text-foreground dark:text-descript-1 font-bold mb-2 md:mb-3 lg:mb-6 leading-relaxed transition-colors duration-300 line-clamp-none">
+              <p className="text-body-text text-foreground mb-8 md:mb-3 lg:mb-6 leading-relaxed transition-colors duration-300 line-clamp-none">
                 {t('vision_description_1', {
                   defaultValue:
                     'DocuHub was created with a simple but powerful vision — to make high-quality academic resources available to all.',
                 })}
               </p>
-              <p className="text-sm md:text-md lg:text-body-text text-gray-500 dark:text-descript font-bold leading-relaxed transition-colors duration-300 line-clamp-none">
+              <p className="text-small-text font-semibold text-gray-500 leading-relaxed transition-colors duration-300 line-clamp-none">
                 {t('vision_description_2', {
                   defaultValue:
                     'DocuHub bridges the gap by curating an extensive repository of thousands of scholarly papers, journals, datasets, and educational tools, all centralized in one intuitive platform.',
@@ -600,10 +604,10 @@ export default function AboutUsPage() {
                     </svg>
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 transition-colors duration-300">
+                    <div className="text-sm font-semibold text-gray-900 transition-colors duration-300">
                       {t('finished', { defaultValue: 'Finished' })}
                     </div>
-                    <div className="text-xs text-gray-700 dark:text-gray-300 transition-colors duration-300">
+                    <div className="text-xs text-gray-900transition-colors duration-300">
                       {t('tasks', {
                         defaultValue: '{{count}} tasks',
                         count: 18,

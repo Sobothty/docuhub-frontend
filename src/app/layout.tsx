@@ -9,6 +9,7 @@ import localFont from "next/font/local";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import { LoadingBar } from "@/components/ui/LoadingBar";
+import { OfflineIndicator } from "@/components/page/offline-indicatior";
 
 // English: Poppins
 const poppins = Poppins({
@@ -162,6 +163,7 @@ export default function RootLayout({
           <StickyBanner />
           <NavbarWrapper />
           <main className="mt-20 overflow-x-hidden">
+            <OfflineIndicator />
             <LoadingBar />
             {children}
             <SpeedInsights />
