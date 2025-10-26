@@ -1,5 +1,5 @@
 // Authentication utilities and types
-export type UserRole = "admin" | "adviser" | "student" | "public"
+export type UserRole = "admin" | "adviser" | "student" | "public" | "user"
 
 export interface User {
   slug: string
@@ -296,6 +296,7 @@ export function hasPermission(userRole: UserRole, requiredRole: UserRole): boole
     student: 1,
     adviser: 2,
     admin: 3,
+    user: 0,
   }
 
   return roleHierarchy[userRole] >= roleHierarchy[requiredRole]
@@ -307,7 +308,7 @@ export function canAccessRoute(userRole: UserRole, route: string): boolean {
     "/admin": "admin",
     "/adviser": "adviser",
     "/student": "student",
-    "/profile": "public", // Any authenticated user can access profile
+    "/profile": "user",
   }
 
   const requiredRole = routePermissions[route]
