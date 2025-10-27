@@ -70,10 +70,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ResourcesPageSkeleton } from "@/components/card/TablePlaceHolderAdviserResource";
-
-const filterCategories = ["All", "Guide", "Template", "Reference", "Tutorial"];
+import { useRouter } from "next/navigation";
 
 export default function MentorResourcesPage() {
+
+const router = useRouter();
+
   const { data: adviserProfile } = useGetUserProfileQuery();
   const {
     data: papersData,
@@ -368,6 +370,10 @@ export default function MentorResourcesPage() {
   const handlePublish = async (uuid: string) => {
     await createPublishedPaper(uuid).unwrap();
   };
+
+  const handlePreview = (uuid: string) => {
+    router.push(`/paper/${uuid}`);
+  }
 
   if (papersLoading) {
     return (
@@ -828,7 +834,7 @@ export default function MentorResourcesPage() {
                                 Publish
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handlePreview(resource.id)}>
                               <Eye className="h-4 w-4 mr-2" />
                               Preview
                             </DropdownMenuItem>

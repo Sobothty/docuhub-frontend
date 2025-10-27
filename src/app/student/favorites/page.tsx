@@ -14,6 +14,7 @@ import {
 import FavoriteCard from "@/components/card/FavoriteCard";
 import PaperCardPlaceholder from "@/components/card/FavoriteCardPlaceholder"; // Import placeholder
 import { Search } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function MyDownloads() {
   const { data: userProfile, isLoading: isProfileLoading } =
@@ -26,6 +27,8 @@ export default function MyDownloads() {
       size: 100,
     });
   const [searchQuery, setSearchQuery] = useState("");
+
+  const router = useRouter();
 
   const papersWithStars: Paper[] | undefined = papers?.papers.content.filter(
     (paper) => userStars?.some((star) => star.paperUuid === paper.uuid)
@@ -107,7 +110,7 @@ export default function MyDownloads() {
                   tags={paper.categoryNames}
                   image={paper.thumbnailUrl}
                   onViewPaper={() =>
-                    window.open(`/papers/${paper.uuid}`, "_blank")
+                    router.push(`/papers/${paper.uuid}`)
                   }
                 />
               ))}

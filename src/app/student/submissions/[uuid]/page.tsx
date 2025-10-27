@@ -231,8 +231,8 @@ export default function SubmissionDetailPage() {
               >
                 <ArrowLeft className="h-4 w-4 mr-2" /> Back
               </Button>
-              <Button onClick={handleDownload}>
-                <Download className="h-4 w-4 mr-2" /> Download
+              <Button onClick={handleDownload} className="text-white">
+                <Download className="h-4 w-4 mr-2 " /> Download
               </Button>
             </div>
           </div>
@@ -406,7 +406,7 @@ export default function SubmissionDetailPage() {
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" /> Back to list
                 </Button>
-                <Button onClick={handleDownload}>
+                <Button onClick={handleDownload} className="text-white border ">
                   <Download className="h-4 w-4 mr-2" /> Download PDF
                 </Button>
               </CardContent>

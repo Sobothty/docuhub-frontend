@@ -242,10 +242,6 @@ export default function StudentSubmissionsPage() {
           </div>
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="text-white">
-                <Upload className="h-4 w-4 mr-2" />
-                Upload New Paper
-              </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
