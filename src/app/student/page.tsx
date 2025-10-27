@@ -28,15 +28,66 @@ import HorizontalCard from "@/components/card/HorizontalCardForAuthor";
 import { useState, useEffect } from "react";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetPapersByAuthorQuery } from "@/feature/paperSlice/papers";
-import { useGetUserStarsQuery, useGetStarCountQuery } from "@/feature/star/StarSlice";
+import { useGetUserStarsQuery, useGetStarCountQuery, StarResponse } from "@/feature/star/StarSlice";
 import { useRouter } from "next/navigation";
 import ProposalCardPlaceholder from "./proposals/PaperSkeleton";
 
+// Type definitions
+interface User {
+  uuid: string;
+  fullName: string;
+  imageUrl?: string;
+  isStudent: boolean;
+}
+
+interface UserProfileResponse {
+  user: User;
+}
+
+interface Paper {
+  uuid: string;
+  title: string;
+  status: string;
+  createdAt: string;
+  publishedAt?: string;
+  isApproved: boolean;
+  downloads?: number;
+  authorUuid: string;
+  categoryNames: string[];
+  abstractText?: string;
+  thumbnailUrl?: string;
+}
+
+interface PapersResponse {
+  papers: {
+    content: Paper[];
+  };
+}
+
+interface FilteredDocument {
+  id: string;
+  title: string;
+  status: string;
+  savedDate: string;
+  feedback: string;
+  progress: number;
+  fileSize: string;
+  downloads: number;
+  isWishlist: boolean;
+  authors: string[];
+  journal: string;
+  year: string;
+  abstract?: string;
+  tags: string[];
+  image: string;
+  starCount: number;
+}
+
 export default function StudentOverviewPage() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeTab, setActiveTab] = useState<string>("documents");
   const router = useRouter();
-  const { data: user } = useGetUserProfileQuery();
+  const { data: user } = useGetUserProfileQuery() as { data: UserProfileResponse | undefined };
   
   // Get user's starred papers
   const { data: starData, isLoading: starLoading } = useGetUserStarsQuery(
@@ -54,31 +105,33 @@ export default function StudentOverviewPage() {
   // Fetch author's papers with pagination
   const {
     data: papersData,
-    error: paperError,
     isLoading: papersLoading,
   } = useGetPapersByAuthorQuery({
     page: 0,
     size: 10,
     sortBy: "createdAt",
     direction: "desc",
-  });
+  }) as { 
+    data: PapersResponse | undefined; 
+    isLoading: boolean; 
+  };
 
   // Extract papers from the response
-  const authorPapers = papersData?.papers?.content || [];
+  const authorPapers: Paper[] = papersData?.papers?.content || [];
 
   // Filter documents based on search query
-  const filteredDocuments = authorPapers
-    .filter((paper) =>
+  const filteredDocuments: FilteredDocument[] = authorPapers
+    .filter((paper: Paper) =>
       paper.title.toLowerCase().includes(searchQuery.toLowerCase())
     )
-    .map((paper) => ({
+    .map((paper: Paper) => ({
       id: paper.uuid,
       title: paper.title,
       status: paper.status,
       savedDate: new Date(paper.createdAt).toLocaleDateString("en-US"),
       feedback: paper.isApproved ? "Approved" : "Under review",
       progress: paper.isApproved ? 100 : 75,
-      fileSize: "2.4 MB", // You may need to calculate this from fileUrl
+      fileSize: "2.4 MB",
       downloads: paper.downloads || 0,
       isWishlist: false,
       authors: [paper.authorUuid],
@@ -89,7 +142,7 @@ export default function StudentOverviewPage() {
       abstract: paper.abstractText,
       tags: paper.categoryNames,
       image: paper.thumbnailUrl || "/placeholder.svg?height=200&width=300",
-      starCount: 0, // Will be updated by StarCountComponent
+      starCount: 0,
     }));
 
   return (
@@ -146,7 +199,7 @@ export default function StudentOverviewPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {authorPapers.filter((p) => p.isApproved).length}
+                {authorPapers.filter((p: Paper) => p.isApproved).length}
               </div>
               <p className="text-xs text-muted-foreground">
                 Published documents
@@ -161,7 +214,7 @@ export default function StudentOverviewPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {authorPapers.reduce((sum, p) => sum + (p.downloads || 0), 0)}
+                {authorPapers.reduce((sum: number, p: Paper) => sum + (p.downloads || 0), 0)}
               </div>
               <p className="text-xs text-muted-foreground">
                 All time downloads of documents
@@ -176,7 +229,7 @@ export default function StudentOverviewPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {starLoading ? "..." : starData?.length || 0}
+                {starLoading ? "..." : (starData as StarResponse[])?.length || 0}
               </div>
               <p className="text-xs text-muted-foreground">Academic impact</p>
             </CardContent>
@@ -217,13 +270,9 @@ export default function StudentOverviewPage() {
                 <CardContent>
                   {papersLoading ? (
                     <div className="text-center py-4">Loading papers...</div>
-                  ) : paperError ? (
-                    <div className="text-center py-4 text-red-500">
-                      Failed to load papers
-                    </div>
                   ) : (
                     <div className="space-y-4">
-                      {authorPapers.slice(0, 3).map((paper) => (
+                      {authorPapers.slice(0, 3).map((paper: Paper) => (
                         <PaperWithStarCount key={paper.uuid} paper={paper} />
                       ))}
                     </div>
@@ -314,7 +363,7 @@ export default function StudentOverviewPage() {
                     "Healthcare Technology",
                     "Data Analysis",
                     "Computer Vision",
-                  ].map((interest, index) => (
+                  ].map((interest: string, index: number) => (
                     <Badge key={index} variant="secondary">
                       {interest}
                     </Badge>
@@ -345,7 +394,7 @@ export default function StudentOverviewPage() {
                         placeholder="Search papers..."
                         className="pl-8 w-64"
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                       />
                     </div>
                     <Button variant="outline" size="sm">
@@ -358,17 +407,13 @@ export default function StudentOverviewPage() {
               <CardContent>
                 {papersLoading ? (
                   <ProposalCardPlaceholder /> 
-                ) : paperError ? (
-                  <div className="text-center py-8 text-red-500">
-                    Failed to load papers. Please try again.
-                  </div>
                 ) : filteredDocuments.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     No papers found. Start by submitting your first paper!
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {filteredDocuments.map((doc) => (
+                    {filteredDocuments.map((doc: FilteredDocument) => (
                       <HorizontalCardWithStarCount
                         key={doc.id}
                         doc={doc}
@@ -392,7 +437,11 @@ export default function StudentOverviewPage() {
 }
 
 // Component to display paper with star count in Recent Papers section
-function PaperWithStarCount({ paper }: { paper: any }) {
+interface PaperWithStarCountProps {
+  paper: Paper;
+}
+
+function PaperWithStarCount({ paper }: PaperWithStarCountProps) {
   const { data: starCount = 0, isLoading } = useGetStarCountQuery(paper.uuid);
 
   return (
@@ -425,7 +474,12 @@ function PaperWithStarCount({ paper }: { paper: any }) {
 }
 
 // Component to wrap HorizontalCard with star count
-function HorizontalCardWithStarCount({ doc, onDownloadPDF }: { doc: any; onDownloadPDF: () => void }) {
+interface HorizontalCardWithStarCountProps {
+  doc: FilteredDocument;
+  onDownloadPDF: () => void;
+}
+
+function HorizontalCardWithStarCount({ doc, onDownloadPDF }: HorizontalCardWithStarCountProps) {
   const { data: starCount = 0, isLoading } = useGetStarCountQuery(doc.id);
 
   return (

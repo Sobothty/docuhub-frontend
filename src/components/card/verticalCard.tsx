@@ -10,7 +10,9 @@ import {
   useStarPaperMutation,
   useUnstarPaperMutation,
   useGetStarCountQuery,
+  StarResponse,
 } from "@/feature/star/StarSlice";
+import { toast } from "sonner";
 
 interface VerticalCardProps {
   title: string;
@@ -27,6 +29,18 @@ interface VerticalCardProps {
   onDownloadPDF?: () => void;
   className?: string;
 }
+
+// interface StarData {
+//   paperUuid: string;
+//   starred: boolean;
+// }
+
+// interface SessionUser {
+//   id: string | null;
+//   username: string | null;
+//   email: string | null;
+//   roles: string[];
+// }
 
 export default function VerticalCard({
   title,
@@ -45,11 +59,11 @@ export default function VerticalCard({
 }: VerticalCardProps) {
   const router = useRouter();
   const { data: session, status } = useSession();
-  const [isStarred, setIsStarred] = useState(false);
+  const [isStarred, setIsStarred] = useState<boolean>(false);
 
   // Get the user UUID from session
-  const userUuid =
-    session?.user?.id || session?.user?.id || (session?.user as any)?.sub;
+  const userUuid: string =
+    session?.user?.id as string || "";
 
   // Get star count for this paper
   const { data: starCount = 0 } = useGetStarCountQuery(paperId);
@@ -63,10 +77,10 @@ export default function VerticalCard({
   const [starPaper, { isLoading: isStarring }] = useStarPaperMutation();
   const [unstarPaper, { isLoading: isUnstarring }] = useUnstarPaperMutation();
 
-  const displayAuthors =
+  const displayAuthors: string[] =
     authors.length > 2 ? [...authors.slice(0, 2), "..."] : authors;
 
-  const displayAbstract = abstract
+  const displayAbstract: string = abstract
     ? abstract.length > 150
       ? `${abstract.slice(0, 150).trim()}...`
       : abstract
@@ -75,30 +89,28 @@ export default function VerticalCard({
   // Check if paper is starred
   useEffect(() => {
     if (userStars && Array.isArray(userStars)) {
-      const starred = userStars.some(
-        (star: { paperUuid: string; starred: boolean }) =>
-          star.paperUuid === paperId && star.starred
+      const starred = (userStars as StarResponse[]).some(
+        (star: StarResponse) => star.paperUuid === paperId && star.starred
       );
       setIsStarred(starred);
     }
   }, [userStars, paperId]);
 
-  const handleViewPaper = () => {
+  const handleViewPaper = (): void => {
     router.push(`/papers/${paperId}`);
   };
 
-  const handleAuthorClick = () => {
+  const handleAuthorClick = (): void => {
     if (authorUuid) {
       router.push(`/users/${authorUuid}`);
     }
   };
 
-  const handleToggleStar = async () => {
+  const handleToggleStar = async (): Promise<void> => {
     // Check authentication status
     if (status === "unauthenticated") {
-      console.log("Please login to star papers");
-      // Optional: redirect to login
-      // router.push('/login');
+      toast.warning("Please login to star papers");
+      router.push("/register");
       return;
     }
 
@@ -125,7 +137,7 @@ export default function VerticalCard({
     }
   };
 
-  const isLoading = isStarring || isUnstarring;
+  const isLoading: boolean = isStarring || isUnstarring;
 
   return (
     <div
@@ -207,7 +219,7 @@ export default function VerticalCard({
             }
           >
             <Star
-              className={`w-3 h-3 sm:w-4 sm:h-4 transition-colors ${
+              className={`w-3 h-3 sm:w-4 sm:h-4 transition-colors hover:cursor-pointer ${
                 isStarred
                   ? "fill-yellow-500 text-yellow-500"
                   : "text-foreground"
@@ -235,7 +247,7 @@ export default function VerticalCard({
         {/* Tags */}
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1 sm:gap-2 mb-3 sm:mb-4">
-            {tags.map((tag, idx) => (
+            {tags.map((tag: string, idx: number) => (
               <span
                 key={idx}
                 className="px-2 py-1 text-foreground text-xs sm:text-sm rounded-full font-medium truncate"
@@ -250,10 +262,10 @@ export default function VerticalCard({
         <div className="flex gap-2 sm:gap-3 mt-auto">
           <button
             onClick={handleViewPaper}
-            className="flex items-center justify-center gap-1 px-3 py-2 sm:px-4 sm:py-2 bg-secondary text-white rounded-md hover:bg-secondary/90 transition-colors text-sm sm:text-base flex-1"
+            className="flex items-center hover:cursor-pointer justify-center gap-1 px-3 py-2 sm:px-4 sm:py-2 bg-secondary text-white rounded-md hover:bg-secondary/90 transition-colors text-sm sm:text-base flex-1"
             aria-label="View paper"
           >
-            <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Eye className="w-4 h-4 sm:w-5 sm:h-5 " />
             <span>View</span>
           </button>
           <button
@@ -261,7 +273,7 @@ export default function VerticalCard({
             className="flex items-center justify-center gap-1 px-3 py-2 sm:px-4 sm:py-2 bg-gray-700 text-white rounded-md hover:bg-gray-800 transition-colors text-sm sm:text-base flex-1"
             aria-label="Download PDF"
           >
-            <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Download className="w-4 h-4 sm:w-5 sm:h-5 hover:cursor-pointer" />
             <span>PDF</span>
           </button>
         </div>

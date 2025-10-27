@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
-import { useGetAllUserStarredPapersQuery } from "@/feature/star/StarSlice";
+import { useGetUserStarsQuery } from "@/feature/star/StarSlice";
 import {
   Paper,
   useGetAllPublishedPapersQuery,
@@ -19,7 +19,7 @@ export default function MyDownloads() {
   const { data: userProfile, isLoading: isProfileLoading } =
     useGetUserProfileQuery();
   const { data: userStars, isLoading: isStarsLoading } =
-    useGetAllUserStarredPapersQuery(userProfile?.user.uuid || "");
+    useGetUserStarsQuery(userProfile?.user.uuid || "");
   const { data: papers, isLoading: isPapersLoading } =
     useGetAllPublishedPapersQuery({
       page: 0,

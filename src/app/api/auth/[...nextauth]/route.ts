@@ -4,7 +4,7 @@ import { Buffer } from "buffer"
 import type { JWT } from "next-auth/jwt"
 
 declare module "next-auth" {
-  interface Session {
+  export interface Session {
     user: {
       id: string | null
       username: string | null

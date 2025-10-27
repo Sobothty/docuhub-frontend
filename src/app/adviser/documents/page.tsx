@@ -18,7 +18,6 @@ import { PageHeader } from "@/components/ui/page-header";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetAssignmentByAdviserWithPaginationQuery } from "@/feature/adviserAssignment/AdviserAssignmentSlice";
 import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
-import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
 import FeedbackCardPlaceholder from "@/components/card/FeedbackCardPlaceholder";
 
@@ -161,40 +160,6 @@ function AssignmentCard({ assignment }: { assignment: AssignmentWithStudent }) {
           </div>
         </CardContent>
       </Card>
-    </>
-  );
-}
-
-// Loading Skeleton Component
-function AssignmentCardSkeleton({ count = 3 }: { count?: number }) {
-  return (
-    <>
-      {Array.from({ length: count }).map((_, index) => (
-        <Card key={index}>
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <Skeleton className="h-6 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-1/2" />
-              </div>
-              <Skeleton className="h-6 w-24" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Skeleton className="w-10 h-10 rounded-full" />
-                <div className="flex-1">
-                  <Skeleton className="h-4 w-32 mb-1" />
-                  <Skeleton className="h-3 w-48" />
-                </div>
-              </div>
-              <Skeleton className="h-48 w-full rounded-lg" />
-              <Skeleton className="h-10 w-32" />
-            </div>
-          </CardContent>
-        </Card>
-      ))}
     </>
   );
 }
