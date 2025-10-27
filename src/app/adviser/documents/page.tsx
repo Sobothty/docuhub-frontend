@@ -225,7 +225,7 @@ export default function MentorProposalsPage() {
           {assignmentsLoading ? (
             <div className="space-y-6">
               {Array.from({ length: 3 }).map((_, index) => (
-                <FeedbackCardPlaceholder key={index} isLast={index === 2} />
+                <FeedbackCardPlaceholder key={index} isLast={index === 3} />
               ))}
             </div>
           ) : assignmentsError ? (
