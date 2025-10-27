@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { getSession, useSession } from "next-auth/react";
 import {
   CreateStudentDetailRequest,
+  UpdateStudentDetailRequest,
   useCreateStudentDetailMutation,
+  useUpdateStudentDetailMutation,
+  useGetStudentDetailByUserQuery,
 } from "@/feature/users/studentSlice";
 import {
   useCreateMediaMutation,
@@ -33,24 +36,22 @@ import {
   CheckCircle,
   AlertCircle,
   X,
+  RefreshCw,
 } from "lucide-react";
 import { StudentFormData, StudentFormErrors } from "@/types/studentType";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import Image from "next/image";
 
 import SockJS from "sockjs-client";
-import {
-  Client,
-  IMessage,
-  StompSubscription,
-} from "@stomp/stompjs";
+import { Client, IMessage, StompSubscription } from "@stomp/stompjs";
 import { useGetAllUsersQuery } from "@/feature/users/usersSlice";
-import { UserProfile} from "@/types/userType";
+import { UserProfile } from "@/types/userType";
 import { Message } from "@/types/message";
 
 interface StudentVerificationFormProps {
   userUuid?: string;
   onSuccess?: () => void;
+  isUpdate?: boolean;
 }
 
 const UNIVERSITIES = [
@@ -70,32 +71,48 @@ const YEARS_OF_STUDY = ["1", "2", "3", "4", "5", "6"];
 export default function StudentVerificationForm({
   userUuid,
   onSuccess,
+  isUpdate = false,
 }: StudentVerificationFormProps) {
   const [email, setEmail] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const stompClientRef = useRef<Client | null>(null);
   const subscriptionRef = useRef<StompSubscription | null>(null);
-  // const [allUsers, setAllUsers] = useState<KeycloakUser[]>([]);
-  // const [selectedUser, setSelectedUser] = useState<KeycloakUser | null>(null);
   const [message, setMessage] = useState<string>("");
 
   const router = useRouter();
   const { data: session } = useSession();
-  const [createStudentDetail, { isLoading, error }] =
+
+  // Get current user UUID
+  const currentUserUuid = userUuid || session?.user?.id || "";
+
+  // Always check if student detail exists
+  const {
+    data: existingStudentDetail,
+    isLoading: isLoadingExisting,
+    error: studentDetailError,
+    refetch: refetchStudentDetail,
+  } = useGetStudentDetailByUserQuery(currentUserUuid, {
+    skip: !currentUserUuid,
+  });
+
+  const [createStudentDetail, { isLoading: isCreating, error: createError }] =
     useCreateStudentDetailMutation();
+
+  const [updateStudentDetail, { isLoading: isUpdating, error: updateError }] =
+    useUpdateStudentDetailMutation();
+
   const [createMedia, { isLoading: isUploadingMedia }] =
     useCreateMediaMutation();
+
   const [deleteMedia, { isLoading: isDeletingMedia }] =
     useDeleteMediaMutation();
-
-  const useruuid = useSession();
 
   const [formData, setFormData] = useState<CreateStudentDetailRequest>({
     studentCardUrl: "",
     university: "",
     major: "",
     yearsOfStudy: "",
-    userUuid: useruuid.data?.user.id || "",
+    userUuid: currentUserUuid,
   });
 
   const [formErrors, setFormErrors] = useState<StudentFormErrors>({});
@@ -104,6 +121,29 @@ export default function StudentVerificationForm({
   const [uploadedMediaName, setUploadedMediaName] = useState<string>("");
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [allChats, setAllChats] = useState<Record<string, Message[]>>({});
+  const [hasExistingRecord, setHasExistingRecord] = useState<boolean>(false);
+
+  // Determine if we should use update mode
+  const shouldUseUpdate = isUpdate || !!existingStudentDetail;
+
+  // Use the appropriate error based on mode
+  const mutationError = shouldUseUpdate ? updateError : createError;
+
+
+  // Populate form with existing data when student detail exists
+  useEffect(() => {
+    if (existingStudentDetail) {
+      setFormData({
+        studentCardUrl: existingStudentDetail.studentCardUrl,
+        university: existingStudentDetail.university,
+        major: existingStudentDetail.major,
+        yearsOfStudy: existingStudentDetail.yearsOfStudy,
+        userUuid: currentUserUuid,
+      });
+      setPreviewUrl(existingStudentDetail.studentCardUrl);
+      setHasExistingRecord(true);
+    }
+  }, [existingStudentDetail, currentUserUuid]);
 
   const validateForm = (): boolean => {
     const errors: StudentFormErrors = {};
@@ -207,7 +247,7 @@ export default function StudentVerificationForm({
     }
   };
 
-  // webSocket
+  // WebSocket setup
   useEffect(() => {
     (async () => {
       const session = await getSession();
@@ -223,7 +263,6 @@ export default function StudentVerificationForm({
     setCurrentUser(user as UserProfile);
   }, [allUser, session]);
 
-  // 4) Connect WebSocket ONCE and subscribe to *my* topic
   useEffect(() => {
     if (!currentUser?.uuid || !session?.accessToken) return;
 
@@ -269,12 +308,6 @@ export default function StudentVerificationForm({
     };
   }, [currentUser?.uuid, session?.accessToken]);
 
-  // 5) Load conversation history when user is selected
-
-  //websocket
-
-  console.log("currentUser :>> ", currentUser?.uuid);
-
   const sendPrivateMessage = (message: string) => {
     if (!stompClientRef.current?.connected || !message.trim() || !currentUser) {
       return;
@@ -287,7 +320,6 @@ export default function StudentVerificationForm({
       timestamp: new Date().toISOString(),
       isRead: false,
     };
-    console.log("tempMessage :>> ", tempMessage);
 
     stompClientRef.current.publish({
       destination: "/app/private-message",
@@ -304,26 +336,58 @@ export default function StudentVerificationForm({
       return;
     }
 
-    const currentUserUuid = userUuid || session?.user?.id;
     if (!currentUserUuid) {
       console.log("User UUID not found");
       return;
     }
 
     try {
-      const result = await createStudentDetail({
-        studentCardUrl: formData.studentCardUrl,
-        university: formData.university,
-        major: formData.major,
-        yearsOfStudy: formData.yearsOfStudy,
-        userUuid: currentUserUuid,
-      }).unwrap();
+      let result;
 
-      //send to websock
+      // Smart logic: Use UPDATE if record exists, otherwise CREATE
+      if (shouldUseUpdate) {
+        // Update existing student detail using PATCH with user UUID
+        const updateData: UpdateStudentDetailRequest = {
+          studentCardUrl: formData.studentCardUrl,
+          university: formData.university,
+          major: formData.major,
+          yearsOfStudy: formData.yearsOfStudy,
+          userUuid: currentUserUuid,
+        };
+
+        console.log("Updating student detail with user UUID:", currentUserUuid);
+        result = await updateStudentDetail({
+          uuid: currentUserUuid,
+          data: updateData,
+        }).unwrap();
+      } else {
+        // Create new student detail
+        console.log(
+          "Creating new student detail with user UUID:",
+          currentUserUuid
+        );
+        result = await createStudentDetail({
+          studentCardUrl: formData.studentCardUrl,
+          university: formData.university,
+          major: formData.major,
+          yearsOfStudy: formData.yearsOfStudy,
+          userUuid: currentUserUuid,
+        }).unwrap();
+      }
+
+      // Send to websocket
       sendPrivateMessage(result.message);
 
       setSubmitSuccess(true);
-      console.log("Student verification submitted successfully:", result);
+      console.log(
+        `Student verification ${
+          shouldUseUpdate ? "updated" : "submitted"
+        } successfully:`,
+        result
+      );
+
+      // Refetch student detail to get updated data
+      refetchStudentDetail();
 
       setTimeout(() => {
         if (onSuccess) {
@@ -333,19 +397,73 @@ export default function StudentVerificationForm({
         }
       }, 2000);
     } catch (error) {
-      console.log("Failed to submit student verification:", error);
+      console.log(
+        `Failed to ${
+          shouldUseUpdate ? "update" : "submit"
+        } student verification:`,
+        error
+      );
 
-      // Handle the case where the request was successful but parsing failed
+      // Handle duplicate key error - switch to update mode
       const err = error as FetchBaseQueryError & {
         originalStatus?: number;
         status?: string | number;
+        data?: { detail?: string };
       };
 
-      if (err.originalStatus === 201 || err.status === "PARSING_ERROR") {
+      if (
+        err.data?.detail?.includes("duplicate key") ||
+        err.data?.detail?.includes("constraint")
+      ) {
+        console.log("Duplicate record detected, switching to update mode");
+        setHasExistingRecord(true);
+
+        // Retry with update
+        try {
+          const updateData: UpdateStudentDetailRequest = {
+            studentCardUrl: formData.studentCardUrl,
+            university: formData.university,
+            major: formData.major,
+            yearsOfStudy: formData.yearsOfStudy,
+            userUuid: currentUserUuid,
+          };
+
+          const result = await updateStudentDetail({
+            uuid: currentUserUuid,
+            data: updateData,
+          }).unwrap();
+
+          sendPrivateMessage(result.message);
+          setSubmitSuccess(true);
+          refetchStudentDetail();
+
+          setTimeout(() => {
+            if (onSuccess) {
+              onSuccess();
+            } else {
+              router.push("/profile");
+            }
+          }, 2000);
+          return;
+        } catch (retryError) {
+          console.log("Retry with update also failed:", retryError);
+        }
+      }
+
+      // Handle the case where the request was successful but parsing failed
+      if (
+        err.originalStatus === 200 ||
+        err.originalStatus === 201 ||
+        err.status === "PARSING_ERROR"
+      ) {
         setSubmitSuccess(true);
         console.log(
-          "Student verification submitted successfully (parsing error ignored)"
+          `Student verification ${
+            shouldUseUpdate ? "updated" : "submitted"
+          } successfully (parsing error ignored)`
         );
+
+        refetchStudentDetail();
 
         setTimeout(() => {
           if (onSuccess) {
@@ -358,20 +476,40 @@ export default function StudentVerificationForm({
     }
   };
 
+  const isLoading = isCreating || isUpdating || isLoadingExisting;
+  const isSubmitting = isLoading || isUploading || isUploadingMedia;
+
+  if (isLoadingExisting && isUpdate) {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardContent className="p-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">
+            Loading your student information...
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (submitSuccess) {
     return (
       <Card className="max-w-2xl mx-auto">
         <CardContent className="p-8 text-center">
           <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-semibold text-green-600 mb-2">
-            Verification Submitted Successfully!
+            {shouldUseUpdate
+              ? "Verification Updated Successfully!"
+              : "Verification Submitted Successfully!"}
           </h2>
           <p className="text-muted-foreground mb-4">
-            Your student verification request has been submitted. Our admin team
-            will review your documents and notify you of the result.
+            {shouldUseUpdate
+              ? "Your student verification request has been updated. Our admin team will review your updated documents."
+              : "Your student verification request has been submitted. Our admin team will review your documents and notify you of the result."}
           </p>
           <Badge variant="outline" className="text-yellow-600">
-            Status: Pending Review
+            Status:{" "}
+            {shouldUseUpdate ? "Updated - Pending Review" : "Pending Review"}
           </Badge>
         </CardContent>
       </Card>
@@ -383,29 +521,30 @@ export default function StudentVerificationForm({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <GraduationCap className="h-6 w-6 text-primary" />
-          Student Verification
+          {shouldUseUpdate
+            ? "Update Student Verification"
+            : "Student Verification"}
+          {hasExistingRecord && (
+            <Badge variant="outline" className="ml-2 text-xs">
+              Existing Application
+            </Badge>
+          )}
         </CardTitle>
         <p className="text-muted-foreground">
-          Submit your student information to get verified and access student
-          features.
+          {shouldUseUpdate
+            ? "Update your student information to get verified and access student features."
+            : "Submit your student information to get verified and access student features."}
+          {hasExistingRecord && (
+            <span className="block mt-1 text-yellow-600 text-sm">
+              You already have a pending application. Updating will replace your
+              previous submission.
+            </span>
+          )}
         </p>
       </CardHeader>
 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {"data" in error &&
-                error.data &&
-                typeof error.data === "object" &&
-                "details" in error.data
-                  ? String(error.data.details)
-                  : "Failed to submit student verification. Please try again."}
-              </AlertDescription>
-            </Alert>
-          )}
 
           {/* Student Card Upload */}
           <div className="space-y-2">
@@ -550,18 +689,24 @@ export default function StudentVerificationForm({
           <div className="flex gap-4">
             <Button
               type="submit"
-              disabled={isLoading || isUploading || isUploadingMedia}
+              disabled={isSubmitting}
               className="flex-1 bg-gray-600 hover:bg-gray-700 flex items-center justify-center"
             >
               {isLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Submitting...
+                  {shouldUseUpdate ? "Updating..." : "Submitting..."}
                 </>
               ) : (
                 <>
-                  <CheckCircle className="h-4 w-4 mr-2 text-white" />
-                  Submit Verification
+                  {shouldUseUpdate ? (
+                    <RefreshCw className="h-4 w-4 mr-2 text-white" />
+                  ) : (
+                    <CheckCircle className="h-4 w-4 mr-2 text-white" />
+                  )}
+                  {shouldUseUpdate
+                    ? "Update Verification"
+                    : "Submit Verification"}
                 </>
               )}
             </Button>
