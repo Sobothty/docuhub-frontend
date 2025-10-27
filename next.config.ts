@@ -32,6 +32,9 @@ const nextConfig = {
       // Allow example.com over HTTP for external images
       { protocol: "http", hostname: "example.com" },
     ],
+    domains: [
+      'res.cloudinary.com',
+    ]
   },
 };
 

@@ -1,12 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import DashboardLayout from "@/components/layout/dashboard-layout";
@@ -17,15 +12,19 @@ import {
   useGetAllPublishedPapersQuery,
 } from "@/feature/paperSlice/papers";
 import FavoriteCard from "@/components/card/FavoriteCard";
+import PaperCardPlaceholder from "@/components/card/FavoriteCardPlaceholder"; // Import placeholder
 import { Search } from "lucide-react";
 
 export default function MyDownloads() {
-  const { data: userProfile } = useGetUserProfileQuery();
-  const { data: userStars } = useGetAllUserStarredPapersQuery(userProfile?.user.uuid || "");
-  const { data: papers } = useGetAllPublishedPapersQuery({
-    page: 0,
-    size: 100,
-  });
+  const { data: userProfile, isLoading: isProfileLoading } =
+    useGetUserProfileQuery();
+  const { data: userStars, isLoading: isStarsLoading } =
+    useGetAllUserStarredPapersQuery(userProfile?.user.uuid || "");
+  const { data: papers, isLoading: isPapersLoading } =
+    useGetAllPublishedPapersQuery({
+      page: 0,
+      size: 100,
+    });
   const [searchQuery, setSearchQuery] = useState("");
 
   const papersWithStars: Paper[] | undefined = papers?.papers.content.filter(
@@ -48,6 +47,8 @@ export default function MyDownloads() {
       );
     });
   }, [papersWithStars, searchQuery]);
+
+  const isLoading = isProfileLoading || isStarsLoading || isPapersLoading;
 
   return (
     <DashboardLayout
@@ -90,20 +91,26 @@ export default function MyDownloads() {
 
         {/* Downloads List */}
         <div className="space-y-4">
-          {filteredPapers?.map((paper) => (
-            <FavoriteCard
-              key={paper.uuid}
-              id={paper.uuid}
-              title={paper.title}
-              journal={paper.categoryNames.join(", ")}
-              year={paper.publishedAt}
-              downloads={paper.downloads.toString()}
-              abstract={paper.abstractText}
-              tags={paper.categoryNames}
-              image={paper.thumbnailUrl}
-              onViewPaper={() => window.open(`/papers/${paper.uuid}`, "_blank")}
-            />
-          ))}
+          {isLoading
+            ? Array.from({ length: 3 }).map((_, index) => (
+                <PaperCardPlaceholder key={index} />
+              ))
+            : filteredPapers?.map((paper) => (
+                <FavoriteCard
+                  key={paper.uuid}
+                  id={paper.uuid}
+                  title={paper.title}
+                  journal={paper.categoryNames.join(", ")}
+                  year={paper.publishedAt}
+                  downloads={paper.downloads.toString()}
+                  abstract={paper.abstractText}
+                  tags={paper.categoryNames}
+                  image={paper.thumbnailUrl}
+                  onViewPaper={() =>
+                    window.open(`/papers/${paper.uuid}`, "_blank")
+                  }
+                />
+              ))}
         </div>
       </div>
     </DashboardLayout>

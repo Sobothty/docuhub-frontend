@@ -4,9 +4,9 @@ import { ThemeProvider } from "next-themes";
 import { I18nextProvider } from "react-i18next";
 import i18n from "@/lib/i18nClient";
 import { useEffect } from "react";
-import { NotificationProvider } from "@/components/contexts/notification-context";
 import ReduxProvider from "@/lib/Provider";
 import { SessionProvider } from "next-auth/react";
+import { AutoSignOutHandler } from "@/components/auth/autoSignOut";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Keep <html lang> in sync with current language
@@ -31,11 +31,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <I18nextProvider i18n={i18n} defaultNS="common">
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
-            enableSystem
+            defaultTheme="light"
+            enableSystem={false}
             disableTransitionOnChange
           >
-            <NotificationProvider>{children}</NotificationProvider>
+              <AutoSignOutHandler />
+              {children}
           </ThemeProvider>
         </I18nextProvider>
       </SessionProvider>

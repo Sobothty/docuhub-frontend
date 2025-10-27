@@ -43,7 +43,7 @@ export default function AdviserDocumentDetailPage({
   const router = useRouter();
 
   const [feedback, setFeedback] = useState("");
-  const [decision, setDecision] = useState<"approved" | "revision" | null>(
+  const [decision, setDecision] = useState<"APPROVED" | "REVISION" | null>(
     null
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -132,18 +132,6 @@ export default function AdviserDocumentDetailPage({
       return;
     }
 
-    // Debug logging with exact UUIDs
-    console.log("=== DEBUGGING FEEDBACK SUBMISSION ===");
-    console.log("URL Parameter paperUuid:", paperUuid);
-    console.log("Paper object UUID:", paper.uuid);
-    console.log("Paper object:", paper);
-    console.log("Adviser UUID:", adviserProfile.user.uuid);
-    console.log("Decision:", decision);
-    console.log(
-      "Status to send:",
-      decision === "approved" ? "APPROVED" : "REVISION"
-    );
-
     setIsSubmitting(true);
     try {
       // Create feedback with the uploaded file URL - using exact UUID from paper object
@@ -151,19 +139,19 @@ export default function AdviserDocumentDetailPage({
         paperUuid: paper.uuid, // This should be "b34f8df2-cbf9-42c4-b4f9-582b5110fd95"
         feedbackText: feedback.trim(),
         fileUrl: uploadedFileUrl,
-        status: decision === "approved" ? "APPROVED" : "REVISION",
+        status: decision,
         advisorUuid: adviserProfile.user.uuid,
-        deadline: decision === "approved" ? "" : "2025-12-31", // Empty string for approved, future date for revision
+        deadline: decision === "APPROVED" ? "" : "2025-12-31",
       };
 
       const result = await createFeedback(feedbackData).unwrap();
-      if(result.status === 201){
+      if (result.status === 201) {
         toast.success("Feedback submitted successfully");
       }
 
       router.push("/adviser/documents");
     } catch (error) {
-      console.error("Error submitting feedback:", error);
+      console.log("Error submitting feedback:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -239,7 +227,6 @@ export default function AdviserDocumentDetailPage({
       userAvatar={adviserProfile?.user.imageUrl || undefined}
     >
       <div className="space-y-6">
-
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -277,8 +264,8 @@ export default function AdviserDocumentDetailPage({
               <CardHeader>
                 <CardTitle>Document Review</CardTitle>
                 <CardDescription>
-                  Review and annotate the student document. Click &quot;Upload to
-                  Student&quot; to save your annotations.
+                  Review and annotate the student document. Click &quot;Upload
+                  to Student&quot; to save your annotations.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -322,9 +309,9 @@ export default function AdviserDocumentDetailPage({
                 </div>
                 <div className="flex gap-2">
                   <Button
-                    onClick={() => setDecision("approved")}
+                    onClick={() => setDecision("APPROVED")}
                     className={`flex-1 ${
-                      decision === "approved"
+                      decision === "APPROVED"
                         ? "bg-green-500 hover:bg-green-600"
                         : "bg-gray-100 hover:bg-gray-200 text-gray-700"
                     }`}
@@ -334,9 +321,9 @@ export default function AdviserDocumentDetailPage({
                     Approved
                   </Button>
                   <Button
-                    onClick={() => setDecision("revision")}
+                  onClick={() => setDecision("REVISION")}
                     className={`flex-1 ${
-                      decision === "revision"
+                      decision === "REVISION"
                         ? "bg-red-500 hover:bg-red-600"
                         : "bg-gray-100 hover:bg-gray-200 text-gray-700"
                     }`}

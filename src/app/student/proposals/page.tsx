@@ -26,10 +26,10 @@ import {
   CheckCircle,
   XCircle,
   FileText,
-  Send,
   X,
   RefreshCwOff,
   ScanSearch,
+  Plus,
 } from "lucide-react";
 import { useGetAllCategoriesQuery } from "@/feature/categoriesSlice/categoriesSlices";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
@@ -43,8 +43,9 @@ import {
 import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
 import { useGetFeedbackByPaperUuidQuery } from "@/feature/feedbackSlice/feedbackSlice";
 import { Paper } from "@/types/paperType";
-import { PaperCardSkeleton } from "./PaperSkeleton";
+import ProposalCardPlaceholder from "./PaperSkeleton";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function StudentProposalsPage() {
   const [showNewProposal, setShowNewProposal] = useState(false);
@@ -265,8 +266,8 @@ export default function StudentProposalsPage() {
               Create, submit, and track your documents
             </p>
           </div>
-          <Button onClick={() => setShowNewProposal(true)}>
-            <Send className="w-4 h-4 mr-2" />
+          <Button onClick={() => setShowNewProposal(true)} className="text-white">
+            <Plus className="w-4 h-4 mr-2 text-white" />
             New Document
           </Button>
         </div>
@@ -468,7 +469,7 @@ export default function StudentProposalsPage() {
         {/* Existing Proposals */}
         <div className="space-y-4">
           {papersLoading ? (
-            <PaperCardSkeleton count={4} />
+            <ProposalCardPlaceholder />
           ) : papers.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center">
@@ -560,15 +561,12 @@ function PaperCard({
 
         {proposal.status === "APPROVED" && (
           <div className="mt-4">
-            <Button
-              className="bg-green-500 hover:bg-green-600"
-              onClick={() =>
-                window.open(`/student/submissions/${proposal.uuid}`, "_blank")
-              }
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              View Document Details
-            </Button>
+            <Link href={`/student/submissions/${proposal.uuid}`}>
+              <Button className="bg-green-500 hover:bg-green-600 text-white">
+                <FileText className="w-4 h-4 mr-2" />
+                View Document Details
+              </Button>
+            </Link>
           </div>
         )}
         {proposal.status === "PENDING" && (

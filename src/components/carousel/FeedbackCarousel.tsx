@@ -7,7 +7,6 @@ interface FeedbackCardCarouselProps {
   feedbacks: Feedback[];
   autoPlay?: boolean;
   autoPlayInterval?: number;
-  showControls?: boolean;
   showIndicators?: boolean;
 }
 

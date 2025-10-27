@@ -6,7 +6,6 @@ import { useGetPapersByAuthorQuery } from "@/feature/paperSlice/papers";
 import Loading from "@/app/Loading";
 
 export default function StudentProfilePage() {
-
   // Fetch complete user profile data
   const {
     data: userProfile,

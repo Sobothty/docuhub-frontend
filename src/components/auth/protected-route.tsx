@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { type UserRole } from "@/lib/auth";
+import DocuhubLoader from "../loader/docuhub-loading";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -25,30 +26,19 @@ export default function ProtectedRoute({
   const user = session?.user;
 
   useEffect(() => {
-    if (!isLoading) {
-      if (!isAuthenticated) {
-        router.push(redirectTo);
-        return;
-      }
+    if (isLoading) return;
 
-      if (requiredRole && user?.roles) {
-        const roles = user.roles as string[];
-        const hasRequiredRole =
-          requiredRole === "public" ||
-          roles.includes(requiredRole.toUpperCase());
+    if (!isAuthenticated) {
+      router.replace(redirectTo);
+      return;
+    }
 
-        if (!hasRequiredRole) {
-          // Redirect to appropriate dashboard based on user role
-          if (roles.includes("ADMIN")) {
-            router.push("/admin");
-          } else if (roles.includes("ADVISER")) {
-            router.push("/adviser");
-          } else if (roles.includes("STUDENT")) {
-            router.push("/student");
-          } else {
-            router.push("/profile");
-          }
-        }
+    if (requiredRole && user?.roles) {
+      const roles = user.roles as string[];
+      const hasRequiredRole = roles.includes(requiredRole.toUpperCase());
+
+      if (!hasRequiredRole) {
+        router.replace("/unauthorized");
       }
     }
   }, [user, isLoading, isAuthenticated, requiredRole, router, redirectTo]);
@@ -56,10 +46,7 @@ export default function ProtectedRoute({
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
+        <DocuhubLoader />
       </div>
     );
   }

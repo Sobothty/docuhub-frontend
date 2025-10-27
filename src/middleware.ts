@@ -6,7 +6,19 @@ import type { NextRequest } from "next/server";
 const protectedRoutes = ["/adviser", "/student", "/profile", "/dashboard"];
 
 // Public routes that don't require authentication
-const publicRoutes = ["/", "/browse", "/directory", "/login", "/register", "/about", "/contact", "/papers", "/papers/", "/users/[id]"];
+const publicRoutes = [
+  "/",
+  "/browse",
+  "/directory",
+  "/login",
+  "/register",
+  "/about",
+  "/contact",
+  "/papers",
+  "/papers/",
+  "/users/[id]",
+];
+
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -21,7 +33,6 @@ export async function middleware(req: NextRequest) {
   );
 
   if (isProtectedRoute) {
-    // Use getToken instead of getSession for Edge Runtime compatibility
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
     if (!token) {

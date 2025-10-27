@@ -21,12 +21,14 @@ const ContactFooter: FC<ContactFooterProps> = () => {
     '/login',
     '/register',
     '/dashboard',
+    '/students',
+    '/advisers',
+    "/users",
+    "/papers",
+    '/profile',
     '/student',
     '/adviser',
-    '/profile',
-    "/student-verification",
-    "/users",
-    "/papers"
+    '/unauthorized',
   ];
   const shouldHide = hiddenPaths.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`)

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
-import { useGetAllStarOfPapersQuery } from "@/feature/star/StarSlice";
+import { useGetAllUserStarredPapersQuery } from "@/feature/star/StarSlice";
 import {
   Paper,
   useGetAllPublishedPapersQuery,
@@ -19,21 +19,17 @@ import {
 import FavoriteCard from "@/components/card/FavoriteCard";
 import { Search } from "lucide-react";
 
-export default function Myfavorite() {
+export default function MyDownloads() {
   const { data: userProfile } = useGetUserProfileQuery();
-  const { data: userStars } = useGetAllStarOfPapersQuery();
+  const { data: userStars } = useGetAllUserStarredPapersQuery(userProfile?.user.uuid || "");
   const { data: papers } = useGetAllPublishedPapersQuery({
     page: 0,
     size: 100,
   });
   const [searchQuery, setSearchQuery] = useState("");
 
-  const allStars = userStars?.filter(
-    (star) => star.userUuid === userProfile?.user.uuid
-  );
-
   const papersWithStars: Paper[] | undefined = papers?.papers.content.filter(
-    (paper) => allStars?.some((star) => star.paperUuid === paper.uuid)
+    (paper) => userStars?.some((star) => star.paperUuid === paper.uuid)
   );
 
   const filteredPapers = useMemo(() => {
@@ -55,7 +51,7 @@ export default function Myfavorite() {
 
   return (
     <DashboardLayout
-      userRole="adviser"
+      userRole="student"
       userAvatar={userProfile?.user.imageUrl}
       userName={userProfile?.user.fullName}
     >

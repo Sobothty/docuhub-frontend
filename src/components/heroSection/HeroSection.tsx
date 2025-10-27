@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import Image from 'next/image';
-import { FC } from 'react';
-import { useTranslation } from 'react-i18next';   
+import Image from "next/image";
+import { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 const HeroSection: FC = () => {
   const { t } = useTranslation('common');
@@ -13,16 +13,22 @@ const HeroSection: FC = () => {
       {/* Left Content */}
       <div className="max-w-xl md:max-w-md lg:max-w-lg ml-0 sm:ml-4 lg:ml-20 lg:text-left gap-10 text-center md:text-start ">   
         <h1 className="sm:text-hero-subtitle sm:text-hero-subtitle md:text-hero-title font-bold mb-4 sm:mb-6 text-2xl sm:text-2xl lg:text-6xl">
-          {t('hero-title','Discover, Share & Collaborate on Academic Excellence')}
+          {t(
+            "hero-title",
+            "Discover, Share & Collaborate on Academic Excellence"
+          )}
         </h1>
 
         <p className="mb-4 sm:mb-6 text-foreground text-base sm:text-sm md:text-md lg:text-lg">
-          <span className="text-secondary font-semibold">DocuHub</span>{' '}
-          {t('hero_description', 'is your space for research and innovation. Explore papers, connect with experts, and showcase your work globally.')}
+          <span className="text-secondary font-semibold">DocuHub</span>{" "}
+          {t(
+            "hero_description",
+            "is your space for research and innovation. Explore papers, connect with experts, and showcase your work globally."
+          )}
         </p>
 
         <p className="italic text-foreground text-base flex flex-col sm:flex-row items-center sm:text-sm md:text-md lg:text-lg">
-          {t('hero_quote', "Knowledge grows when it's shared.")}{' '}
+          {t("hero_quote", "Knowledge grows when it's shared.")}{" "}
           <span
             className="text-orange-500 text-xl sm:text-2xl align-middle "
             aria-label="quote"
@@ -50,7 +56,7 @@ const HeroSection: FC = () => {
         {/* Person Image inside circle */}
         <Image
           src="/hero-section/hero-section-image.png"
-          alt={t('hero_image_alt', 'Person holding laptop')}
+          alt={t("hero_image_alt", "Person holding laptop")}
           width={480}
           height={480}
           className="rounded-full object-cover relative z-10 -top-10 sm:-top-16 md:-top-20"
@@ -81,7 +87,7 @@ const HeroSection: FC = () => {
           <div className="w-6 sm:w-8 md:w-10 h-6 sm:h-8 md:h-10 rounded-full overflow-hidden">
             <Image
               src="https://as1.ftcdn.net/jpg/01/65/06/10/1000_F_165061057_4zWzz1Ev99pR2Vib9PLrpAohKMWNRkKM.jpg"
-              alt={t('happy_students_alt', 'Happy Students')}
+              alt={t("happy_students_alt", "Happy Students")}
               width={40}
               height={40}
               className="object-cover scale-160"
@@ -90,7 +96,7 @@ const HeroSection: FC = () => {
           <div className="text-white">
             <p className="font-bold text-[10px] lg:text-base text-sm">980k+</p>
             <p className="text-[10px] lg:text-base font-medium">
-              {t('happy_students_label', 'Happy Students')}
+              {t("happy_students_label", "Happy Students")}
             </p>
           </div>
         </div>

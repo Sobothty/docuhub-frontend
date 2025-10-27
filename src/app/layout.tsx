@@ -8,8 +8,8 @@ import { Poppins } from "next/font/google";
 import localFont from "next/font/local";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
-import { Suspense } from "react";
-import DocuhubLoader from "@/components/loader/docuhub-loading";
+import { LoadingBar } from "@/components/ui/LoadingBar";
+import { OfflineIndicator } from "@/components/page/offline-indicatior";
 
 // English: Poppins
 const poppins = Poppins({
@@ -162,8 +162,10 @@ export default function RootLayout({
         <Providers>
           <StickyBanner />
           <NavbarWrapper />
-          <main className="mt-20 overflow-hidden mx-auto">
-            <Suspense fallback={<DocuhubLoader />}>{children}</Suspense>
+          <main className="mt-20 overflow-x-hidden">
+            <OfflineIndicator />
+            <LoadingBar />
+            {children}
             <SpeedInsights />
             <Analytics />
           </main>

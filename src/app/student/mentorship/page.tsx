@@ -10,22 +10,21 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import {
   Search,
   UserPlus,
   Mail,
   BookOpen,
   Users,
-  Star,
   GraduationCap,
+  Sparkles,
 } from "lucide-react";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { Adviser, useGetAllAdvisersQuery } from "@/feature/users/studentSlice";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function StudentMentorshipPage() {
   const { data: user } = useGetUserProfileQuery();
@@ -52,7 +51,7 @@ export default function StudentMentorshipPage() {
   }, [filteredAdvisers]);
 
   const handleOnClickDynamic = (uuid: string) => {
-    router.push(`/student/mentorship/${uuid}`);
+    router.push(`/advisers/${uuid}`);
   };
 
   return (
@@ -63,7 +62,7 @@ export default function StudentMentorshipPage() {
     >
       <div className="space-y-6">
         {/* Header with gradient background */}
-        <div className="rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6">
+        <div className="rounded-xl p-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
@@ -77,7 +76,7 @@ export default function StudentMentorshipPage() {
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="text-sm px-3 py-1">
                 <Users className="h-3 w-3 mr-1" />
-                {advisers?.length || 0} Advisers Available
+                {advisers?.length || 0} Advisers
               </Badge>
             </div>
           </div>
@@ -113,18 +112,13 @@ export default function StudentMentorshipPage() {
                   Explore and connect with potential mentors
                 </CardDescription>
               </div>
-              {!isLoading && (
-                <Badge variant="secondary">
-                  {availableMentors.length} Available
-                </Badge>
-              )}
             </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <SkeletonCard key={i} />
+                {[1,2,3,4,5,6,7,8,9].map((i) => (
+                  <AdvisorCardPlaceholder key={i} />
                 ))}
               </div>
             ) : availableMentors.length === 0 ? (
@@ -146,7 +140,7 @@ export default function StudentMentorshipPage() {
                     key={adviser.uuid}
                     adviser={adviser}
                     isCurrent={true}
-                    onClickDynamic={() => handleOnClickDynamic(adviser.uuid)}
+                    onClick={() => handleOnClickDynamic(adviser.uuid)}
                   />
                 ))}
               </div>
@@ -162,154 +156,175 @@ export default function StudentMentorshipPage() {
 function AdvisorCard({
   adviser,
   isCurrent = true,
-  onClickDynamic,
+  onClick,
 }: {
   adviser: Adviser;
   isCurrent?: boolean;
-  onClickDynamic?: (uuid: string) => void;
+  onClick?: () => void;
 }) {
-  const initials = adviser.fullName
-    .split(" ")
-    .map((n: string) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
   return (
-    <Card
-      className={`group transition-all duration-300 ${
-        isCurrent ? "border-primary/50" : "hover:border-primary/30"
-      }`}
-    >
-      <CardContent className="pt-6">
-        <div className="flex flex-col items-center text-center space-y-4">
-          {/* Avatar */}
-          <div className="relative">
-            <Avatar className="h-20 w-20 border-4 border-accent shadow-lg group-hover:scale-105 transition-transform">
-              <AvatarImage
+    <Card className="relative group max-w-sm w-full transition-all duration-300 hover:shadow-2xl overflow-hidden border-0 shadow-xl">
+
+      {/* Main card */}
+      <div className="relative bg-card rounded-2xl shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl">
+        {/* Header gradient with pattern */}
+        <div className="relative h-32 bg-blue-600 overflow-hidden">
+          <div className="absolute inset-0">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full -translate-y-1/2 translate-x-1/3 opacity-50"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-700 rounded-full translate-y-1/2 -translate-x-1/4 opacity-40"></div>
+            <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-blue-400 rounded-full -translate-x-1/2 -translate-y-1/2 opacity-30"></div>
+          </div>
+        </div>
+
+        {/* Avatar section */}
+        <div className="relative px-6 -mt-16 mb-4">
+          <div className="relative inline-block">
+            <div className="w-32 h-32 rounded-2xl bg-card p-1 shadow-2xl ring-4 ring-card">
+              <Image
+                height={400}
+                width={400}
+                unoptimized
                 src={adviser.imageUrl || "/placeholder.svg"}
                 alt={adviser.fullName}
+                className="w-full h-full rounded-xl object-cover"
               />
-              <AvatarFallback className="text-lg font-semibold bg-gradient-to-br from-primary/20 to-primary/10">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            {isCurrent && (
-              <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-1">
-                <Star className="h-3 w-3 fill-current" />
-              </div>
-            )}
-          </div>
-
-          {/* Name and Role */}
-          <div className="space-y-1">
-            <h3 className="font-semibold text-lg">{adviser.fullName}</h3>
-            <div className="flex flex-wrap justify-center gap-1">
-              {adviser.isAdvisor && (
-                <Badge variant="default" className="text-xs">
-                  Advisor
-                </Badge>
-              )}
-              {adviser.isAdmin && (
-                <Badge variant="secondary" className="text-xs">
-                  Admin
-                </Badge>
-              )}
-              {adviser.status && (
-                <Badge variant="outline" className="text-xs capitalize">
-                  {adviser.status}
-                </Badge>
-              )}
+            </div>
+            <div className="absolute -bottom-2 -right-2 bg-accent text-white rounded-xl p-1.5 text-xs font-bold shadow-lg flex items-center gap-1">
+              <Sparkles className="h-3 w-3" />
             </div>
           </div>
+        </div>
 
+        {/* Content */}
+        <div className="px-6 pb-6 space-y-4">
+          {/* Name and badges */}
+          <div className="space-y-2">
+            <h3 className="text-2xl font-bold ">
+              {adviser.fullName}
+            </h3>
+          </div>
           {/* Bio */}
-          {adviser.bio && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
+          {adviser.bio ? (
+            <p className="text-sm leading-relaxed">
               {adviser.bio}
+            </p>
+          ) : (
+            <p className="text-sm text-slate-400 leading-relaxed">
+              No bio available.
             </p>
           )}
 
-          <Separator />
-
-          {/* Stats */}
-          <div className="w-full grid grid-cols-2 gap-3">
-            <div className="text-center p-2 rounded-lg bg-muted/50">
-              <div className="text-xs text-muted-foreground">Joined</div>
-              <div className="text-sm font-semibold">
+          {/* Stats with modern design */}
+          <div className="grid grid-cols-2 gap-2 pt-2">
+            <div className="relative overflow-hidden">
+              <div className="text-xs font-medium text-foreground mb-1">
+                Joined
+              </div>
+              <div className="text-lg font-bold text-foreground">
                 {new Date(adviser.createDate).getFullYear()}
               </div>
             </div>
-            <div className="text-center p-2 rounded-lg bg-muted/50">
-              <div className="text-xs text-muted-foreground">Gender</div>
-              <div className="text-sm font-semibold capitalize">
+            <div className="relative overflow-hidden">
+              <div className="text-xs font-medium text-foreground mb-1">
+                Gender
+              </div>
+              <div className="text-lg font-bold text-foreground">
                 {adviser.gender || "N/A"}
               </div>
             </div>
           </div>
-
-          {/* Actions */}
-          <div className="w-full flex gap-2">
+          {/* Action buttons */}
+          <div className="flex gap-2 pt-2">
             {isCurrent ? (
               <>
-                <Button size="sm" className="flex-1 gap-1">
-                  <Mail className="h-3 w-3" />
-                  Message
+                <Button className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-2.5 px-4 rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center gap-2 group">
+                  <Mail className="h-4 w-4 group-hover:rotate-12 transition-transform" />
+                  Telegram
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 gap-1"
-                  onClick={() => onClickDynamic?.(adviser.uuid)}
-                >
-                  <BookOpen className="h-3 w-3" />
+                <Button className="flex-1 bg-white hover:bg-slate-50 text-slate-700 font-semibold py-2.5 px-4 rounded-xl border-2 border-slate-200 hover:border-slate-300 transition-all duration-300 flex items-center justify-center gap-2 group" onClick={onClick}>
+                  <BookOpen className="h-4 w-4 hover:rotate-12 transition-transform" />
                   View
                 </Button>
               </>
             ) : (
               <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 gap-1 group-hover:border-primary group-hover:text-primary"
-                >
-                  <UserPlus className="h-3 w-3" />
+                <Button className="flex-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-600 font-semibold py-2.5 px-4 rounded-xl border-2 border-slate-200 hover:border-blue-300 transition-all duration-300 flex items-center justify-center gap-2 group">
+                  <UserPlus className="h-4 w-4 group-hover:scale-110 transition-transform" />
                   Request
                 </Button>
-                <Button size="sm" variant="ghost" className="flex-1 gap-1">
+                <Button
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-xl transition-all duration-300"
+                >
                   View Profile
                 </Button>
               </>
             )}
           </div>
         </div>
-      </CardContent>
+      </div>
     </Card>
   );
 }
 
-// Skeleton Card Component
-function SkeletonCard() {
+function AdvisorCardPlaceholder() {
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="flex flex-col items-center text-center space-y-4">
-          <div className="h-20 w-20 rounded-full bg-muted animate-pulse" />
-          <div className="space-y-2 w-full">
-            <div className="h-4 bg-muted rounded w-3/4 mx-auto animate-pulse" />
-            <div className="h-3 bg-muted rounded w-1/2 mx-auto animate-pulse" />
-          </div>
-          <div className="h-12 bg-muted rounded w-full animate-pulse" />
-          <div className="w-full grid grid-cols-2 gap-3">
-            <div className="h-12 bg-muted rounded animate-pulse" />
-            <div className="h-12 bg-muted rounded animate-pulse" />
-          </div>
-          <div className="w-full flex gap-2">
-            <div className="h-8 bg-muted rounded flex-1 animate-pulse" />
-            <div className="h-8 bg-muted rounded flex-1 animate-pulse" />
+    <Card className="relative group max-w-sm w-full transition-all duration-300 hover:shadow-2xl overflow-hidden border-0 shadow-xl">
+      {/* Main card */}
+      <div className="relative bg-card rounded-2xl shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl">
+        {/* Header gradient with pattern */}
+        <div className="relative h-32 bg-gradient-to-br from-slate-200 to-slate-300 overflow-hidden animate-pulse">
+          <div className="absolute inset-0">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-slate-300 rounded-full -translate-y-1/2 translate-x-1/3 opacity-50"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-slate-400 rounded-full translate-y-1/2 -translate-x-1/4 opacity-40"></div>
+            <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-slate-200 rounded-full -translate-x-1/2 -translate-y-1/2 opacity-30"></div>
           </div>
         </div>
-      </CardContent>
+
+        {/* Avatar section */}
+        <div className="relative px-6 -mt-16 mb-4">
+          <div className="relative inline-block">
+            <div className="w-32 h-32 rounded-2xl bg-slate-200 p-1 shadow-2xl ring-4 ring-card animate-pulse">
+              <div className="w-full h-full rounded-xl bg-slate-300"></div>
+            </div>
+            <div className="absolute -bottom-2 -right-2 bg-slate-300 text-transparent rounded-xl p-1.5 text-xs font-bold shadow-lg flex items-center gap-1 animate-pulse">
+              <Sparkles className="h-3 w-3" />
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="px-6 pb-6 space-y-4">
+          {/* Name placeholder */}
+          <div className="space-y-2">
+            <div className="h-7 bg-slate-200 rounded-lg w-3/4 animate-pulse"></div>
+          </div>
+
+          {/* Bio placeholder */}
+          <div className="space-y-2">
+            <div className="h-4 bg-slate-200 rounded w-full animate-pulse"></div>
+            <div className="h-4 bg-slate-200 rounded w-5/6 animate-pulse"></div>
+          </div>
+
+          {/* Stats placeholder */}
+          <div className="grid grid-cols-2 gap-2 pt-2">
+            <div className="relative overflow-hidden space-y-2">
+              <div className="h-3 bg-slate-200 rounded w-16 animate-pulse"></div>
+              <div className="h-6 bg-slate-200 rounded w-12 animate-pulse"></div>
+            </div>
+            <div className="relative overflow-hidden space-y-2">
+              <div className="h-3 bg-slate-200 rounded w-16 animate-pulse"></div>
+              <div className="h-6 bg-slate-200 rounded w-12 animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Action buttons placeholder */}
+          <div className="flex gap-2 pt-2">
+            <div className="flex-1 h-10 bg-slate-200 rounded-xl animate-pulse"></div>
+            <div className="flex-1 h-10 bg-slate-200 rounded-xl animate-pulse"></div>
+          </div>
+        </div>
+      </div>
     </Card>
   );
 }
+

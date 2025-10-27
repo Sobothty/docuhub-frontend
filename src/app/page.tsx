@@ -330,7 +330,6 @@ export default function Home() {
             feedbacks={feedbacksData}
             autoPlay
             autoPlayInterval={6000}
-            showControls
             showIndicators
           />
         </div>

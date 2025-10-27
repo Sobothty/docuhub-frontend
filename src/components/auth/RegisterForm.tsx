@@ -12,8 +12,15 @@ interface RegisterFormData {
   confirmedPassword: string;
 }
 
-const RegisterForm: React.FC = () => {
+interface ApiErrorResponse {
+  status: number;
+  message?: string;
+  detail?: string;
+}
+
+export default function RegisterForm() {
   const router = useRouter();
+
   const [formData, setFormData] = useState<RegisterFormData>({
     username: "",
     email: "",
@@ -22,14 +29,14 @@ const RegisterForm: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<Partial<RegisterFormData>>({});
+  const [apiError, setApiError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmedPassword, setShowConfirmedPassword] = useState(false);
-  const [apiError, setApiError] = useState("");
   const [agreeToTerms, setAgreeToTerms] = useState(false);
 
   const validateField = (name: keyof RegisterFormData, value: string) => {
-    const newErrors = { ...errors };
+    const newErrors: Partial<RegisterFormData> = { ...errors };
     const regex = {
       username: /^[a-zA-Z0-9_]{3,20}$/,
       email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
@@ -72,7 +79,7 @@ const RegisterForm: React.FC = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setApiError("");
+    setApiError(""); // clear api error when user types
     validateField(name as keyof RegisterFormData, value);
   };
 
@@ -80,14 +87,16 @@ const RegisterForm: React.FC = () => {
     Object.entries(formData).forEach(([key, value]) =>
       validateField(key as keyof RegisterFormData, value)
     );
+
     if (!agreeToTerms) {
       setApiError("You must agree to the Terms & Privacy Policy");
       return false;
     }
+
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validateForm()) return;
 
@@ -104,12 +113,28 @@ const RegisterForm: React.FC = () => {
         }
       );
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Registration failed");
+      // parse backend JSON safely
+      const data: ApiErrorResponse = await response.json();
 
+      if (!response.ok) {
+        const message =
+          data.detail ?? data.message ?? `Error ${response.status}`;
+
+        // Set field-specific errors
+        if (message.toLowerCase().includes("email"))
+          setErrors((prev) => ({ ...prev, email: message }));
+        else if (message.toLowerCase().includes("username"))
+          setErrors((prev) => ({ ...prev, username: message }));
+        else setApiError(message);
+
+        return;
+      }
+      
+      // Success
       router.push("/login");
     } catch (error) {
-      setApiError((error as Error).message);
+      if (error instanceof Error) setApiError(error.message);
+      else setApiError("Something went wrong");
     } finally {
       setIsLoading(false);
     }
@@ -117,8 +142,8 @@ const RegisterForm: React.FC = () => {
 
   return (
     <div className="w-full max-w-md mx-auto transition-colors duration-300">
-      <div className=" rounded-xl shadow-md p-8 bg-card transition-colors duration-300">
-        <h2 className="text-2xl font-bold text-center  dark:text-white mb-6">
+      <div className="rounded-xl shadow-md p-8 bg-card transition-colors duration-300">
+        <h2 className="text-2xl font-bold text-center dark:text-white mb-6">
           Welcome to DocuHub
         </h2>
 
@@ -131,7 +156,7 @@ const RegisterForm: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Username */}
           <div>
-            <label className="block text-sm font-medium  dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium dark:text-gray-300 mb-1">
               Username
             </label>
             <div className="relative">
@@ -142,7 +167,7 @@ const RegisterForm: React.FC = () => {
                 value={formData.username}
                 onChange={handleInputChange}
                 placeholder="Enter your username"
-                className={`w-full pl-10 pr-3 py-2 rounded-md text-sm bg-gray-50 text-gray-700 dark:bg-gray-800 border focus:outline-none focus:ring-2 focus:ring-blue-500  ${
+                className={`w-full pl-10 pr-3 py-2 rounded-md text-sm bg-gray-50 text-gray-700 dark:bg-gray-800 border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   errors.username
                     ? "border-red-500"
                     : "border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100"
@@ -156,7 +181,7 @@ const RegisterForm: React.FC = () => {
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium  dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium dark:text-gray-300 mb-1">
               Email
             </label>
             <div className="relative">
@@ -167,7 +192,7 @@ const RegisterForm: React.FC = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="Enter your email"
-                className={`w-full pl-10 pr-3 py-2 rounded-md  text-gray-700 text-sm bg-gray-50 dark:bg-gray-800 border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${
+                className={`w-full pl-10 pr-3 py-2 rounded-md text-gray-700 text-sm bg-gray-50 dark:bg-gray-800 border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${
                   errors.email
                     ? "border-red-500"
                     : "border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100"
@@ -181,7 +206,7 @@ const RegisterForm: React.FC = () => {
 
           {/* Password */}
           <div>
-            <label className="block text-sm font-medium  dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium dark:text-gray-300 mb-1">
               Password
             </label>
             <div className="relative">
@@ -213,7 +238,7 @@ const RegisterForm: React.FC = () => {
 
           {/* Confirm Password */}
           <div>
-            <label className="block text-sm font-medium  dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium dark:text-gray-300 mb-1">
               Confirm Password
             </label>
             <div className="relative">
@@ -232,9 +257,7 @@ const RegisterForm: React.FC = () => {
               />
               <button
                 type="button"
-                onClick={() =>
-                  setShowConfirmedPassword(!showConfirmedPassword)
-                }
+                onClick={() => setShowConfirmedPassword(!showConfirmedPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
               >
                 {showConfirmedPassword ? (
@@ -265,7 +288,7 @@ const RegisterForm: React.FC = () => {
               className="ml-2 text-sm text-gray-400 dark:text-gray-300"
             >
               I agree to the{" "}
-              <a href="#" className="text-blue-600  hover:underline">
+              <a href="#" className="text-blue-600 hover:underline">
                 Terms & Privacy Policy
               </a>
             </label>
@@ -300,6 +323,4 @@ const RegisterForm: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default RegisterForm;
+}

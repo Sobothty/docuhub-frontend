@@ -67,6 +67,7 @@ import {
 } from "@/feature/media/mediaSlice";
 import Image from "next/image";
 import { toast } from "sonner";
+import TableRowPlaceholder from "@/components/card/SubmissionPlaceholder";
 
 interface PaperData {
   assignment: Assignment | undefined;
@@ -483,8 +484,14 @@ export default function StudentSubmissionsPage() {
           </CardHeader>
           <CardContent>
             {papersLoading ? (
-              <div className="py-12 text-center">
-                <p className="text-muted-foreground">Loading submissions...</p>
+              <div className="py-12">
+                <Table>
+                  <TableBody>
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <TableRowPlaceholder key={index} />
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             ) : filteredPapers.length === 0 ? (
               <div className="py-12 text-center">
@@ -503,6 +510,7 @@ export default function StudentSubmissionsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Thumbnail</TableHead>
                     <TableHead>Title</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Publish</TableHead>
@@ -586,7 +594,7 @@ function SubmissionRow({
 
   const handlePublish = async () => {
     await createPublishedPaper(paper.uuid).unwrap();
-  }
+  };
 
   const getStatusPublication = (isPublished: boolean) => {
     switch (isPublished) {
@@ -610,7 +618,30 @@ function SubmissionRow({
   return (
     <TableRow>
       <TableCell>
-        <div className="max-w-xs">
+        {paper.thumbnailUrl ? (
+          <div className="relative w-16 h-10">
+            <Image
+              src={paper.thumbnailUrl}
+              alt={paper.title}
+              layout="fill"
+              objectFit="cover"
+              className="rounded-md"
+            />
+          </div>
+        ) : (
+          <div className="relative w-16 h-10">
+            <Image
+              src="/placeholder.svg"
+              alt="Placeholder"
+              layout="fill"
+              objectFit="cover"
+              className="rounded-md"
+            />
+          </div>
+        )}
+      </TableCell>
+      <TableCell>
+        <div className="w-36">
           <div className="font-medium truncate p-2">
             <Link
               href={`/student/submissions/${paper.uuid}`}

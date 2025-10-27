@@ -268,20 +268,8 @@ export default function StudentSettingsPage() {
         return;
       }
 
-      console.log("🔍 DEBUG - Profile Update Data:", {
-        uuid: studentProfile.user.uuid,
-        profileForm,
-        userNameInForm: profileForm.userName,
-        isUserNameChanged:
-          profileForm.userName !== studentProfile.user.userName,
-      });
-
       const updateData = prepareDataForBackend(profileForm);
 
-      console.log("🔍 DEBUG - After prepareDataForBackend:", {
-        updateData,
-        userNameInUpdateData: updateData.userName,
-      });
 
       if (Object.keys(updateData).length === 0) {
         toast.info("No changes to save");
@@ -289,17 +277,12 @@ export default function StudentSettingsPage() {
         return;
       }
 
-      const result = await updateUserProfile({
-        uuid: studentProfile.user.uuid,
-        updateData: updateData,
-      }).unwrap();
 
-      console.log("✅ Update successful:", result);
       toast.success("Profile updated successfully");
       setIsEditingProfile(false);
       refetch();
     } catch (error) {
-      console.error("❌ Update error:", error);
+      console.log("❌ Update error:", error);
       const errorMessage = handleApiError(
         error,
         "Failed to update profile. Please check your input and try again."
@@ -396,7 +379,7 @@ export default function StudentSettingsPage() {
                 alt={user?.fullName || "Profile"}
                 width={140}
                 height={140}
-                className="rounded-full border-4 border-white shadow-lg object-cover"
+                className="rounded-full border-4 border-accent shadow-lg object-cover"
                 unoptimized
               />
               <button
@@ -447,7 +430,7 @@ export default function StudentSettingsPage() {
           <div className="flex justify-center mt-4">
             <Button
               onClick={() => setShowExportProfile(true)}
-              className="gap-2 bg-blue-600 hover:bg-blue-600/90"
+              className="gap-2 bg-blue-600 hover:bg-blue-600/90 text-white"
               size="lg"
             >
               <Download className="h-4 w-4" />
@@ -823,16 +806,6 @@ export default function StudentSettingsPage() {
                         })}
                       </span>
                     </div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">
-                    User ID
-                  </Label>
-                  <div className="p-2 rounded-md bg-muted/50">
-                    <code className="text-xs font-mono text-muted-foreground break-all">
-                      {user.uuid}
-                    </code>
                   </div>
                 </div>
               </CardContent>

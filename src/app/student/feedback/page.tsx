@@ -23,7 +23,7 @@ import { useRouter } from "next/navigation";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetAllFeedbackByAuthorQuery } from "@/feature/feedbackSlice/feedbackSlice";
 import { useGetPaperByUuidQuery } from "@/feature/paperSlice/papers";
-import DocuhubLoader from "@/components/loader/docuhub-loading";
+import FeedbackCardPlaceholder from "@/components/card/FeedbackCardPlaceholder";
 
 // Add type definitions
 interface Feedback {
@@ -118,7 +118,7 @@ function FeedbackItem({ feedback, isLast }: FeedbackItemProps) {
           <Badge
             variant={
               feedback.status === "APPROVED"
-                ? "default"
+                ? "approved"
                 : feedback.status === "REJECTED" ||
                   feedback.status === "ADMIN_REJECTED"
                 ? "destructive"
@@ -143,9 +143,14 @@ function FeedbackItem({ feedback, isLast }: FeedbackItemProps) {
             {feedback.createdAt}
           </span>
         </div>
-        <h5 className="font-medium text-sm mb-2">{paper?.paper.title}</h5>
+        <h5 className="font-medium text-sm mb-2">
+          <span>
+            <strong>Paper: </strong>
+          </span>
+          {paper?.paper.title}
+        </h5>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          {feedback.feedbackText}
+          <strong>Feedback: </strong> {feedback.feedbackText}
         </p>
 
         {/* Action Buttons */}
@@ -275,14 +280,14 @@ export default function StudentFeedbackPage() {
           </CardHeader>
           <CardContent>
             {feedbackLoading ? (
-              <div className="py-12 text-center items-center space-y-4">
-                <DocuhubLoader />
+              <div className="space-y-6">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <FeedbackCardPlaceholder key={index} isLast={index === 2} />
+                ))}
               </div>
             ) : allFeedback.length === 0 ? (
               <div className="py-12 text-center">
-                <p className="text-muted-foreground">
-                  No feedback received yet.
-                </p>
+                <p className="text-muted-foreground">No feedback received yet.</p>
               </div>
             ) : (
               <div className="space-y-6">
