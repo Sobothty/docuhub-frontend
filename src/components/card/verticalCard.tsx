@@ -1,8 +1,16 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { BookOpen, Calendar, Award, Star, Download, Eye } from 'lucide-react';
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { BookOpen, Calendar, Award, Star, Download, Eye } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import {
+  useGetUserStarsQuery,
+  useStarPaperMutation,
+  useUnstarPaperMutation,
+  useGetStarCountQuery,
+} from "@/feature/star/StarSlice";
 
 interface VerticalCardProps {
   title: string;
@@ -14,10 +22,9 @@ interface VerticalCardProps {
   abstract?: string;
   tags?: string[];
   image?: string;
-  isBookmarked?: boolean;
   paperId: string;
+  authorUuid?: string;
   onDownloadPDF?: () => void;
-  onToggleBookmark?: () => void;
   className?: string;
 }
 
@@ -31,26 +38,94 @@ export default function VerticalCard({
   abstract,
   tags = [],
   image,
-  isBookmarked = false,
   paperId,
+  authorUuid,
   onDownloadPDF,
-  onToggleBookmark,
-  className = '',
+  className = "",
 }: VerticalCardProps) {
   const router = useRouter();
-  const displayAuthors =
-    authors.length > 2 ? [...authors.slice(0, 2), '...'] : authors;
+  const { data: session, status } = useSession();
+  const [isStarred, setIsStarred] = useState(false);
 
-  // Truncate abstract to 150 characters with ... if longer
+  // Get the user UUID from session
+  const userUuid =
+    session?.user?.id || session?.user?.id || (session?.user as any)?.sub;
+
+  // Get star count for this paper
+  const { data: starCount = 0 } = useGetStarCountQuery(paperId);
+
+  // Get user's starred papers
+  const { data: userStars, refetch } = useGetUserStarsQuery(userUuid || "", {
+    skip: !userUuid,
+  });
+
+  // Star/Unstar mutations
+  const [starPaper, { isLoading: isStarring }] = useStarPaperMutation();
+  const [unstarPaper, { isLoading: isUnstarring }] = useUnstarPaperMutation();
+
+  const displayAuthors =
+    authors.length > 2 ? [...authors.slice(0, 2), "..."] : authors;
+
   const displayAbstract = abstract
     ? abstract.length > 150
       ? `${abstract.slice(0, 150).trim()}...`
       : abstract
-    : '';
+    : "";
+
+  // Check if paper is starred
+  useEffect(() => {
+    if (userStars && Array.isArray(userStars)) {
+      const starred = userStars.some(
+        (star: { paperUuid: string; starred: boolean }) =>
+          star.paperUuid === paperId && star.starred
+      );
+      setIsStarred(starred);
+    }
+  }, [userStars, paperId]);
 
   const handleViewPaper = () => {
     router.push(`/papers/${paperId}`);
   };
+
+  const handleAuthorClick = () => {
+    if (authorUuid) {
+      router.push(`/users/${authorUuid}`);
+    }
+  };
+
+  const handleToggleStar = async () => {
+    // Check authentication status
+    if (status === "unauthenticated") {
+      console.log("Please login to star papers");
+      // Optional: redirect to login
+      // router.push('/login');
+      return;
+    }
+
+    if (!userUuid) {
+      console.log("User UUID not found in session");
+      console.log("Session data:", session);
+      return;
+    }
+
+    try {
+      if (isStarred) {
+        const response = await unstarPaper(paperId).unwrap();
+        console.log("Unstar response:", response);
+        setIsStarred(false);
+      } else {
+        const response = await starPaper(paperId).unwrap();
+        console.log("Star response:", response);
+        setIsStarred(true);
+      }
+      // Refetch user stars to update the list
+      refetch();
+    } catch (error) {
+      console.error("Error toggling star:", error);
+    }
+  };
+
+  const isLoading = isStarring || isUnstarring;
 
   return (
     <div
@@ -83,16 +158,20 @@ export default function VerticalCard({
           {authorImage && (
             <Image
               src={authorImage}
-              alt={authors[0] || 'Author'}
+              alt={authors[0] || "Author"}
               width={24}
               height={24}
-              className="w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2 sm:mr-3 flex-shrink-0"
+              className="w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2 sm:mr-3 flex-shrink-0 hover:cursor-pointer"
               priority={false}
               unoptimized
+              onClick={handleAuthorClick}
             />
           )}
-          <span className="text-sm sm:text-base text-foreground truncate">
-            {displayAuthors.join(', ')}
+          <span
+            className="text-sm sm:text-base text-foreground truncate cursor-pointer hover:text-blue-600 transition-colors"
+            onClick={handleAuthorClick}
+          >
+            {displayAuthors.join(", ")}
           </span>
         </div>
 
@@ -116,16 +195,33 @@ export default function VerticalCard({
               <span>{citations}</span>
             </div>
           )}
+
+          {/* Star Button with Count */}
           <button
-            onClick={onToggleBookmark}
-            className="flex items-center space-x-1 hover:text-secondary transition-colors"
-            aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+            onClick={handleToggleStar}
+            disabled={isLoading || status === "loading"}
+            className="flex items-center space-x-1 hover:scale-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label={isStarred ? "Remove star" : "Add star"}
+            title={
+              status === "unauthenticated" ? "Login to star papers" : undefined
+            }
           >
             <Star
-              className={`w-3 h-3 sm:w-4 sm:h-4 ${
-                isBookmarked ? 'fill-accent text-accent' : 'text-foreground'
+              className={`w-3 h-3 sm:w-4 sm:h-4 transition-colors ${
+                isStarred
+                  ? "fill-yellow-500 text-yellow-500"
+                  : "text-foreground"
               }`}
             />
+            {starCount > 0 && (
+              <span
+                className={`text-xs sm:text-sm font-medium ${
+                  isStarred ? "text-yellow-500" : "text-foreground"
+                }`}
+              >
+                {starCount}
+              </span>
+            )}
           </button>
         </div>
 

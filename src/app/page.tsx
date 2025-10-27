@@ -10,10 +10,9 @@ import AdventureSection from "@/components/ctaBanner/CtaBanner";
 import WorksCardGrid from "@/components/cardGrid/WorksCardGrid";
 import DiscussionForumSection from "@/components/ctaBanner/DiscussionForumSection";
 import FeedbackCardCarousel from "@/components/carousel/FeedbackCarousel";
-import { motion, useScroll } from "motion/react"
+import { motion, useScroll } from "motion/react";
 import { useGetAllPublishedPapersQuery } from "@/feature/paperSlice/papers";
 import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
-
 
 // Sample research paper data
 const researchPapers = [
@@ -26,7 +25,7 @@ const researchPapers = [
     year: "2024",
     citations: "120",
     abstract:
-      "This document provides a detailed overview of GlobalCorp’s financial performance for the fiscal year 2024, including revenue, expenses, and projections for 2025.",
+      "This document provides a detailed overview of GlobalCorp's financial performance for the fiscal year 2024, including revenue, expenses, and projections for 2025.",
     tags: ["Finance", "Reports"],
     isBookmarked: false,
     image:
@@ -113,7 +112,7 @@ const feedbacksData = [
   {
     id: "1",
     userName: "Chim Theara",
-    userTitle: "ISTAD’s Student",
+    userTitle: "ISTAD's Student",
     content:
       "IPUB AcademicHub helped me publish my first research paper and connect with mentors who guided me every step of the way.",
     rating: 5,
@@ -122,7 +121,7 @@ const feedbacksData = [
   {
     id: "2",
     userName: "Sorn Sophamarinet",
-    userTitle: "ISTAD’s Student",
+    userTitle: "ISTAD's Student",
     content:
       "The platform streamlines mentorship and feedback, making it easier to guide multiple students and track their progress.",
     rating: 4,
@@ -131,7 +130,7 @@ const feedbacksData = [
   {
     id: "3",
     userName: "BUT SEAVTHONG",
-    userTitle: "ISTAD’s Student",
+    userTitle: "ISTAD's Student",
     content:
       "I discovered valuable research in my field and received constructive feedback that greatly improved a lot of my works.",
     rating: 5,
@@ -140,7 +139,7 @@ const feedbacksData = [
   {
     id: "4",
     userName: "KRY SOBOTHTY",
-    userTitle: "ISTAD’s Student",
+    userTitle: "ISTAD's Student",
     content:
       "The advanced search and project discovery features helped me find relevant studies and collaborate with peers worldwide.",
     rating: 4,
@@ -149,7 +148,7 @@ const feedbacksData = [
   {
     id: "5",
     userName: "SIM PENGSEANG",
-    userTitle: "ISTAD’s Student",
+    userTitle: "ISTAD's Student",
     content:
       "Docuhub AcademicHub has been a game-changer for my research journey. The resources and support available are unparalleled.",
     rating: 4,
@@ -158,7 +157,7 @@ const feedbacksData = [
   {
     id: "6",
     userName: "PHO HONGLEAP",
-    userTitle: "ISTAD’s Student",
+    userTitle: "ISTAD's Student",
     content:
       "I highly recommend IPUB AcademicHub to any student or researcher looking to elevate their work and connect with a vibrant academic community.",
     rating: 4,
@@ -166,7 +165,10 @@ const feedbacksData = [
   },
 ];
 
-const getYear = (paper: { publishedAt?: string | null; createdAt?: string | null }) => {
+const getYear = (paper: {
+  publishedAt?: string | null;
+  createdAt?: string | null;
+}) => {
   const dateStr = paper.publishedAt || paper.createdAt;
   if (!dateStr || dateStr === "null") return "";
 
@@ -175,21 +177,23 @@ const getYear = (paper: { publishedAt?: string | null; createdAt?: string | null
 };
 
 export default function Home() {
-  // scroll progress bar
   const { scrollYProgress } = useScroll();
 
   const handleViewPaper = (paperId: number) => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       window.location.href = `/papers/${paperId}`;
     }
   };
+
   const handleDownloadPDF = (paperId: number) =>
     console.log("Download PDF:", paperId);
-  const handleToggleBookmark = (paperId: number) =>
-    console.log("Toggle bookmark:", paperId);
 
   // Fetch papers using RTK Query
-  const { data: papersData, isLoading, error } = useGetAllPublishedPapersQuery({});
+  const {
+    data: papersData,
+    isLoading,
+    error,
+  } = useGetAllPublishedPapersQuery({});
 
   const papers = papersData?.papers.content ?? [];
 
@@ -206,22 +210,20 @@ export default function Home() {
     fileUrl?: string;
   };
 
-  // Fix type for papers mapping
   const apiPapers = papers.map((paper: PaperType) => ({
-    id: paper.uuid, // always string
+    id: paper.uuid,
     title: paper.title,
     authorUuid: paper.authorUuid,
     authors: [paper.authorUuid ?? "Unknown Author"],
     authorImage: "/default-author.png",
     journal: paper.categoryNames?.[0] ?? "",
-    year: getYear(paper), // always string
+    year: getYear(paper),
     abstract: paper.abstractText ?? "",
     tags: paper.categoryNames ?? [],
-    isBookmarked: false,
     image: paper.thumbnailUrl ?? "/default-image.png",
     citations: paper.citations ?? "",
-    thumbnailUrl: paper.thumbnailUrl ?? undefined, // always string | undefined
-    publishedAt: paper.publishedAt ?? undefined, // always string | undefined
+    thumbnailUrl: paper.thumbnailUrl ?? undefined,
+    publishedAt: paper.publishedAt ?? undefined,
     fileUrl: paper.fileUrl,
   }));
 
@@ -229,120 +231,116 @@ export default function Home() {
 
   return (
     <>
-    <motion.div
-              id="scroll-indicator"
-              style={{
-                  scaleX: scrollYProgress,
-                  position: "fixed",
-                  top: 127,
-                  left: 0,
-                  right: 0,
-                  height: 5,
-                  originX: 0,
-                  backgroundColor: "#f59e0b",
-                  zIndex: 9999,
-                }}
-            />
-    
-    <div  className="min-h-screen flex flex-col">
-      
-      {/* Hero Section */}
-      <HeroSection />
-      <DevelopmentServicesBanner />
+      <motion.div
+        id="scroll-indicator"
+        style={{
+          scaleX: scrollYProgress,
+          position: "fixed",
+          top: 127,
+          left: 0,
+          right: 0,
+          height: 5,
+          originX: 0,
+          backgroundColor: "#f59e0b",
+          zIndex: 9999,
+        }}
+      />
 
-      {/* Card Section */}
-      <section className="w-full max-w-[1400px] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-6 md:py-8 lg:py-12">
-        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-center text-[var(--color-foreground)] mb-4 md:mb-6 lg:mb-8">
-          New Documents
-        </h2>
-        <div className="mb-8 md:mb-10">
-          <ButtonScrollHorizontal />
-        </div>
+      <div className="min-h-screen flex flex-col">
+        {/* Hero Section */}
+        <HeroSection />
+        <DevelopmentServicesBanner />
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-2 text-gray-600">Loading papers...</span>
+        {/* Card Section */}
+        <section className="w-full max-w-[1400px] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-6 md:py-8 lg:py-12">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-center text-[var(--color-foreground)] mb-4 md:mb-6 lg:mb-8">
+            New Documents
+          </h2>
+          <div className="mb-8 md:mb-10">
+            <ButtonScrollHorizontal />
           </div>
-        )}
 
-        {/* Error State */}
-        {error && (
-          <div className="text-center py-8">
-            <p className="text-red-500 mb-2">Failed to load papers from API</p>
-            <p className="text-sm text-gray-500">Showing sample data instead</p>
-          </div>
-        )}
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-gray-600">Loading papers...</span>
+            </div>
+          )}
 
-        {/* Papers Grid */}
-        {!isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {papersToShow.map((paper) => (
-              <PaperCardWithAuthor
-                key={paper.id}
-                paper={paper}
-                onDownloadPDF={() => handleDownloadPDF(Number(paper.id))}
-                onToggleBookmark={() => handleToggleBookmark(Number(paper.id))}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+          {/* Error State */}
+          {error && (
+            <div className="text-center py-8">
+              <p className="text-red-500 mb-2">
+                Failed to load papers from API
+              </p>
+              <p className="text-sm text-gray-500">
+                Showing sample data instead
+              </p>
+            </div>
+          )}
 
-      {/* Most Popular Documents */}
-      <section className="w-full px-2 sm:px-4 md:px-6 py-6 sm:py-8 md:py-10 bg-background">
-        <h2 className="font-semibold text-xl sm:text-2xl md:text-3xl lg:text-5xl lg:text-section-headings text-center mb-6 sm:mb-8 md:mb-10">
-          Popular Documents
-        </h2>
-        <HorizontalCardCarousel
-          papers={researchPapers}
-          onViewPaper={handleViewPaper}
-          onDownloadPDF={handleDownloadPDF}
-          onToggleBookmark={handleToggleBookmark}
-        />
-      </section>
+          {/* Papers Grid */}
+          {!isLoading && (
+            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {papersToShow.map((paper) => (
+                <PaperCardWithAuthor
+                  key={paper.id}
+                  paper={paper}
+                  onDownloadPDF={() => handleDownloadPDF(Number(paper.id))}
+                />
+              ))}
+            </div>
+          )}
+        </section>
 
-      {/* Feature Section */}
-      <FeatureCardGrid />
-      <AdventureSection />
-      <WorksCardGrid />
-      <DiscussionForumSection />
-
-      {/* Feedback Section */}
-      <section className="w-full py-6 sm:py-8 md:py-12">
-        {/* Banner */}
-        <div className="relative w-full h-40 sm:h-56 md:h-72 lg:h-[28rem] bg-[url('/banner/feedbackBanner.png')] bg-cover bg-center">
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-black/60"></div>
-
-          {/* Text Content */}
-          <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-2 sm:px-4 md:px-6 text-center sm:text-left sm:pl-10 z-10">
-            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-7xl font-bold text-white mb-1 sm:mb-2 md:mb-4">
-              We Prominent Truly Trusted IT Student 
-            </h1>
-          </div>
-        </div>
-
-        {/* Carousel */}
-        <div className="max-w-[90%] sm:max-w-[85%] md:max-w-7xl mx-auto -mt-16 sm:-mt-20 md:-mt-32 mb-8 sm:mb-12 md:mb-20 px-2 sm:px-4 md:px-6 lg:px-8">
-          <FeedbackCardCarousel
-            feedbacks={feedbacksData}
-            autoPlay
-            autoPlayInterval={6000}
-            showIndicators
+        {/* Most Popular Documents */}
+        <section className="w-full px-2 sm:px-4 md:px-6 py-6 sm:py-8 md:py-10 bg-background">
+          <h2 className="font-semibold text-xl sm:text-2xl md:text-3xl lg:text-5xl lg:text-section-headings text-center mb-6 sm:mb-8 md:mb-10">
+            Popular Documents
+          </h2>
+          <HorizontalCardCarousel
+            papers={researchPapers}
+            onViewPaper={handleViewPaper}
+            onDownloadPDF={handleDownloadPDF}
+            onToggleBookmark={() => {}}
           />
-        </div>
-      </section>
-    </div>
+        </section>
+
+        {/* Feature Section */}
+        <FeatureCardGrid />
+        <AdventureSection />
+        <WorksCardGrid />
+        <DiscussionForumSection />
+
+        {/* Feedback Section */}
+        <section className="w-full py-6 sm:py-8 md:py-12">
+          <div className="relative w-full h-40 sm:h-56 md:h-72 lg:h-[28rem] bg-[url('/banner/feedbackBanner.png')] bg-cover bg-center">
+            <div className="absolute inset-0 bg-black/60"></div>
+            <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-2 sm:px-4 md:px-6 text-center sm:text-left sm:pl-10 z-10">
+              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-7xl font-bold text-white mb-1 sm:mb-2 md:mb-4">
+                We Prominent Truly Trusted IT Student
+              </h1>
+            </div>
+          </div>
+
+          <div className="max-w-[90%] sm:max-w-[85%] md:max-w-7xl mx-auto -mt-16 sm:-mt-20 md:-mt-32 mb-8 sm:mb-12 md:mb-20 px-2 sm:px-4 md:px-6 lg:px-8">
+            <FeedbackCardCarousel
+              feedbacks={feedbacksData}
+              autoPlay
+              autoPlayInterval={6000}
+              showIndicators
+            />
+          </div>
+        </section>
+      </div>
     </>
   );
 }
 
-// PaperCardWithAuthor props and types
 interface PaperCardWithAuthorProps {
   paper: {
-    id: string; // always string
+    id: string;
     title: string;
     authors: string[];
     authorImage?: string;
@@ -351,7 +349,6 @@ interface PaperCardWithAuthorProps {
     citations?: string;
     abstract?: string;
     tags?: string[];
-    isBookmarked?: boolean;
     image?: string;
     authorUuid?: string;
     thumbnailUrl?: string;
@@ -359,40 +356,43 @@ interface PaperCardWithAuthorProps {
     fileUrl?: string;
   };
   onDownloadPDF: (fileUrl?: string) => void;
-  onToggleBookmark: (id: string) => void;
 }
 
-function PaperCardWithAuthor({ paper, onDownloadPDF, onToggleBookmark }: PaperCardWithAuthorProps) {
-  
-  const {
-    data: author,
-    isLoading: authorLoading
-  } = useGetUserByIdQuery(paper.authorUuid ?? "", {
-    skip: !paper.authorUuid,
-  });
+function PaperCardWithAuthor({
+  paper,
+  onDownloadPDF,
+}: PaperCardWithAuthorProps) {
+  const { data: author, isLoading: authorLoading } = useGetUserByIdQuery(
+    paper.authorUuid ?? "",
+    {
+      skip: !paper.authorUuid,
+    }
+  );
 
   return (
     <VerticalCard
       key={paper.id}
-      paperId={paper.id} // always string
+      paperId={paper.id}
       title={paper.title}
-      authors={authorLoading ? ["Loading..."] : author ? [author.fullName || "Unknown Author"] : ["Unknown Author"]}
-      authorImage={
-        author?.imageUrl ||
-        "./placeholder.svg"
+      authors={
+        authorLoading
+          ? ["Loading..."]
+          : author
+          ? [author.fullName || "Unknown Author"]
+          : ["Unknown Author"]
       }
+      authorImage={author?.imageUrl || "./placeholder.svg"}
       journal={paper.journal}
-      year={paper.year} // pass year, not publishedAt
+      year={paper.year}
       citations={paper.citations}
       abstract={paper.abstract}
       tags={paper.tags}
-      isBookmarked={paper.isBookmarked}
       image={
         paper.thumbnailUrl ??
         "https://storage.googleapis.com/bukas-website-v3-prd/website_v3/images/Article_Image_College_Courses_x_Computer_and_I.width-800.png"
       }
+      authorUuid={paper.authorUuid}
       onDownloadPDF={() => onDownloadPDF(paper.fileUrl)}
-      onToggleBookmark={() => onToggleBookmark(paper.id)}
     />
   );
 }

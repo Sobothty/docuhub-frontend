@@ -28,7 +28,7 @@ import HorizontalCard from "@/components/card/HorizontalCardForAuthor";
 import { useState, useEffect } from "react";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetPapersByAuthorQuery } from "@/feature/paperSlice/papers";
-import { useGetAllStarOfPapersQuery } from "@/feature/star/StarSlice";
+import { useGetUserStarsQuery, useGetStarCountQuery } from "@/feature/star/StarSlice";
 import { useRouter } from "next/navigation";
 import ProposalCardPlaceholder from "./proposals/PaperSkeleton";
 
@@ -37,8 +37,12 @@ export default function StudentOverviewPage() {
   const [activeTab, setActiveTab] = useState<string>("documents");
   const router = useRouter();
   const { data: user } = useGetUserProfileQuery();
-  const { data: starData, isLoading: starLoading } =
-    useGetAllStarOfPapersQuery();
+  
+  // Get user's starred papers
+  const { data: starData, isLoading: starLoading } = useGetUserStarsQuery(
+    user?.user.uuid || "",
+    { skip: !user?.user.uuid }
+  );
 
   // Use useEffect to redirect if not a student (prevent SSR issues)
   useEffect(() => {
@@ -62,10 +66,6 @@ export default function StudentOverviewPage() {
   // Extract papers from the response
   const authorPapers = papersData?.papers?.content || [];
 
-  // Helper to get star count for a paper
-  const getStarCount = (paperUuid: string) =>
-    starData?.filter((star) => star.paperUuid === paperUuid).length || 0;
-
   // Filter documents based on search query
   const filteredDocuments = authorPapers
     .filter((paper) =>
@@ -79,7 +79,7 @@ export default function StudentOverviewPage() {
       feedback: paper.isApproved ? "Approved" : "Under review",
       progress: paper.isApproved ? 100 : 75,
       fileSize: "2.4 MB", // You may need to calculate this from fileUrl
-      downloads: paper.downloads || 0, // Add this to your backend if needed
+      downloads: paper.downloads || 0,
       isWishlist: false,
       authors: [paper.authorUuid],
       journal: paper.categoryNames[0] || "N/A",
@@ -89,7 +89,7 @@ export default function StudentOverviewPage() {
       abstract: paper.abstractText,
       tags: paper.categoryNames,
       image: paper.thumbnailUrl || "/placeholder.svg?height=200&width=300",
-      star: getStarCount(paper.uuid), // <-- add star count here
+      starCount: 0, // Will be updated by StarCountComponent
     }));
 
   return (
@@ -224,28 +224,7 @@ export default function StudentOverviewPage() {
                   ) : (
                     <div className="space-y-4">
                       {authorPapers.slice(0, 3).map((paper) => (
-                        <div key={paper.uuid} className="p-3 rounded-lg border">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-medium text-sm">
-                              {paper.title}
-                            </h4>
-                            <Badge
-                              variant={
-                                paper.isApproved ? "approved" : "pending"
-                              }
-                              className="capitalize"
-                            >
-                              {paper.status}
-                            </Badge>
-                          </div>
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>
-                              Submitted:{" "}
-                              {new Date(paper.createdAt).toLocaleDateString()}
-                            </span>
-                            <span>{paper.categoryNames.join(", ")}</span>
-                          </div>
-                        </div>
+                        <PaperWithStarCount key={paper.uuid} paper={paper} />
                       ))}
                     </div>
                   )}
@@ -390,17 +369,9 @@ export default function StudentOverviewPage() {
                 ) : (
                   <div className="space-y-4">
                     {filteredDocuments.map((doc) => (
-                      <HorizontalCard
+                      <HorizontalCardWithStarCount
                         key={doc.id}
-                        id={doc.id}
-                        title={doc.title}
-                        journal={doc.journal}
-                        year={doc.year}
-                        downloads={doc.downloads.toString()}
-                        abstract={doc.abstract || ""}
-                        tags={doc.tags}
-                        image={doc.image}
-                        star={doc.star.toString()} 
+                        doc={doc}
                         onDownloadPDF={() =>
                           window.open(
                             `/student/submissions/${doc.id}`,
@@ -417,5 +388,59 @@ export default function StudentOverviewPage() {
         </Tabs>
       </div>
     </DashboardLayout>
+  );
+}
+
+// Component to display paper with star count in Recent Papers section
+function PaperWithStarCount({ paper }: { paper: any }) {
+  const { data: starCount = 0, isLoading } = useGetStarCountQuery(paper.uuid);
+
+  return (
+    <div className="p-3 rounded-lg border">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="font-medium text-sm">{paper.title}</h4>
+        <div className="flex items-center gap-2">
+          <Badge
+            variant={paper.isApproved ? "approved" : "pending"}
+            className="capitalize"
+          >
+            {paper.status}
+          </Badge>
+          {!isLoading && starCount > 0 && (
+            <div className="flex items-center gap-1 text-xs text-yellow-600">
+              <Star className="h-3 w-3 fill-yellow-500" />
+              <span>{starCount}</span>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="flex justify-between text-xs text-muted-foreground">
+        <span>
+          Submitted: {new Date(paper.createdAt).toLocaleDateString()}
+        </span>
+        <span>{paper.categoryNames.join(", ")}</span>
+      </div>
+    </div>
+  );
+}
+
+// Component to wrap HorizontalCard with star count
+function HorizontalCardWithStarCount({ doc, onDownloadPDF }: { doc: any; onDownloadPDF: () => void }) {
+  const { data: starCount = 0, isLoading } = useGetStarCountQuery(doc.id);
+
+  return (
+    <HorizontalCard
+      key={doc.id}
+      id={doc.id}
+      title={doc.title}
+      journal={doc.journal}
+      year={doc.year}
+      downloads={doc.downloads.toString()}
+      abstract={doc.abstract || ""}
+      tags={doc.tags}
+      image={doc.image}
+      star={isLoading ? "..." : starCount.toString()}
+      onDownloadPDF={onDownloadPDF}
+    />
   );
 }
