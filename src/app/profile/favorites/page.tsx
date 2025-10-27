@@ -11,17 +11,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
-import { useGetAllUserStarredPapersQuery } from "@/feature/star/StarSlice";
 import {
   Paper,
   useGetAllPublishedPapersQuery,
 } from "@/feature/paperSlice/papers";
 import FavoriteCard from "@/components/card/FavoriteCard";
 import { Search } from "lucide-react";
+import { useGetUserStarsQuery } from "@/feature/star/StarSlice";
 
 export default function MyDownloads() {
   const { data: userProfile } = useGetUserProfileQuery();
-  const { data: userStars } = useGetAllUserStarredPapersQuery(userProfile?.user.uuid || "");
+  const { data: userStars } = useGetUserStarsQuery(userProfile?.user.uuid || "");
   const { data: papers } = useGetAllPublishedPapersQuery({
     page: 0,
     size: 100,

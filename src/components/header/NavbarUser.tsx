@@ -129,7 +129,7 @@ export default function NavbarUser() {
       user?.student &&
       user?.student.isStudent
     ) {
-      router.push(`/student/starts`);
+      router.push(`/student/favorites`);
     } else if (userRoles.includes("ADVISER") && user?.adviser) {
       router.push("/adviser/stars");
     } else {

@@ -1,8 +1,18 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { BookOpen, Calendar, Award, Star, Download, Eye } from 'lucide-react';
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { BookOpen, Calendar, Award, Star, Download, Eye } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import {
+  useGetUserStarsQuery,
+  useStarPaperMutation,
+  useUnstarPaperMutation,
+  useGetStarCountQuery,
+  StarResponse,
+} from "@/feature/star/StarSlice";
+import { toast } from "sonner";
 
 interface VerticalCardProps {
   title: string;
@@ -14,12 +24,23 @@ interface VerticalCardProps {
   abstract?: string;
   tags?: string[];
   image?: string;
-  isBookmarked?: boolean;
   paperId: string;
+  authorUuid?: string;
   onDownloadPDF?: () => void;
-  onToggleBookmark?: () => void;
   className?: string;
 }
+
+// interface StarData {
+//   paperUuid: string;
+//   starred: boolean;
+// }
+
+// interface SessionUser {
+//   id: string | null;
+//   username: string | null;
+//   email: string | null;
+//   roles: string[];
+// }
 
 export default function VerticalCard({
   title,
@@ -31,26 +52,92 @@ export default function VerticalCard({
   abstract,
   tags = [],
   image,
-  isBookmarked = false,
   paperId,
+  authorUuid,
   onDownloadPDF,
-  onToggleBookmark,
-  className = '',
+  className = "",
 }: VerticalCardProps) {
   const router = useRouter();
-  const displayAuthors =
-    authors.length > 2 ? [...authors.slice(0, 2), '...'] : authors;
+  const { data: session, status } = useSession();
+  const [isStarred, setIsStarred] = useState<boolean>(false);
 
-  // Truncate abstract to 150 characters with ... if longer
-  const displayAbstract = abstract
+  // Get the user UUID from session
+  const userUuid: string =
+    session?.user?.id as string || "";
+
+  // Get star count for this paper
+  const { data: starCount = 0 } = useGetStarCountQuery(paperId);
+
+  // Get user's starred papers
+  const { data: userStars, refetch } = useGetUserStarsQuery(userUuid || "", {
+    skip: !userUuid,
+  });
+
+  // Star/Unstar mutations
+  const [starPaper, { isLoading: isStarring }] = useStarPaperMutation();
+  const [unstarPaper, { isLoading: isUnstarring }] = useUnstarPaperMutation();
+
+  const displayAuthors: string[] =
+    authors.length > 2 ? [...authors.slice(0, 2), "..."] : authors;
+
+  const displayAbstract: string = abstract
     ? abstract.length > 150
       ? `${abstract.slice(0, 150).trim()}...`
       : abstract
-    : '';
+    : "";
 
-  const handleViewPaper = () => {
+  // Check if paper is starred
+  useEffect(() => {
+    if (userStars && Array.isArray(userStars)) {
+      const starred = (userStars as StarResponse[]).some(
+        (star: StarResponse) => star.paperUuid === paperId && star.starred
+      );
+      setIsStarred(starred);
+    }
+  }, [userStars, paperId]);
+
+  const handleViewPaper = (): void => {
     router.push(`/papers/${paperId}`);
   };
+
+  const handleAuthorClick = (): void => {
+    if (authorUuid) {
+      router.push(`/users/${authorUuid}`);
+    }
+  };
+
+  const handleToggleStar = async (): Promise<void> => {
+    // Check authentication status
+    if (status === "unauthenticated") {
+      toast.warning("Please login to star papers");
+      router.push("/register");
+      return;
+    }
+
+    if (!userUuid) {
+      console.log("User UUID not found in session");
+      console.log("Session data:", session);
+      return;
+    }
+
+    try {
+      if (isStarred) {
+        const response = await unstarPaper(paperId).unwrap();
+        console.log("Unstar response:", response);
+        setIsStarred(false);
+      } else {
+        const response = await starPaper(paperId).unwrap();
+        console.log("Star response:", response);
+        setIsStarred(true);
+      }
+      // Refetch user stars to update the list
+      refetch();
+    } catch (error) {
+      console.error("Error toggling star:", error);
+    }
+  };
+
+  const isLoading: boolean = isStarring || isUnstarring;
 
   return (
     <div
@@ -83,16 +170,20 @@ export default function VerticalCard({
           {authorImage && (
             <Image
               src={authorImage}
-              alt={authors[0] || 'Author'}
+              alt={authors[0] || "Author"}
               width={24}
               height={24}
-              className="w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2 sm:mr-3 flex-shrink-0"
+              className="w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2 sm:mr-3 flex-shrink-0 hover:cursor-pointer"
               priority={false}
               unoptimized
+              onClick={handleAuthorClick}
             />
           )}
-          <span className="text-sm sm:text-base text-foreground truncate">
-            {displayAuthors.join(', ')}
+          <span
+            className="text-sm sm:text-base text-foreground truncate cursor-pointer hover:text-blue-600 transition-colors"
+            onClick={handleAuthorClick}
+          >
+            {displayAuthors.join(", ")}
           </span>
         </div>
 
@@ -116,16 +207,33 @@ export default function VerticalCard({
               <span>{citations}</span>
             </div>
           )}
+
+          {/* Star Button with Count */}
           <button
-            onClick={onToggleBookmark}
-            className="flex items-center space-x-1 hover:text-secondary transition-colors"
-            aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+            onClick={handleToggleStar}
+            disabled={isLoading || status === "loading"}
+            className="flex items-center space-x-1 hover:scale-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label={isStarred ? "Remove star" : "Add star"}
+            title={
+              status === "unauthenticated" ? "Login to star papers" : undefined
+            }
           >
             <Star
-              className={`w-3 h-3 sm:w-4 sm:h-4 ${
-                isBookmarked ? 'fill-accent text-accent' : 'text-foreground'
+              className={`w-3 h-3 sm:w-4 sm:h-4 transition-colors hover:cursor-pointer ${
+                isStarred
+                  ? "fill-yellow-500 text-yellow-500"
+                  : "text-foreground"
               }`}
             />
+            {starCount > 0 && (
+              <span
+                className={`text-xs sm:text-sm font-medium ${
+                  isStarred ? "text-yellow-500" : "text-foreground"
+                }`}
+              >
+                {starCount}
+              </span>
+            )}
           </button>
         </div>
 
@@ -139,7 +247,7 @@ export default function VerticalCard({
         {/* Tags */}
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1 sm:gap-2 mb-3 sm:mb-4">
-            {tags.map((tag, idx) => (
+            {tags.map((tag: string, idx: number) => (
               <span
                 key={idx}
                 className="px-2 py-1 text-foreground text-xs sm:text-sm rounded-full font-medium truncate"
@@ -154,10 +262,10 @@ export default function VerticalCard({
         <div className="flex gap-2 sm:gap-3 mt-auto">
           <button
             onClick={handleViewPaper}
-            className="flex items-center justify-center gap-1 px-3 py-2 sm:px-4 sm:py-2 bg-secondary text-white rounded-md hover:bg-secondary/90 transition-colors text-sm sm:text-base flex-1"
+            className="flex items-center hover:cursor-pointer justify-center gap-1 px-3 py-2 sm:px-4 sm:py-2 bg-secondary text-white rounded-md hover:bg-secondary/90 transition-colors text-sm sm:text-base flex-1"
             aria-label="View paper"
           >
-            <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Eye className="w-4 h-4 sm:w-5 sm:h-5 " />
             <span>View</span>
           </button>
           <button
@@ -165,7 +273,7 @@ export default function VerticalCard({
             className="flex items-center justify-center gap-1 px-3 py-2 sm:px-4 sm:py-2 bg-gray-700 text-white rounded-md hover:bg-gray-800 transition-colors text-sm sm:text-base flex-1"
             aria-label="Download PDF"
           >
-            <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Download className="w-4 h-4 sm:w-5 sm:h-5 hover:cursor-pointer" />
             <span>PDF</span>
           </button>
         </div>
