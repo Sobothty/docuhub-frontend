@@ -143,7 +143,7 @@ export default function AdviserDocumentDetailPage({
         advisorUuid: adviserProfile.user.uuid,
         deadline: decision === "APPROVED" ? "" : "2025-12-31",
       };
-      console.log("Feedback : ", feedbackData)
+      console.log("Feedback : ", feedbackData);
 
       const result = await createFeedback(feedbackData).unwrap();
       if (result.status === 201) {
@@ -271,20 +271,20 @@ export default function AdviserDocumentDetailPage({
               </CardHeader>
               <CardContent>
                 <div className="rounded-lg overflow-hidden">
+                  {uploadedFileUrl && (
+                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm text-green-800 flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4" />
+                        Annotated PDF uploaded successfully! You can now submit
+                        your review.
+                      </p>
+                    </div>
+                  )}
                   <PDFEdit
                     pdfUri={paper.fileUrl}
                     onUploadSuccess={handleUploadSuccess}
                   />
                 </div>
-                {uploadedFileUrl && (
-                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-sm text-green-800 flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4" />
-                      Annotated PDF uploaded successfully! You can now submit
-                      your review.
-                    </p>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>
@@ -322,7 +322,7 @@ export default function AdviserDocumentDetailPage({
                     Approved
                   </Button>
                   <Button
-                  onClick={() => setDecision("REVISION")}
+                    onClick={() => setDecision("REVISION")}
                     className={`flex-1 ${
                       decision === "REVISION"
                         ? "bg-red-500 hover:bg-red-600"
@@ -344,7 +344,7 @@ export default function AdviserDocumentDetailPage({
                 )}
                 <Button
                   onClick={handleSubmitReview}
-                  className="w-full"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   disabled={
                     !decision ||
                     !feedback.trim() ||

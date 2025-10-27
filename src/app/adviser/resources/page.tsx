@@ -52,6 +52,8 @@ import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import {
   useGetPapersByAuthorQuery,
   useCreatePaperMutation,
+  useDeletePaperMutation,
+  usePublishedPaperMutation,
 } from "@/feature/paperSlice/papers";
 import {
   useCreateMediaMutation,
@@ -167,9 +169,7 @@ export default function MentorResourcesPage() {
       toast.success(`${isThumb ? "Thumbnail" : "File"} uploaded successfully!`);
     } catch (error) {
       console.log("Upload error:", error);
-      toast.error(
-          `Failed to upload ${isThumb ? "thumbnail" : "file"}`
-      );
+      toast.error(`Failed to upload ${isThumb ? "thumbnail" : "file"}`);
     }
   };
 
@@ -195,9 +195,7 @@ export default function MentorResourcesPage() {
       toast.success(`${isThumb ? "Thumbnail" : "File"} deleted successfully!`);
     } catch (error) {
       console.log("Delete error:", error);
-      toast.error(
-          `Failed to delete ${isThumb ? "thumbnail" : "file"}`
-      );
+      toast.error(`Failed to delete ${isThumb ? "thumbnail" : "file"}`);
     }
   };
 
@@ -309,8 +307,7 @@ export default function MentorResourcesPage() {
       resetForm();
     } catch (error) {
       console.log("Error creating paper:", error);
-      toast.error("Failed to create paper. Please try again."
-      );
+      toast.error("Failed to create paper. Please try again.");
     }
   };
 
@@ -337,7 +334,40 @@ export default function MentorResourcesPage() {
       thumbnailUrl: paper.thumbnailUrl,
       status: paper.status,
       isPublished: paper.isPublished,
+      isApproved: paper.isApproved,
     })) || [];
+
+  const [deletePaper] = useDeletePaperMutation();
+  const [createPublishedPaper] = usePublishedPaperMutation();
+
+  const handleDeletePaper = async (uuid: string) => {
+    try {
+      await deletePaper(uuid).unwrap();
+    } catch (error) {
+      console.log("Failed to delete paper:", error);
+    }
+  };
+
+  const handleDownload = (fileUrl: string) => {
+    // Create a download link for the paper file
+    if (fileUrl) {
+      const a = document.createElement("a");
+      a.href = fileUrl;
+      a.download = `${fileUrl
+        .split("/")
+        .pop()!
+        .replace(/[^a-z0-9\-\s]/gi, "")
+        .replace(/\s+/g, "-")}.pdf`;
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+  };
+
+  const handlePublish = async (uuid: string) => {
+    await createPublishedPaper(uuid).unwrap();
+  };
 
   if (papersLoading) {
     return (
@@ -368,14 +398,14 @@ export default function MentorResourcesPage() {
           </div>
           <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-blue-600 bg-blue-600 hover:from-blue-700 hover:to-purple-700">
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                 <Upload className="h-4 w-4 mr-2" />
-                Upload Resource 
+                Upload Resource
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="text-2xl font-semibold bg-gradient-to-r from-blue-600 bg-blue-600 bg-clip-text text-transparent">
+                <DialogTitle className="text-2xl font-semibold bg-foreground bg-clip-text text-transparent">
                   Upload New Resource
                 </DialogTitle>
                 <DialogDescription className="text-muted-foreground">
@@ -400,7 +430,7 @@ export default function MentorResourcesPage() {
                       onChange={(e) =>
                         handleInputChange("title", e.target.value)
                       }
-                      className="border-2 focus:border-blue-500 transition-colors"
+                      className="border-1  transition-colors"
                     />
                   </div>
 
@@ -415,7 +445,7 @@ export default function MentorResourcesPage() {
                       onChange={(e) =>
                         handleInputChange("abstractText", e.target.value)
                       }
-                      className="min-h-[100px] border-2 focus:border-blue-500 transition-colors resize-none"
+                      className="min-h-[100px] border-1transition-colors resize-none"
                     />
                   </div>
 
@@ -424,7 +454,7 @@ export default function MentorResourcesPage() {
                       Category <span className="text-red-500">*</span>
                     </Label>
                     {categoriesLoading ? (
-                      <div className="flex items-center gap-2 p-3 border border-gray-200 rounded-md">
+                      <div className="flex items-center gap-2 p-3 rounded-md">
                         <Loader2 className="h-4 w-4 animate-spin" />
                         <span className="text-sm text-muted-foreground">
                           Loading categories...
@@ -441,14 +471,19 @@ export default function MentorResourcesPage() {
                         value={selectedCategoryUuid}
                         onValueChange={handleCategorySelect}
                       >
-                        <SelectTrigger className="border-2 focus:border-blue-500 transition-colors">
+                        <SelectTrigger className="border-1 transition-colors">
                           <SelectValue placeholder="Select a category for your resource" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-card text-foreground">
                           {categoriesData?.content?.map((category) => (
-                            <SelectItem key={category.uuid} value={category.uuid}>
+                            <SelectItem
+                              key={category.uuid}
+                              value={category.uuid}
+                            >
                               <div className="flex items-center gap-2">
-                                <span className="font-medium">{category.name}</span>
+                                <span className="font-medium">
+                                  {category.name}
+                                </span>
                                 <span className="text-xs text-muted-foreground">
                                   ({category.slug})
                                 </span>
@@ -478,7 +513,7 @@ export default function MentorResourcesPage() {
 
                     {!uploadedFile ? (
                       <div
-                        className="border-2 border-dashed border-gray-300 hover:border-blue-400 rounded-lg p-6 text-center cursor-pointer transition-colors bg-gray-50 hover:bg-blue-50"
+                        className="border bg-card rounded-lg p-6 text-center cursor-pointer transition-colors"
                         onClick={() => fileInputRef.current?.click()}
                       >
                         <div className="flex flex-col items-center gap-2">
@@ -486,10 +521,10 @@ export default function MentorResourcesPage() {
                             <File className="h-6 w-6 text-blue-600" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-900">
+                            <p className="text-sm font-medium text-foreground">
                               Click to upload document
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                               or drag and drop your file here
                             </p>
                           </div>
@@ -547,18 +582,18 @@ export default function MentorResourcesPage() {
 
                     {!uploadedThumbnail ? (
                       <div
-                        className="border-2 border-dashed border-gray-300 hover:border-purple-400 rounded-lg p-4 text-center cursor-pointer transition-colors bg-gray-50 hover:bg-purple-50"
+                        className="border border-gray-300 rounded-lg p-4 text-center cursor-pointer transition-colors bg-card"
                         onClick={() => thumbnailInputRef.current?.click()}
                       >
                         <div className="flex flex-col items-center gap-2">
-                          <div className="p-2 bg-purple-100 rounded-full">
-                            <ImageIcon className="h-5 w-5 text-purple-600" />
+                          <div className="p-2 bg-white rounded-full">
+                            <ImageIcon className="h-5 w-5 text-primary" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-900">
+                            <p className="text-sm font-medium text-foreground">
                               Upload thumbnail
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                               Preview image for your resource
                             </p>
                           </div>
@@ -572,17 +607,17 @@ export default function MentorResourcesPage() {
                         />
                       </div>
                     ) : (
-                      <div className="border-2 border-purple-200 bg-purple-50 rounded-lg p-3">
+                      <div className="border-2 border-green-200 bg-card rounded-lg p-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-purple-100 rounded-lg">
-                              <ImageIcon className="h-4 w-4 text-purple-600" />
+                            <div className="p-2 bg-green-100 rounded-lg">
+                              <ImageIcon className="h-4 w-4 text-green-600" />
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-purple-900">
+                              <p className="text-sm font-medium text-green-900">
                                 {uploadedThumbnail.name}
                               </p>
-                              <p className="text-xs text-purple-600">
+                              <p className="text-xs text-green-600">
                                 {formatFileSize(uploadedThumbnail.size)}
                               </p>
                             </div>
@@ -617,28 +652,14 @@ export default function MentorResourcesPage() {
 
               <DialogFooter className="gap-2 pt-6">
                 <Button
-                  variant="outline"
-                  onClick={() => handleSubmit(true)}
-                  disabled={
-                    isCreating || isUploading || isDeleting || !selectedCategoryUuid
-                  }
-                  className="border-2 hover:bg-gray-50"
-                >
-                  {isCreating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Saving...
-                    </>
-                  ) : (
-                    "Save as Draft"
-                  )}
-                </Button>
-                <Button
                   onClick={() => handleSubmit(false)}
                   disabled={
-                    isCreating || isUploading || isDeleting || !selectedCategoryUuid
+                    isCreating ||
+                    isUploading ||
+                    isDeleting ||
+                    !selectedCategoryUuid
                   }
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="bg-accent hover:bg-accent-foreground/90 text-accent-foreground"
                 >
                   {isCreating ? (
                     <>
@@ -661,18 +682,6 @@ export default function MentorResourcesPage() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Search resources..." className="pl-10" />
-              </div>
-              <div className="flex gap-2">
-                {filterCategories.map((category) => (
-                  <Button
-                    key={category}
-                    variant={category === "All" ? "default" : "outline"}
-                    size="sm"
-                    className="text-xs"
-                  >
-                    {category}
-                  </Button>
-                ))}
               </div>
             </div>
           </CardHeader>
@@ -719,14 +728,14 @@ export default function MentorResourcesPage() {
                 Most Popular
               </CardTitle>
               <Badge variant="secondary" className="text-xs" />
-                {resources.length > 0
-                  ? resources
-                      .reduce((prev, current) =>
-                        prev.downloads > current.downloads ? prev : current
-                      )
-                      .title.substring(0, 10)
-                  : "N/A"}
-              </CardHeader>
+              {resources.length > 0
+                ? resources
+                    .reduce((prev, current) =>
+                      prev.downloads > current.downloads ? prev : current
+                    )
+                    .title.substring(0, 10)
+                : "N/A"}
+            </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {resources.length > 0
@@ -811,15 +820,28 @@ export default function MentorResourcesPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            {resource.isPublished ? null : (
+                              <DropdownMenuItem
+                                onClick={() => handlePublish(resource.id)}
+                              >
+                                <Upload className="h-4 w-4 mr-2" />
+                                Publish
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem>
                               <Eye className="h-4 w-4 mr-2" />
                               Preview
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDownload(resource.fileUrl)}
+                            >
                               <Download className="h-4 w-4 mr-2" />
                               Download
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onClick={() => handleDeletePaper(resource.id)}
+                            >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Delete
                             </DropdownMenuItem>

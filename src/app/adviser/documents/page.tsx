@@ -80,6 +80,13 @@ function AssignmentCard({ assignment }: { assignment: AssignmentWithStudent }) {
             Rejected
           </Badge>
         );
+      case "REVISION":
+        return (
+          <Badge variant="revision">
+            <XCircle className="w-3 h-3 mr-1" />
+            Revision
+          </Badge>
+        );
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -94,7 +101,7 @@ function AssignmentCard({ assignment }: { assignment: AssignmentWithStudent }) {
               <CardTitle className="text-lg truncate max-w-3xl">
                 <Button
                   variant="link"
-                  className="p-0 h-auto font-semibold text-lg"
+                  className="p-0 h-auto font-semibold text-xl md:text-2xl text-foreground hover:underline"
                   onClick={() =>
                     router.push(`/adviser/documents/${assignment.paper.uuid}`)
                   }

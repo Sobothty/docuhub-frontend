@@ -157,6 +157,7 @@ export default function StudentProposalsPage() {
     setSelectedCategory("");
   };
 
+  // Removes a subject from the selected categories
   const handleRemoveSubject = (subject: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -266,7 +267,10 @@ export default function StudentProposalsPage() {
               Create, submit, and track your documents
             </p>
           </div>
-          <Button onClick={() => setShowNewProposal(true)} className="text-white">
+          <Button
+            onClick={() => setShowNewProposal(true)}
+            className="text-white"
+          >
             <Plus className="w-4 h-4 mr-2 text-white" />
             New Document
           </Button>
@@ -305,7 +309,7 @@ export default function StudentProposalsPage() {
                       <SelectTrigger>
                         <SelectValue placeholder="Select subject areas" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-card text-foreground">
                         {categoriesLoading ? (
                           <SelectItem value="loading" disabled>
                             Loading categories...
@@ -342,7 +346,10 @@ export default function StudentProposalsPage() {
                             {subject}
                             <X
                               className="w-3 h-3 cursor-pointer hover:text-destructive"
-                              onClick={() => handleRemoveSubject(subject)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveSubject(subject);
+                              }}
                             />
                           </Badge>
                         ))}
@@ -446,6 +453,7 @@ export default function StudentProposalsPage() {
                 <div className="flex gap-4">
                   <Button
                     type="submit"
+                    variant="outline"
                     className="w-full md:w-auto"
                     disabled={isCreatingPaper || isUploading}
                   >
@@ -591,7 +599,7 @@ function PaperCard({
           </div>
         )}
         {proposal.status === "UNDER_REVIEW" && (
-          <div className="mt-4 p-3 bg-blue-600 rounded-lg w-fit">
+          <div className="mt-4 p-3 text-white bg-blue-600 rounded-lg w-fit">
             <p className="text-sm font-semibold flex items-center gap-2">
               <ScanSearch className="w-4 h-4 mr-2" />
               <span>Under review by adviser. Please check back later.</span>

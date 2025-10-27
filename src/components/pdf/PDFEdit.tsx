@@ -716,30 +716,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
             <div className="mb-4">
               <DocuhubLoader />
             </div>
-            <h3 className="text-lg font-semibold mb-2">{downloadType}</h3>
-            <p className="text-gray-600 mb-4">
-              Processing page {Math.ceil((downloadProgress / 100) * totalPages)}{" "}
-              of {totalPages}
-            </p>
-
-            <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
-              <div
-                className="bg-blue-500 h-3 rounded-full transition-all duration-200 ease-out"
-                style={{ width: `${downloadProgress}%` }}
-              />
-            </div>
-
-            <div className="text-2xl font-bold text-blue-500">
-              {Math.round(downloadProgress)}%
-            </div>
-
-            <p className="text-sm text-gray-500 mt-2">
-              {downloadProgress < 50
-                ? "This may take a moment for large documents..."
-                : downloadProgress < 90
-                ? "Almost ready..."
-                : "Finalizing upload..."}
-            </p>
           </div>
         </div>
       </div>
@@ -1348,22 +1324,6 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
         </div>
       </div>
 
-      {/* Error Display */}
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
-          <div className="flex items-start">
-            <AlertCircle
-              className="mr-3 mt-0.5 text-red-500 flex-shrink-0"
-              size={20}
-            />
-            <div>
-              <p className="font-semibold text-red-800">Error</p>
-              <p className="text-sm text-red-700 mt-1">{error}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* PDF Display Container */}
       <div className="p-1 bg-background rounded-xl" ref={containerRef}>
         <div className="flex justify-center relative">
@@ -1477,6 +1437,53 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
                 className="px-2 sm:px-3 py-1 bg-background rounded-lg text-sm font-medium transition-colors"
               >
                 Last
+              </button>
+            </div>
+            {/* Page Navigation */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={prevPage}
+                disabled={currentPage <= 1 || loading}
+                className="p-1.5 sm:p-2 bg-background rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft
+                  size={16}
+                  className="sm:w-[18px] sm:h-[18px] text-md"
+                />
+              </button>
+
+              <div className="flex items-center gap-1 sm:gap-2 bg-background rounded-lg px-2 sm:px-3 py-1">
+                <input
+                  ref={pageInputRef}
+                  type="number"
+                  min="1"
+                  max={totalPages}
+                  value={pageInputValue}
+                  onChange={(e) => setPageInputValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handlePageJump();
+                      pageInputRef.current?.blur();
+                    }
+                  }}
+                  onBlur={handlePageJump}
+                  className="w-8 sm:w-12 text-center text-sm sm:text-navigation-links"
+                />
+                <span className="text-gray-500 text-xs sm:text-sm">/</span>
+                <span className="w-8 text-center text-sm sm:text-navigation-links">
+                  {totalPages}
+                </span>
+              </div>
+
+              <button
+                onClick={nextPage}
+                disabled={currentPage >= totalPages || loading}
+                className="p-1.5 sm:p-2 bg-background rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronRight
+                  size={16}
+                  className="sm:w-[18px] sm:h-[18px] text-md"
+                />
               </button>
             </div>
           </div>
