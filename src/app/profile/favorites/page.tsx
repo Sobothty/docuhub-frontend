@@ -51,7 +51,7 @@ export default function MyDownloads() {
 
   return (
     <DashboardLayout
-      userRole="student"
+      userRole="public"
       userAvatar={userProfile?.user.imageUrl}
       userName={userProfile?.user.fullName}
     >
