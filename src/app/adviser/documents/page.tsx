@@ -20,6 +20,7 @@ import { useGetAssignmentByAdviserWithPaginationQuery } from "@/feature/adviserA
 import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
+import FeedbackCardPlaceholder from "@/components/card/FeedbackCardPlaceholder";
 
 // Extended Assignment type with student details
 interface AssignmentWithStudent {
@@ -257,7 +258,11 @@ export default function MentorProposalsPage() {
         {/* Assignments List */}
         <div className="space-y-4">
           {assignmentsLoading ? (
-            <AssignmentCardSkeleton count={3} />
+            <div className="space-y-6">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <FeedbackCardPlaceholder key={index} isLast={index === 2} />
+              ))}
+            </div>
           ) : assignmentsError ? (
             <Card>
               <CardContent className="py-8 text-center">

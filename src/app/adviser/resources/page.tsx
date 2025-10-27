@@ -67,6 +67,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ResourcesPageSkeleton } from "@/components/card/TablePlaceHolderAdviserResource";
 
 const filterCategories = ["All", "Guide", "Template", "Reference", "Tutorial"];
 
@@ -345,9 +346,7 @@ export default function MentorResourcesPage() {
         userName={adviserProfile?.user.fullName || "Adviser Name"}
         userAvatar={adviserProfile?.user.imageUrl || undefined}
       >
-        <div className="flex items-center justify-center h-64">
-          <div className="text-muted-foreground">Loading resources...</div>
-        </div>
+        <ResourcesPageSkeleton />
       </DashboardLayout>
     );
   }

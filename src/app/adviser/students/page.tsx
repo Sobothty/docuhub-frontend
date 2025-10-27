@@ -31,6 +31,7 @@ import { Search, MoreHorizontal, MessageSquare, Eye } from "lucide-react";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetAssignmentByAdviserQuery } from "@/feature/adviserAssignment/AdviserAssignmentSlice";
 import Image from "next/image";
+import { TableLoadingSkeleton } from "@/components/card/TableLoadingForStudentAssigntments";
 
 // Define types
 interface Student {
@@ -64,13 +65,6 @@ export default function MentorStudentsPage() {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
     null
   );
-
-  if (isLoading)
-    return (
-      <div className="flex justify-center items-center h-screen text-lg font-semibold">
-        Loading...
-      </div>
-    );
 
   if (error)
     return (
@@ -165,7 +159,9 @@ export default function MentorStudentsPage() {
               </TableHeader>
 
               <TableBody>
-                {students.length === 0 ? (
+                {isLoading ? (
+                  <TableLoadingSkeleton rows={5} />
+                ) : students.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={5}
