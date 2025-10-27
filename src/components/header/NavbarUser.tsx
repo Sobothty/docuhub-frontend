@@ -131,9 +131,9 @@ export default function NavbarUser() {
     ) {
       router.push(`/student/favorites`);
     } else if (userRoles.includes("ADVISER") && user?.adviser) {
-      router.push("/adviser/stars");
+      router.push("/adviser/favorites");
     } else {
-      router.push("/profile/stars");
+      router.push("/profile/favorites");
     }
     setIsUserMenuOpen(false);
     setMobileOpen(false);
