@@ -690,17 +690,16 @@ export default function PaperDetailPage({
               </div>
             </div>
 
-            <div className="flex flex-row lg:flex-col gap-2 lg:w-48">
+            <div className="flex flex-row lg:flex-col gap-2 lg:w-48 ">
               <Button
-                className="flex-1 lg:flex-none"
+                className="flex-1 lg:flex-none bg-white hover:text-accent hover:bg-accent/10 w-full"
                 onClick={handleDownloadPDF}
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download PDF
               </Button>
               <Button
-                variant="outline"
-                className="flex-1 lg:flex-none bg-transparent"
+                className="flex-1 lg:flex-none bg-white hover:text-accent hover:bg-accent/10 w-full"
                 onClick={handleToggleBookmark}
                 aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
               >
@@ -714,8 +713,7 @@ export default function PaperDetailPage({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    variant="outline"
-                    className="flex-1 lg:flex-none bg-transparent"
+                    className="flex-1 lg:flex-none bg-white hover:text-accent hover:bg-accent/10 w-full"
                     aria-label="Share paper"
                   >
                     <Share2 className="h-4 w-4 mr-2" />
@@ -768,19 +766,22 @@ export default function PaperDetailPage({
                 <TabsList className="grid w-full grid-cols-3 bg-muted/30 p-1 rounded-lg gap-1">
                   <TabsTrigger
                     value="content"
-                    className="font-semibold transition-all duration-300 ease-in-out data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-accent/50 data-[state=inactive]:text-muted-foreground rounded-md"
+                    className="font-semibold transition-all duration-300 ease-in-out data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-accent/50 data-[state=inactive]:text-muted-foreground rounded-md
+                    bg-white hover:text-accent hover:bg-accent/10"
                   >
                     Content
                   </TabsTrigger>
                   <TabsTrigger
                     value="abstract"
-                    className="font-semibold transition-all duration-300 ease-in-out data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-accent/50 data-[state=inactive]:text-muted-foreground rounded-md"
+                    className="font-semibold transition-all duration-300 ease-in-out data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-accent/50 data-[state=inactive]:text-muted-foreground rounded-md
+                    bg-white hover:text-accent hover:bg-accent/10"
                   >
                     Description
                   </TabsTrigger>
                   <TabsTrigger
                     value="comments"
-                    className="font-semibold transition-all duration-300 ease-in-out data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-accent/50 data-[state=inactive]:text-muted-foreground rounded-md"
+                    className="font-semibold transition-all duration-300 ease-in-out data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-accent/50 data-[state=inactive]:text-muted-foreground rounded-md
+                    bg-white hover:text-accent hover:bg-accent/10"
                   >
                     Comments
                   </TabsTrigger>

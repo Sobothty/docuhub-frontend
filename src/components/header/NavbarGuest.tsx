@@ -48,6 +48,7 @@ export default function NavbarGuest() {
     { path: "/contact", name: t("contact", "Contact") },
   ];
 
+
   return (
     <nav className="fixed top-16 sm:top-13 md:top-12 left-0 w-full z-40 border-b bg-background border-border shadow-md">
       <div className="max-w-7xl mx-auto px-2 md:px-4 flex justify-between items-center">

@@ -432,7 +432,7 @@ export default function AdviserSettingsPage() {
           </motion.div>
 
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold">
               {user.fullName}
             </h1>
             <p className="text-lg text-muted-foreground">
@@ -791,16 +791,6 @@ export default function AdviserSettingsPage() {
                     </div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">
-                    User ID
-                  </Label>
-                  <div className="p-2 rounded-md bg-muted/50">
-                    <code className="text-xs font-mono text-muted-foreground break-all">
-                      {user.uuid}
-                    </code>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </div>
@@ -919,10 +909,10 @@ export default function AdviserSettingsPage() {
                       href={adviser.linkedinUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 p-2 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                      className="flex items-center gap-2 p-2 rounded-md bg-card hover:bg-card/80 transition-colors"
                     >
                       <Link2 className="h-4 w-4" />
-                      <span className="font-medium">View LinkedIn Profile</span>
+                      <span className="font-medium">{adviser.linkedinUrl}</span>
                     </a>
                   ) : (
                     <div className="p-2 rounded-md bg-muted/50">
@@ -1015,7 +1005,7 @@ export default function AdviserSettingsPage() {
             <Card className="border border-border/30 bg-card/60 backdrop-blur-sm shadow-sm">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary" />
+                  <Shield className="h-5 w-5 " />
                   Account Status
                 </CardTitle>
                 <CardDescription>
@@ -1023,11 +1013,11 @@ export default function AdviserSettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 border border-green-200">
-                  <span className="font-medium text-green-800">Status</span>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-card border border-green-200">
+                  <span className="font-medium">Status</span>
                   <Badge
                     variant="default"
-                    className="bg-green-100 text-green-800"
+                    className="bg-green-100 text-green-900"
                   >
                     Active
                   </Badge>
