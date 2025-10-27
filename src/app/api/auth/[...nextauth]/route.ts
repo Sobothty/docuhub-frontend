@@ -188,36 +188,9 @@ const handler = NextAuth({
     },
   },
 
-  events: {
-    async signOut({ token }) {
-      console.log("[v0] Sign out event triggered, revoking tokens on Keycloak...")
-      if (token?.refreshToken) {
-        try {
-          const response = await fetch(`${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/logout`, {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({
-              client_id: process.env.KEYCLOAK_ID!,
-              client_secret: process.env.KEYCLOAK_SECRET!,
-              refresh_token: token.refreshToken as string,
-            }),
-          })
-
-          if (response.ok) {
-            console.log("[v0] Tokens successfully revoked on Keycloak")
-          } else {
-            console.error("[v0] Failed to revoke tokens:", await response.text())
-          }
-        } catch (error) {
-          console.error("[v0] Error revoking token:", error)
-        }
-      }
-    },
-  },
-
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
 
   cookies: {

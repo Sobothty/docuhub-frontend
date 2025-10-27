@@ -143,6 +143,7 @@ export default function AdviserDocumentDetailPage({
         advisorUuid: adviserProfile.user.uuid,
         deadline: decision === "APPROVED" ? "" : "2025-12-31",
       };
+      console.log("Feedback : ", feedbackData)
 
       const result = await createFeedback(feedbackData).unwrap();
       if (result.status === 201) {
