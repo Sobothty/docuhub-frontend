@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
+import WebSocketStatus from "@/components/ui/WebSocketStatus";
 
 export default function NavbarUser() {
   const pathname = usePathname();
@@ -197,6 +198,9 @@ export default function NavbarUser() {
 
         {/* Desktop actions */}
         <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
+          {/* WebSocket Status Indicator */}
+          <WebSocketStatus variant="dot" className="mr-1" />
+
           <button
             onClick={toggleDarkMode}
             className="p-2 rounded-full hover:bg-muted transition"
@@ -301,6 +305,9 @@ export default function NavbarUser() {
 
         {/* Mobile/Tablet hamburger and user menu */}
         <div className="md:hidden flex items-center space-x-2">
+          {/* WebSocket Status Indicator */}
+          <WebSocketStatus variant="dot" />
+
           {/* User Profile Dropdown for Mobile/Tablet */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getSession, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import {
   CreateStudentDetailRequest,
   UpdateStudentDetailRequest,
@@ -41,12 +41,7 @@ import {
 import { StudentFormData, StudentFormErrors } from "@/types/studentType";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import Image from "next/image";
-
-import SockJS from "sockjs-client";
-import { Client, IMessage, StompSubscription } from "@stomp/stompjs";
-import { useGetAllUsersQuery } from "@/feature/users/usersSlice";
-import { UserProfile } from "@/types/userType";
-import { Message } from "@/types/message";
+import { useWebSocket } from "@/components/providers/WebSocketProvider";
 
 interface StudentVerificationFormProps {
   userUuid?: string;
@@ -73,14 +68,11 @@ export default function StudentVerificationForm({
   onSuccess,
   isUpdate = false,
 }: StudentVerificationFormProps) {
-  const [email, setEmail] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-  const stompClientRef = useRef<Client | null>(null);
-  const subscriptionRef = useRef<StompSubscription | null>(null);
-  const [message, setMessage] = useState<string>("");
-
   const router = useRouter();
   const { data: session } = useSession();
+
+  // Use global WebSocket provider
+  const { sendPrivateMessage, isConnected } = useWebSocket();
 
   // Get current user UUID
   const currentUserUuid = userUuid || session?.user?.id || "";
@@ -120,7 +112,6 @@ export default function StudentVerificationForm({
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [uploadedMediaName, setUploadedMediaName] = useState<string>("");
   const [previewUrl, setPreviewUrl] = useState<string>("");
-  const [allChats, setAllChats] = useState<Record<string, Message[]>>({});
   const [hasExistingRecord, setHasExistingRecord] = useState<boolean>(false);
 
   // Determine if we should use update mode
@@ -128,7 +119,6 @@ export default function StudentVerificationForm({
 
   // Use the appropriate error based on mode
   const mutationError = shouldUseUpdate ? updateError : createError;
-
 
   // Populate form with existing data when student detail exists
   useEffect(() => {
@@ -247,87 +237,8 @@ export default function StudentVerificationForm({
     }
   };
 
-  // WebSocket setup
-  useEffect(() => {
-    (async () => {
-      const session = await getSession();
-      setEmail(session?.user?.email ?? null);
-    })();
-  }, []);
-
-  const { data: allUser } = useGetAllUsersQuery();
-
-  useEffect(() => {
-    if (!allUser || !session?.user?.email) return;
-    const user = allUser.find((u) => u.email === session.user.email);
-    setCurrentUser(user as UserProfile);
-  }, [allUser, session]);
-
-  useEffect(() => {
-    if (!currentUser?.uuid || !session?.accessToken) return;
-
-    const socket = new SockJS("https://api.docuhub.me/ws-chat");
-
-    const stompClient = new Client({
-      webSocketFactory: () => socket,
-      connectHeaders: {
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-      reconnectDelay: 3000,
-      onConnect: () => {
-        console.log("Connected to WebSocket");
-
-        const myTopic = `/topic/user.${currentUser.uuid}`;
-        subscriptionRef.current = stompClient.subscribe(
-          myTopic,
-          (msg: IMessage) => {
-            const payload = JSON.parse(msg.body);
-            const otherUserId =
-              payload.senderUuid === currentUser.uuid
-                ? payload.receiverUuid
-                : payload.senderUuid;
-
-            setAllChats((prev) => {
-              const conv = prev[otherUserId] || [];
-              if (payload.id && conv.some((m) => m.id === payload.id))
-                return prev;
-
-              return { ...prev, [otherUserId]: [...conv, payload] };
-            });
-          }
-        );
-      },
-    });
-
-    stompClient.activate();
-    stompClientRef.current = stompClient;
-
-    return () => {
-      subscriptionRef.current?.unsubscribe();
-      stompClient.deactivate();
-    };
-  }, [currentUser?.uuid, session?.accessToken]);
-
-  const sendPrivateMessage = (message: string) => {
-    if (!stompClientRef.current?.connected || !message.trim() || !currentUser) {
-      return;
-    }
-    const tempMessage: Message = {
-      id: null,
-      senderUuid: currentUser.uuid,
-      message: message,
-      receiverUuid: "8f4dc8f0-007e-408c-a562-e7709d75a3a8",
-      timestamp: new Date().toISOString(),
-      isRead: false,
-    };
-
-    stompClientRef.current.publish({
-      destination: "/app/private-message",
-      body: JSON.stringify(tempMessage),
-    });
-
-    setMessage("");
-  };
+  // Admin UUID for notifications
+  const ADMIN_UUID = "8f4dc8f0-007e-408c-a562-e7709d75a3a8";
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -375,8 +286,10 @@ export default function StudentVerificationForm({
         }).unwrap();
       }
 
-      // Send to websocket
-      sendPrivateMessage(result.message);
+      // Send notification to admin via WebSocket
+      if (isConnected && result.message) {
+        sendPrivateMessage(ADMIN_UUID, result.message);
+      }
 
       setSubmitSuccess(true);
       console.log(
@@ -433,7 +346,9 @@ export default function StudentVerificationForm({
             data: updateData,
           }).unwrap();
 
-          sendPrivateMessage(result.message);
+          if (isConnected && result.message) {
+            sendPrivateMessage(ADMIN_UUID, result.message);
+          }
           setSubmitSuccess(true);
           refetchStudentDetail();
 
@@ -545,7 +460,6 @@ export default function StudentVerificationForm({
 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-
           {/* Student Card Upload */}
           <div className="space-y-2">
             <Label htmlFor="studentCard" className="flex items-center gap-2">
