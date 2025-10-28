@@ -604,7 +604,7 @@ export default function StudentVerificationForm({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 bg-gray-600 hover:bg-gray-700 flex items-center justify-center"
+              className="flex-1  text-white bg-gray-600 hover:bg-gray-700 flex items-center justify-center"
             >
               {isLoading ? (
                 <>
