@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, User, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 
 interface RegisterFormData {
@@ -129,7 +129,7 @@ export default function RegisterForm() {
 
         return;
       }
-      
+
       // Success
       router.push("/login");
     } catch (error) {
@@ -141,39 +141,36 @@ export default function RegisterForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto transition-colors duration-300">
-      <div className="rounded-xl shadow-md p-8 bg-card transition-colors duration-300">
-        <h2 className="text-2xl font-bold text-center dark:text-white mb-6">
-          Welcome to DocuHub
-        </h2>
+    <div className="w-full max-w-lg mx-auto">
+      {/* Glassmorphism Card */}
+      <div className="relative rounded-3xl shadow-2xl auth-card p-10 transition-all duration-300">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-medium auth-title mb-1">
+            Create your account
+          </h2>
+        </div>
 
         {apiError && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-400 text-red-700 rounded text-sm dark:bg-red-900/40 dark:border-red-700 dark:text-red-300 transition-colors duration-300">
+          <div className="mb-6 p-3 bg-red-100/80 dark:bg-red-900/50 rounded-lg text-red-700 dark:text-red-300 text-sm backdrop-blur-sm">
             {apiError}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Username */}
+          {/* Username or email */}
           <div>
-            <label className="block text-sm font-medium dark:text-gray-300 mb-1">
-              Username
-            </label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleInputChange}
-                placeholder="Enter your username"
-                className={`w-full pl-10 pr-3 py-2 rounded-md text-sm bg-gray-50 text-gray-700 dark:bg-gray-800 border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.username
-                    ? "border-red-500"
-                    : "border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100"
-                }`}
-              />
-            </div>
+            <label className="block auth-label mb-2">Username or email</label>
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleInputChange}
+              placeholder="Username or email"
+              className={`w-full px-4 py-3 rounded-xl text-base auth-input transition-all duration-200 ${
+                errors.username ? "ring-2 ring-red-500" : ""
+              }`}
+            />
             {errors.username && (
               <p className="text-red-500 text-xs mt-1">{errors.username}</p>
             )}
@@ -181,24 +178,17 @@ export default function RegisterForm() {
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium dark:text-gray-300 mb-1">
-              Email
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="Enter your email"
-                className={`w-full pl-10 pr-3 py-2 rounded-md text-gray-700 text-sm bg-gray-50 dark:bg-gray-800 border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${
-                  errors.email
-                    ? "border-red-500"
-                    : "border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100"
-                }`}
-              />
-            </div>
+            <label className="block auth-label mb-2">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              placeholder="Email"
+              className={`w-full px-4 py-3 rounded-xl text-base auth-input transition-all duration-200 ${
+                errors.email ? "ring-2 ring-red-500" : ""
+              }`}
+            />
             {errors.email && (
               <p className="text-red-500 text-xs mt-1">{errors.email}</p>
             )}
@@ -206,29 +196,26 @@ export default function RegisterForm() {
 
           {/* Password */}
           <div>
-            <label className="block text-sm font-medium dark:text-gray-300 mb-1">
-              Password
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block auth-label">Password</label>
+            </div>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
-                placeholder="Create a password"
-                className={`w-full pl-10 pr-10 py-2 text-gray-700 rounded-md text-sm bg-gray-50 dark:bg-gray-800 border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${
-                  errors.password
-                    ? "border-red-500"
-                    : "border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100"
+                placeholder="Password"
+                className={`w-full px-4 py-3 pr-12 rounded-xl text-base auth-input transition-all duration-200 ${
+                  errors.password ? "ring-2 ring-red-500" : ""
                 }`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute right-4 top-1/2 -translate-y-1/2 auth-icon hover:opacity-70 transition-opacity"
               >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
             {errors.password && (
@@ -238,32 +225,27 @@ export default function RegisterForm() {
 
           {/* Confirm Password */}
           <div>
-            <label className="block text-sm font-medium dark:text-gray-300 mb-1">
-              Confirm Password
-            </label>
+            <label className="block auth-label mb-2">Confirm Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type={showConfirmedPassword ? "text" : "password"}
                 name="confirmedPassword"
                 value={formData.confirmedPassword}
                 onChange={handleInputChange}
                 placeholder="Confirm password"
-                className={`w-full pl-10 pr-10 py-2 rounded-md text-sm bg-gray-50 dark:bg-gray-800 border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300 ${
-                  errors.confirmedPassword
-                    ? "border-red-500"
-                    : "border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100"
+                className={`w-full px-4 py-3 pr-12 rounded-xl text-base auth-input transition-all duration-200 ${
+                  errors.confirmedPassword ? "ring-2 ring-red-500" : ""
                 }`}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmedPassword(!showConfirmedPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute right-4 top-1/2 -translate-y-1/2 auth-icon hover:opacity-70 transition-opacity"
               >
                 {showConfirmedPassword ? (
-                  <EyeOff size={16} />
+                  <EyeOff size={20} />
                 ) : (
-                  <Eye size={16} />
+                  <Eye size={20} />
                 )}
               </button>
             </div>
@@ -274,52 +256,52 @@ export default function RegisterForm() {
             )}
           </div>
 
-          {/* Terms */}
-          <div className="flex items-center">
+          {/* Terms & Conditions */}
+          <div className="flex items-center gap-2 pt-1">
             <input
               type="checkbox"
               id="agreeToTerms"
               checked={agreeToTerms}
               onChange={(e) => setAgreeToTerms(e.target.checked)}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800"
+              className="w-4 h-4 text-blue-600 auth-checkbox rounded cursor-pointer"
             />
             <label
               htmlFor="agreeToTerms"
-              className="ml-2 text-sm text-gray-400 dark:text-gray-300"
+              className="text-sm auth-text cursor-pointer select-none"
             >
               I agree to the{" "}
-              <a href="#" className="text-blue-600 hover:underline">
+              <a href="#" className="auth-link">
                 Terms & Privacy Policy
               </a>
             </label>
           </div>
 
-          {/* Submit */}
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading || !agreeToTerms}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-md flex items-center justify-center transition-colors duration-300"
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-3.5 rounded-xl transition-all duration-300 disabled:cursor-not-allowed mt-2"
           >
             {isLoading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              <span className="flex items-center justify-center gap-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                 Creating Account...
-              </>
+              </span>
             ) : (
               "Create Account"
             )}
           </button>
         </form>
 
-        <p className="text-center text-gray-400 dark:text-gray-400 mt-6">
-          Already have an account?{" "}
-          <Link
-            href="/login"
-            className="text-blue-600 hover:text-blue-700 font-medium"
-          >
-            Sign In
-          </Link>
-        </p>
+        {/* Footer Links */}
+        <div className="text-center mt-6">
+          <p className="auth-text text-sm">
+            Already have an account?{" "}
+            <Link href="/login" className="auth-link">
+              Sign In
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
