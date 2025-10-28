@@ -39,6 +39,9 @@ import PaperCard from "@/components/card/PaperCard";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import PDFViewer from "@/components/pdf/PDFView";
+import { getSession } from "next-auth/react";
+import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 // Add type definitions
 interface Comment {
@@ -357,6 +360,9 @@ export default function PaperDetailPage({
       skip: !paper?.authorUuid,
     }
   );
+
+  const router = useRouter();
+
   // Prefer fullName, then first+last, then userName, then name
   const authorName =
     (author?.fullName && author.fullName.trim()) ||
@@ -510,6 +516,16 @@ export default function PaperDetailPage({
   };
 
   const handleAddComment = async () => {
+    const token = await getSession();
+
+    if (!token?.accessToken) {
+      toast.error("You must login first");
+      setTimeout(() => {
+        router.push("/register");
+      }, 1000); // Delay navigation to allow toast to show
+      return;
+    }
+
     if (newComment.trim()) {
       try {
         await createComment({
@@ -692,14 +708,14 @@ export default function PaperDetailPage({
 
             <div className="flex flex-row lg:flex-col gap-2 lg:w-48 ">
               <Button
-                className="flex-1 lg:flex-none bg-white hover:text-accent hover:bg-accent/10 w-full"
+                className="flex-1 lg:flex-none bg-card hover:text-accent hover:bg-accent/10 w-full"
                 onClick={handleDownloadPDF}
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download PDF
               </Button>
               <Button
-                className="flex-1 lg:flex-none bg-white hover:text-accent hover:bg-accent/10 w-full"
+                className="flex-1 lg:flex-none bg-card hover:text-accent hover:bg-accent/10 w-full"
                 onClick={handleToggleBookmark}
                 aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
               >
@@ -713,7 +729,7 @@ export default function PaperDetailPage({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    className="flex-1 lg:flex-none bg-white hover:text-accent hover:bg-accent/10 w-full"
+                    className="flex-1 lg:flex-none bg-card hover:text-accent hover:bg-accent/10 w-full"
                     aria-label="Share paper"
                   >
                     <Share2 className="h-4 w-4 mr-2" />
@@ -767,21 +783,21 @@ export default function PaperDetailPage({
                   <TabsTrigger
                     value="content"
                     className="font-semibold transition-all duration-300 ease-in-out data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-accent/50 data-[state=inactive]:text-muted-foreground rounded-md
-                    bg-white hover:text-accent hover:bg-accent/10"
+                    bg-card hover:text-accent hover:bg-accent/10"
                   >
                     Content
                   </TabsTrigger>
                   <TabsTrigger
                     value="abstract"
                     className="font-semibold transition-all duration-300 ease-in-out data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-accent/50 data-[state=inactive]:text-muted-foreground rounded-md
-                    bg-white hover:text-accent hover:bg-accent/10"
+                    bg-card hover:text-accent hover:bg-accent/10"
                   >
                     Description
                   </TabsTrigger>
                   <TabsTrigger
                     value="comments"
                     className="font-semibold transition-all duration-300 ease-in-out data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-accent/50 data-[state=inactive]:text-muted-foreground rounded-md
-                    bg-white hover:text-accent hover:bg-accent/10"
+                    bg-card hover:text-accent hover:bg-accent/10"
                   >
                     Comments
                   </TabsTrigger>
@@ -876,7 +892,7 @@ export default function PaperDetailPage({
                             onChange={(e) => setNewComment(e.target.value)}
                           />
                           <Button
-                            className="mt-2"
+                            className="mt-2 bg-blue-600 hover:bg-blue-700 text-white"
                             size="sm"
                             onClick={handleAddComment}
                             disabled={!newComment.trim()}

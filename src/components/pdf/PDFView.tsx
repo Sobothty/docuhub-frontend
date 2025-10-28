@@ -126,15 +126,6 @@ const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
 
   return (
     <div className="w-full max-w-7xl">
-      {/* Error Display */}
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-center text-red-800">
-            <AlertCircle className="mr-2" size={20} />
-            <span className="font-medium">Error: {error}</span>
-          </div>
-        </div>
-      )}
 
       {/* Loading Display */}
       {loading && (

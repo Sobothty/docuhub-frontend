@@ -372,7 +372,7 @@ const router = useRouter();
   };
 
   const handlePreview = (uuid: string) => {
-    router.push(`/paper/${uuid}`);
+    router.push(`/papers/${uuid}`);
   }
 
   if (papersLoading) {
@@ -806,7 +806,7 @@ const router = useRouter();
                       <TableCell>
                         <Badge
                           variant={
-                            resource.isPublished ? "default" : "secondary"
+                            resource.isPublished ? "approved" : "secondary"
                           }
                         >
                           {resource.isPublished ? "Published" : "Draft"}
