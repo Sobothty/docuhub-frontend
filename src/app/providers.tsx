@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import ReduxProvider from "@/lib/Provider";
 import { SessionProvider } from "next-auth/react";
 import { AutoSignOutHandler } from "@/components/auth/autoSignOut";
+import { WebSocketProvider } from "@/components/providers/WebSocketProvider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Keep <html lang> in sync with current language
@@ -28,17 +29,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ReduxProvider>
       <SessionProvider>
-        <I18nextProvider i18n={i18n} defaultNS="common">
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem={false}
-            disableTransitionOnChange
-          >
+        <WebSocketProvider>
+          <I18nextProvider i18n={i18n} defaultNS="common">
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="light"
+              enableSystem={false}
+              disableTransitionOnChange
+            >
               <AutoSignOutHandler />
               {children}
-          </ThemeProvider>
-        </I18nextProvider>
+            </ThemeProvider>
+          </I18nextProvider>
+        </WebSocketProvider>
       </SessionProvider>
     </ReduxProvider>
   );

@@ -35,6 +35,7 @@ import { signOut } from "next-auth/react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { useSidebar } from "@/components/contexts/sidebar-context";
+import WebSocketStatus from "@/components/ui/WebSocketStatus";
 
 interface SidebarProps {
   userRole: "admin" | "adviser" | "student" | "public";
@@ -144,10 +145,10 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-1">
               <BookOpen className="h-6 w-6 text-primary" />
               {isOpen && (
-                <div>
+                <div className="flex-1">
                   <Link
                     href="/"
                     className="inline-block"
@@ -167,6 +168,10 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                   </p>
                 </div>
               )}
+            </div>
+            {/* WebSocket Status Indicator */}
+            <div className="ml-auto">
+              <WebSocketStatus variant="dot" />
             </div>
           </div>
 

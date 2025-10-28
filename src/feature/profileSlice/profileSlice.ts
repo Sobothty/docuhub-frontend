@@ -55,6 +55,8 @@ interface FrontendUserData {
 }
  export interface PendingStudentResponse {
   isStudent: boolean;
+  reason : string;
+  status : string;
 }
 // Helper function to transform frontend data to backend format
 const transformUserDataForBackend = (data: FrontendUserData): UpdateUserDto => {
