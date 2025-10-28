@@ -64,7 +64,7 @@ interface CommentItemProps {
   activeReplyId: string | null;
   replyContent: string;
   onReplyChange: (uuid: string, content: string) => void;
-  onReplySubmit: (uuid: string) => void;
+  onReplySubmit: (parentUuid: string) => void;
   onReplyCancel: () => void;
   showAllReplies: boolean;
   onToggleReplies: () => void;
@@ -229,7 +229,7 @@ function CommentItem({
                     onClick={() => onReplySubmit(comment.uuid)}
                     disabled={!replyContent.trim()}
                   >
-                    Reply
+                    Send
                   </Button>
                 </div>
               </div>
@@ -242,7 +242,17 @@ function CommentItem({
                 ? comment.replies
                 : comment.replies.slice(0, 2)
               ).map((reply) => (
-                <ReplyItem key={reply.uuid} reply={reply} />
+                <ReplyItem
+                  key={reply.uuid}
+                  reply={reply}
+                  parentCommentUuid={comment.uuid}
+                  onReply={onReply}
+                  activeReplyId={activeReplyId}
+                  replyContent={replyContent}
+                  onReplyChange={onReplyChange}
+                  onReplySubmit={onReplySubmit}
+                  onReplyCancel={onReplyCancel}
+                />
               ))}
               {comment.replies.length > 2 && (
                 <Button
@@ -265,7 +275,27 @@ function CommentItem({
 }
 
 // Component for reply items
-function ReplyItem({ reply }: { reply: Comment }) {
+interface ReplyItemProps {
+  reply: Comment;
+  parentCommentUuid: string;
+  onReply: (uuid: string) => void;
+  activeReplyId: string | null;
+  replyContent: string;
+  onReplyChange: (uuid: string, content: string) => void;
+  onReplySubmit: (parentUuid: string) => void;
+  onReplyCancel: () => void;
+}
+
+function ReplyItem({
+  reply,
+  parentCommentUuid,
+  onReply,
+  activeReplyId,
+  replyContent,
+  onReplyChange,
+  onReplySubmit,
+  onReplyCancel,
+}: ReplyItemProps) {
   const { data: replyUser, isLoading: userLoading } = useGetUserByIdQuery(
     reply.userUuid,
     {
@@ -310,6 +340,55 @@ function ReplyItem({ reply }: { reply: Comment }) {
           </div>
         </div>
         <p className="text-sm text-foreground mt-1">{reply.content}</p>
+        
+        {/* Reply Button for child comments */}
+        <div className="flex items-center gap-4 mt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onReply(reply.uuid)}
+            className="text-muted-foreground hover:text-accent"
+            aria-label="Reply to comment"
+          >
+            <Reply className="h-4 w-4 mr-1" />
+            Reply
+          </Button>
+        </div>
+
+        {/* Reply Form for child comments */}
+        {activeReplyId === reply.uuid && (
+          <div className="ml-6 mt-4 flex items-start gap-3">
+            <Avatar className="h-6 w-6">
+              <AvatarFallback className="text-xs">U</AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <textarea
+                className="w-full p-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                rows={2}
+                placeholder="Write a reply..."
+                value={replyContent}
+                onChange={(e) => onReplyChange(reply.uuid, e.target.value)}
+              />
+              <div className="flex gap-2 mt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onReplyCancel}
+                  className="text-muted-foreground"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => onReplySubmit(parentCommentUuid)}
+                  disabled={!replyContent.trim()}
+                >
+                  Sent
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -542,14 +621,17 @@ export default function PaperDetailPage({
   };
 
   const handleAddReply = async (parentCommentUuid: string) => {
-    if (newReply[parentCommentUuid]?.trim()) {
+    // Find the reply ID that was used to trigger this
+    const replyCommentId = activeReplyCommentId;
+    
+    if (replyCommentId && newReply[replyCommentId]?.trim()) {
       try {
         await createComment({
-          content: newReply[parentCommentUuid],
+          content: newReply[replyCommentId],
           paperUuid: id,
-          parentUuid: parentCommentUuid, // Reply to parent comment
+          parentUuid: parentCommentUuid, // Always use the top-level parent UUID
         }).unwrap();
-        setNewReply((prev) => ({ ...prev, [parentCommentUuid]: "" }));
+        setNewReply((prev) => ({ ...prev, [replyCommentId]: "" }));
         setActiveReplyCommentId(null);
         console.log("Reply added successfully");
       } catch (error) {
@@ -634,12 +716,6 @@ export default function PaperDetailPage({
                 <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight">
                   {paper.title}
                 </h1>
-                <Badge
-                  variant={paper.isApproved ? "default" : "secondary"}
-                  className="flex-shrink-0"
-                >
-                  {paper.status}
-                </Badge>
               </div>
 
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
@@ -695,7 +771,7 @@ export default function PaperDetailPage({
                     {category}
                   </Badge>
                 ))}
-                <Badge variant={paper.isApproved ? "default" : "outline"}>
+                <Badge variant={paper.isApproved ? "approved" : "outline"}>
                   {paper.isApproved ? "Approved" : "Pending"}
                 </Badge>
                 <div className="flex items-center gap-1">
@@ -934,7 +1010,7 @@ export default function PaperDetailPage({
                                   onDelete={handleDeleteComment}
                                   onReply={handleReplyClick}
                                   activeReplyId={activeReplyCommentId}
-                                  replyContent={newReply[comment.uuid] || ""}
+                                  replyContent={newReply[activeReplyCommentId || ""] || ""}
                                   onReplyChange={(uuid, content) =>
                                     setNewReply((prev) => ({
                                       ...prev,
@@ -1022,12 +1098,7 @@ export default function PaperDetailPage({
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>Status</span>
                     </div>
-                    <Badge variant={paper.isApproved ? "default" : "secondary"}>
-                      {paper.status}
-                    </Badge>
                   </div>
                   <Separator />
                   <div className="flex items-center justify-between text-sm">

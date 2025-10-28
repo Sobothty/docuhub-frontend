@@ -12,7 +12,7 @@ import {
   useGetStarCountQuery,
   StarResponse,
 } from "@/feature/star/StarSlice";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 
 interface VerticalCardProps {
   title: string;

@@ -73,16 +73,11 @@ export default function PaperCard({
           <CardTitle className="text-lg leading-tight line-clamp-1">
             {paper.title}
           </CardTitle>
-          
-          <div className="text-sm text-gray-600 space-y-1">
-            <p>By: {authorName || 'Unknown Author'}</p>
-            <p>Published: {formatDate(paper.publishedAt || paper.createdAt)}</p>
-          </div>
         </CardHeader>
       </Link>
 
       <CardContent className="space-y-4">
-        <CardDescription className="line-clamp-1 text-sm text-gray-700">
+        <CardDescription className="line-clamp-1 text-sm text-muted-foreground">
           {paper.abstractText}
         </CardDescription>
 
@@ -99,18 +94,9 @@ export default function PaperCard({
         <div className="flex gap-2 pt-2">
           <Button 
             onClick={handleDownload} 
-            className="flex-1" 
-            variant="default"
+            className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
           >
             Download PDF
-          </Button>
-          <Button
-            onClick={handleBookmark}
-            variant="outline"
-            size="sm"
-            className={isBookmarked ? 'text-yellow-600 border-yellow-600' : ''}
-          >
-            {isBookmarked ? '★' : '☆'}
           </Button>
         </div>
       </CardContent>
