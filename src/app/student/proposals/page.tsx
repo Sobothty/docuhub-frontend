@@ -594,7 +594,8 @@ function PaperCard({
           </div>
         )}
         {proposal.status === "ADMIN_REJECTED" && (
-          <div className="mt-4 text-sm text-destructive bg-red-700">
+          <div className="mt-4 text-sm text-destructive bg-red-700 w-fit p-3 rounded-lg flex items-center text-white">
+            <XCircle className="w-4 h-4 mr-2" />
             Rejected. Please revise and resubmit based on feedback.
           </div>
         )}

@@ -28,7 +28,11 @@ import HorizontalCard from "@/components/card/HorizontalCardForAuthor";
 import { useState, useEffect } from "react";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useGetPapersByAuthorQuery } from "@/feature/paperSlice/papers";
-import { useGetUserStarsQuery, useGetStarCountQuery, StarResponse } from "@/feature/star/StarSlice";
+import {
+  useGetUserStarsQuery,
+  useGetStarCountQuery,
+  StarResponse,
+} from "@/feature/star/StarSlice";
 import { useRouter } from "next/navigation";
 import ProposalCardPlaceholder from "./proposals/PaperSkeleton";
 
@@ -83,12 +87,102 @@ interface FilteredDocument {
   starCount: number;
 }
 
+// Add this above the main component
+interface MentorInfo {
+  fullName: string;
+  imageUrl?: string;
+  title?: string;
+  university?: string;
+  lastInteraction?: string;
+  feedbackCount?: number;
+  responseTime?: string;
+  uuid?: string;
+}
+
+function MentorCard({ mentor }: { mentor: MentorInfo }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Your Mentor</CardTitle>
+        <CardDescription>Connect with your assigned mentor</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-4 mb-4">
+          <Avatar className="h-12 w-12">
+            <AvatarImage
+              src={mentor.imageUrl || "/placeholder.svg?height=48&width=48"}
+              alt={mentor.fullName}
+            />
+            <AvatarFallback>
+              {mentor.fullName
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()
+                .slice(0, 2)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <h4 className="font-medium">{mentor.fullName}</h4>
+            <p className="text-sm text-muted-foreground">
+              {mentor.title || "Mentor"}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {mentor.university || ""}
+            </p>
+          </div>
+        </div>
+        <div className="space-y-2 mb-4">
+          <div className="flex justify-between text-sm">
+            <span>Last interaction:</span>
+            <span className="text-muted-foreground">
+              {mentor.lastInteraction || "-"}
+            </span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Total feedback received:</span>
+            <span className="text-muted-foreground">
+              {mentor.feedbackCount ?? "-"} comments
+            </span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Response time:</span>
+            <span className="text-muted-foreground">
+              {mentor.responseTime || "-"}
+            </span>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" className="flex-1" asChild>
+            <Link href="/student/mentorship">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Message
+            </Link>
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1 bg-transparent"
+            asChild
+          >
+            <Link href={mentor.uuid ? `/mentors/${mentor.uuid}` : "#"}>
+              View Profile
+            </Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function StudentOverviewPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeTab, setActiveTab] = useState<string>("documents");
   const router = useRouter();
-  const { data: user } = useGetUserProfileQuery() as { data: UserProfileResponse | undefined };
-  
+  const { data: user } = useGetUserProfileQuery() as {
+    data: UserProfileResponse | undefined;
+  };
+
   // Get user's starred papers
   const { data: starData, isLoading: starLoading } = useGetUserStarsQuery(
     user?.user.uuid || "",
@@ -103,18 +197,16 @@ export default function StudentOverviewPage() {
   }, [user?.user.isStudent, router]);
 
   // Fetch author's papers with pagination
-  const {
-    data: papersData,
-    isLoading: papersLoading,
-  } = useGetPapersByAuthorQuery({
-    page: 0,
-    size: 10,
-    sortBy: "createdAt",
-    direction: "desc",
-  }) as { 
-    data: PapersResponse | undefined; 
-    isLoading: boolean; 
-  };
+  const { data: papersData, isLoading: papersLoading } =
+    useGetPapersByAuthorQuery({
+      page: 0,
+      size: 10,
+      sortBy: "createdAt",
+      direction: "desc",
+    }) as {
+      data: PapersResponse | undefined;
+      isLoading: boolean;
+    };
 
   // Extract papers from the response
   const authorPapers: Paper[] = papersData?.papers?.content || [];
@@ -214,7 +306,10 @@ export default function StudentOverviewPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {authorPapers.reduce((sum: number, p: Paper) => sum + (p.downloads || 0), 0)}
+                {authorPapers.reduce(
+                  (sum: number, p: Paper) => sum + (p.downloads || 0),
+                  0
+                )}
               </div>
               <p className="text-xs text-muted-foreground">
                 All time downloads of documents
@@ -229,7 +324,9 @@ export default function StudentOverviewPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {starLoading ? "..." : (starData as StarResponse[])?.length || 0}
+                {starLoading
+                  ? "..."
+                  : (starData as StarResponse[])?.length || 0}
               </div>
               <p className="text-xs text-muted-foreground">Academic impact</p>
             </CardContent>
@@ -288,64 +385,18 @@ export default function StudentOverviewPage() {
               </Card>
 
               {/* Mentor Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Your Mentor</CardTitle>
-                  <CardDescription>
-                    Connect with your assigned mentor
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-4 mb-4">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage
-                        src="/placeholder.svg?height=48&width=48"
-                        alt="Dr. Sarah Johnson"
-                      />
-                      <AvatarFallback>SJ</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <h4 className="font-medium">Dr. Sarah Johnson</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Professor of Computer Science
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Stanford University
-                      </p>
-                    </div>
-                  </div>
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-sm">
-                      <span>Last interaction:</span>
-                      <span className="text-muted-foreground">2 days ago</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Total feedback received:</span>
-                      <span className="text-muted-foreground">8 comments</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Response time:</span>
-                      <span className="text-muted-foreground">~24 hours</span>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" className="flex-1" asChild>
-                      <Link href="/student/mentorship">
-                        <MessageSquare className="h-4 w-4 mr-2" />
-                        Message
-                      </Link>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 bg-transparent"
-                      asChild
-                    >
-                      <Link href="/mentors/1">View Profile</Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <MentorCard
+                mentor={{
+                  fullName: "Dr. Sarah Johnson",
+                  imageUrl: "/placeholder.svg?height=48&width=48",
+                  title: "Professor of Computer Science",
+                  university: "Stanford University",
+                  lastInteraction: "2 days ago",
+                  feedbackCount: 8,
+                  responseTime: "~24 hours",
+                  uuid: "1", // Replace with real mentor uuid if available
+                }}
+              />
             </div>
 
             {/* Research Interests */}
@@ -394,7 +445,9 @@ export default function StudentOverviewPage() {
                         placeholder="Search papers..."
                         className="pl-8 w-64"
                         value={searchQuery}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setSearchQuery(e.target.value)
+                        }
                       />
                     </div>
                     <Button variant="outline" size="sm">
@@ -406,7 +459,7 @@ export default function StudentOverviewPage() {
               </CardHeader>
               <CardContent>
                 {papersLoading ? (
-                  <ProposalCardPlaceholder /> 
+                  <ProposalCardPlaceholder />
                 ) : filteredDocuments.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     No papers found. Start by submitting your first paper!
@@ -464,9 +517,7 @@ function PaperWithStarCount({ paper }: PaperWithStarCountProps) {
         </div>
       </div>
       <div className="flex justify-between text-xs text-muted-foreground">
-        <span>
-          Submitted: {new Date(paper.createdAt).toLocaleDateString()}
-        </span>
+        <span>Submitted: {new Date(paper.createdAt).toLocaleDateString()}</span>
         <span>{paper.categoryNames.join(", ")}</span>
       </div>
     </div>
@@ -479,7 +530,10 @@ interface HorizontalCardWithStarCountProps {
   onDownloadPDF: () => void;
 }
 
-function HorizontalCardWithStarCount({ doc, onDownloadPDF }: HorizontalCardWithStarCountProps) {
+function HorizontalCardWithStarCount({
+  doc,
+  onDownloadPDF,
+}: HorizontalCardWithStarCountProps) {
   const { data: starCount = 0, isLoading } = useGetStarCountQuery(doc.id);
 
   return (
