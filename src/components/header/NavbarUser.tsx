@@ -173,18 +173,18 @@ export default function NavbarUser() {
             alt="DocuHub Logo"
             width={120}
             height={40}
-            className="transition-all hover:brightness-110"
+            className="transition-all hover:brightness-110 w-[60%] h-auto sm:w-[110px] sm:h-[37px] md:w-[120px] md:h-[40px] lg:w-auto lg:h-auto"
             priority
           />
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden md:flex space-x-6">
+        <div className="hidden md:flex space-x-4 lg:space-x-6">
           {navLinks.map((link, idx) => (
             <Link
               key={idx}
               href={link.path}
-              className={`transition-all duration-200 ${
+              className={`transition-all duration-200 text-sm lg:text-base ${
                 pathname === link.path
                   ? "text-accent font-semibold border-b-2 border-accent pb-1"
                   : "text-foreground hover:text-accent hover:scale-105"
@@ -196,7 +196,7 @@ export default function NavbarUser() {
         </div>
 
         {/* Desktop actions */}
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
           <button
             onClick={toggleDarkMode}
             className="p-2 rounded-full hover:bg-muted transition"
@@ -208,11 +208,10 @@ export default function NavbarUser() {
             )}
           </button>
 
-          {/* <button className="p-2 rounded-full hover:bg-muted transition">
-            <Bell className="h-5 w-5 text-secondary" />
-          </button> */}
-
-          <button className="p-2 rounded-full hover:bg-muted transition">
+          <button
+            onClick={handleClickStars}
+            className="p-2 rounded-full hover:bg-muted transition"
+          >
             <Star className="h-5 w-5 text-secondary" />
           </button>
 
@@ -225,9 +224,9 @@ export default function NavbarUser() {
               alt="flag"
               width={45}
               height={25}
-              className="rounded-[8px]"
+              className="rounded-[8px] w-[35px] h-[20px] lg:w-[45px] lg:h-[25px]"
             />
-            <span className="text-foreground font-medium">
+            <span className="text-foreground font-medium text-sm lg:text-base">
               {currentLang.toUpperCase()}
             </span>
           </div>
@@ -252,7 +251,7 @@ export default function NavbarUser() {
                       {user ? getInitials(user.user.slug) : "U"}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="hidden md:flex flex-col items-start">
+                  <div className="hidden lg:flex flex-col items-start">
                     <span className="text-sm font-medium truncate max-w-24">
                       {user?.user.userName || "User"}
                     </span>
@@ -300,16 +299,77 @@ export default function NavbarUser() {
           </DropdownMenu>
         </div>
 
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden p-2 rounded-lg border border-border text-foreground"
-          onClick={() => setMobileOpen((v) => !v)}
-          aria-label="Toggle navigation"
-        >
-          <span className="block w-5 h-0.5 bg-foreground mb-1" />
-          <span className="block w-5 h-0.5 bg-foreground mb-1" />
-          <span className="block w-5 h-0.5 bg-foreground" />
-        </button>
+        {/* Mobile/Tablet hamburger and user menu */}
+        <div className="md:hidden flex items-center space-x-2">
+          {/* User Profile Dropdown for Mobile/Tablet */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="relative h-10 w-10 p-0 rounded-full hover:bg-muted/50 transition-colors"
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarImage
+                    src={
+                      user?.user.imageUrl ||
+                      "https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png"
+                    }
+                    alt={user?.user.firstName || "User"}
+                  />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {user ? getInitials(user.user.slug) : "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="w-56 bg-background z-10000"
+              align="end"
+              forceMount
+            >
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {user?.user.fullName || "User"}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.user.email || "user@example.com"}
+                  </p>
+                  <div className="mt-1">{getRoleBadge()}</div>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleProfileClick}>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleProfileSettingClick}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleClickStars}>
+                <Heart className="mr-2 h-4 w-4" />
+                <span>Saved Papers</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Hamburger menu button */}
+          <button
+            className="p-2 rounded-lg border border-border text-foreground"
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label="Toggle navigation"
+          >
+            <span className="block w-5 h-0.5 bg-foreground mb-1" />
+            <span className="block w-5 h-0.5 bg-foreground mb-1" />
+            <span className="block w-5 h-0.5 bg-foreground" />
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
@@ -335,7 +395,7 @@ export default function NavbarUser() {
               {link.name}
             </Link>
           ))}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pt-2 border-t border-border">
             <button
               onClick={toggleDarkMode}
               className="p-2 rounded-full hover:bg-muted transition"
@@ -357,35 +417,16 @@ export default function NavbarUser() {
                 height={20}
                 className="rounded-[6px]"
               />
-              <span className="text-foreground font-medium">
+              <span className="text-foreground font-medium text-sm">
                 {currentLang.toUpperCase()}
               </span>
             </div>
-            <div className="flex gap-3 items-center">
-              {/* <button className="p-2 rounded-full hover:bg-muted transition">
-                <Bell className="h-5 w-5 text-secondary" />
-              </button>
-              <button className="p-2 rounded-full hover:bg-muted transition">
-                <Heart className="h-5 w-5 text-secondary" />
-              </button> */}
-              <div className="flex items-center space-x-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage
-                    src={user?.user.imageUrl || "/avatar.png"}
-                    alt={user?.user.slug || "User"}
-                  />
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    {user ? getInitials(user.user.firstName) : "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <span className="text-xs font-medium">
-                    {user?.user.fullName || "User"}
-                  </span>
-                  {getRoleBadge()}
-                </div>
-              </div>
-            </div>
+            <button
+              onClick={handleClickStars}
+              className="p-2 rounded-full hover:bg-muted transition"
+            >
+              <Star className="h-5 w-5 text-secondary" />
+            </button>
           </div>
         </div>
       </div>
