@@ -1,4 +1,9 @@
-import { MentorPublicProfile } from "@/components/profiles/mentor-public-profile"
+"use client";
+
+import { MentorPublicProfile } from "@/components/profiles/mentor-public-profile";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // Mock mentor data - in a real app, this would come from a database
 const mentorData = {
@@ -48,18 +53,39 @@ const mentorData = {
       journal: "Nature Machine Intelligence",
       year: "2024",
       link: "#",
+      abstract:
+        "This paper explores the application of advanced neural network architectures in healthcare, focusing on improving diagnostic accuracy and patient outcomes through intelligent systems.",
+      tags: ["Machine Learning", "Healthcare", "Neural Networks"],
+      image:
+        "https://idpdefault.s3.ap-south-1.amazonaws.com/589465a620a8be4fd4220240116115232.jpg",
+      downloads: "245",
+      star: "128",
     },
     {
       title: "Ethical AI in Medical Decision Making",
       journal: "Journal of Medical AI",
       year: "2023",
       link: "#",
+      abstract:
+        "An in-depth analysis of ethical considerations when implementing AI systems for medical decision-making processes.",
+      tags: ["Ethics", "AI", "Healthcare"],
+      image:
+        "https://idpdefault.s3.ap-south-1.amazonaws.com/589465a620a8be4fd4220240116115232.jpg",
+      downloads: "189",
+      star: "96",
     },
     {
       title: "Federated Learning in Healthcare Systems",
       journal: "IEEE Transactions on Medical Imaging",
       year: "2023",
       link: "#",
+      abstract:
+        "This research presents novel approaches to federated learning that enable collaborative machine learning while preserving patient privacy.",
+      tags: ["Federated Learning", "Privacy", "Medical Imaging"],
+      image:
+        "https://idpdefault.s3.ap-south-1.amazonaws.com/589465a620a8be4fd4220240116115232.jpg",
+      downloads: "312",
+      star: "156",
     },
   ],
   stats: {
@@ -78,12 +104,33 @@ const mentorData = {
     orcid: "https://orcid.org/0000-0000-0000-0000",
     googleScholar: "https://scholar.google.com/citations?user=example",
   },
-}
+};
 
 export default function MentorProfilePage() {
+  const router = useRouter();
+
+  const handleGoBack = () => {
+    router.push("/student/mentorship");
+  };
+
   return (
-    <div className="min-h-screen bg-background py-8 px-6">
+    <div className="min-h-screen dashboard-background py-8 px-6">
+      <div className="max-w-7xl mx-auto mb-6">
+        <Button
+          onClick={handleGoBack}
+          variant="outline"
+          className="px-6 py-2 rounded-xl font-semibold bg-card hover:bg-accent text-card-foreground border-2 border-border"
+          style={{
+            backgroundColor: "#1f2937",
+            color: "#ffffff",
+            borderColor: "#1f2937",
+          }}
+        >
+          <ArrowLeft className="h-5 w-5 mr-2" />
+          Go Back
+        </Button>
+      </div>
       <MentorPublicProfile mentor={mentorData} />
     </div>
-  )
+  );
 }

@@ -21,9 +21,8 @@ function DashboardLayoutContent({
 }: DashboardLayoutProps) {
   const { isOpen } = useSidebar();
 
-
   return (
-    <div className="min-h-screen bg-background">
+    <div className="dashboard-background">
       <Sidebar
         userRole={userRole}
         userName={userName || "User"} // Fallback to session user name
@@ -31,9 +30,13 @@ function DashboardLayoutContent({
       />
 
       {/* Main content */}
-      <div className={`${isOpen ? "md:pl-64" : "md:pl-16"} transition-all duration-300`}>
-        <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-          <div className="space-y-6">{children}</div>
+      <div
+        className={`${
+          isOpen ? "md:pl-64" : "md:pl-16"
+        } transition-all duration-300`}
+      >
+        <main className="px-4 sm:px-6 lg:px-8 pt-4 pb-8 max-w-7xl mx-auto">
+          {children}
         </main>
       </div>
     </div>

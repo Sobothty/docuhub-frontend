@@ -1,14 +1,8 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import HorizontalCard from '@/components/card/HorizontalCard';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import HorizontalCardForAuthor from "@/components/card/HorizontalCardForAuthor";
 import {
   MapPin,
   Mail,
@@ -17,7 +11,11 @@ import {
   BookOpen,
   Users,
   Award,
-} from 'lucide-react';
+  TrendingUp,
+  FileCheck,
+  Clock,
+  Sparkles,
+} from "lucide-react";
 
 interface MentorPublicProfileProps {
   mentor: {
@@ -39,6 +37,11 @@ interface MentorPublicProfileProps {
       journal: string;
       year: string;
       link?: string;
+      abstract?: string;
+      tags?: string[];
+      image?: string;
+      downloads?: string;
+      star?: string;
     }>;
     stats: {
       studentsGuided: number;
@@ -61,129 +64,284 @@ interface MentorPublicProfileProps {
 
 export function MentorPublicProfile({ mentor }: MentorPublicProfileProps) {
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-      {/* Main Content and Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content (Left Column) */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Header Section (Spans both columns) */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-col md:flex-row gap-6">
-                <Avatar className="h-32 w-32 mx-auto md:mx-0">
-                  <AvatarImage
-                    src={mentor.avatar || '/placeholder.svg'}
-                    alt={mentor.name}
-                  />
-                  <AvatarFallback className="text-2xl">
-                    {mentor.name
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 text-center md:text-left">
-                  <h1 className="text-3xl font-bold text-foreground mb-2">
-                    {mentor.name}
-                  </h1>
-                  <p className="text-xl text-muted-foreground mb-2">
-                    {mentor.title}
-                  </p>
-                  <div className="flex items-center justify-center md:justify-start gap-2 text-muted-foreground mb-4">
-                    <MapPin className="h-4 w-4" />
-                    <span>
-                      {mentor.department}, {mentor.university}
-                    </span>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
-                    <Button>
-                      <Users className="h-4 w-4 mr-2" />
-                      Request Mentorship
-                    </Button>
-                    <Button variant="outline">
-                      <Mail className="h-4 w-4 mr-2" />
-                      Contact
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Header Section */}
+      <div className="dashboard-header rounded-2xl p-8">
+        <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
+          <Avatar className="h-32 w-32 border-4 border-white shadow-xl">
+            <AvatarImage
+              src={mentor.avatar || "/placeholder.svg"}
+              alt={mentor.name}
+            />
+            <AvatarFallback className="text-3xl font-bold bg-gradient-to-br from-blue-500 to-purple-500 text-white">
+              {mentor.name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")}
+            </AvatarFallback>
+          </Avatar>
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-5">
-            <Card>
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold">
-                  {mentor.stats.studentsGuided}
-                </CardTitle>
-                <CardDescription>Students Guided</CardDescription>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold">
-                  {mentor.stats.papersApproved}
-                </CardTitle>
-                <CardDescription>Papers Approved</CardDescription>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold">
-                  {mentor.stats.yearsExperience}+
-                </CardTitle>
-                <CardDescription>Years Experience</CardDescription>
-              </CardHeader>
-            </Card>
+          <div className="flex-1 text-center md:text-left">
+            <h1 className="text-4xl font-bold gradient-text mb-2">
+              {mentor.name}
+            </h1>
+            <p className="text-xl text-muted-foreground mb-3">{mentor.title}</p>
+            <div className="flex items-center justify-center md:justify-start gap-2 text-muted-foreground mb-6">
+              <MapPin className="h-5 w-5" />
+              <span className="text-base">
+                {mentor.department}, {mentor.university}
+              </span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+              <Button className="advisor-profile-btn-primary px-6 py-2 rounded-xl">
+                <Users className="h-5 w-5 mr-2" />
+                Request Mentorship
+              </Button>
+              <Button className="advisor-profile-btn-secondary px-6 py-2 rounded-xl">
+                <Mail className="h-5 w-5 mr-2" />
+                Contact
+              </Button>
+            </div>
           </div>
+        </div>
+      </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="advisor-profile-stat-card">
+          <CardContent className="pt-6 pb-6">
+            <div className="flex items-center gap-4">
+              <div
+                className="p-4 rounded-xl"
+                style={{ background: "var(--color-secondary)" }}
+              >
+                <Users className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold gradient-text">
+                  {mentor.stats.studentsGuided}
+                </p>
+                <p className="text-sm text-muted-foreground font-medium">
+                  Students Guided
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="advisor-profile-stat-card">
+          <CardContent className="pt-6 pb-6">
+            <div className="flex items-center gap-4">
+              <div
+                className="p-4 rounded-xl"
+                style={{ background: "var(--color-secondary)" }}
+              >
+                <FileCheck className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold gradient-text">
+                  {mentor.stats.papersApproved}
+                </p>
+                <p className="text-sm text-muted-foreground font-medium">
+                  Papers Approved
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="advisor-profile-stat-card">
+          <CardContent className="pt-6 pb-6">
+            <div className="flex items-center gap-4">
+              <div
+                className="p-4 rounded-xl"
+                style={{ background: "var(--color-secondary)" }}
+              >
+                <TrendingUp className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold gradient-text">
+                  {mentor.stats.yearsExperience}+
+                </p>
+                <p className="text-sm text-muted-foreground font-medium">
+                  Years Experience
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
           {/* About */}
-          <Card>
+          <Card className="dashboard-card border-0">
             <CardHeader>
-              <CardTitle>About</CardTitle>
+              <div className="flex items-center gap-3">
+                <div
+                  className="p-2 rounded-lg"
+                  style={{ background: "var(--color-secondary)" }}
+                >
+                  <BookOpen className="h-5 w-5 text-white" />
+                </div>
+                <CardTitle className="text-2xl font-bold gradient-text">
+                  About
+                </CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed text-base">
                 {mentor.bio}
               </p>
             </CardContent>
           </Card>
+
+          {/* Research Interests */}
+          <Card className="dashboard-card border-0">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div
+                  className="p-2 rounded-lg"
+                  style={{ background: "var(--color-secondary)" }}
+                >
+                  <Sparkles className="h-5 w-5 text-white" />
+                </div>
+                <CardTitle className="text-2xl font-bold gradient-text">
+                  Research Interests
+                </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-3">
+                {mentor.researchInterests.map((interest, index) => (
+                  <Badge
+                    key={index}
+                    className="px-4 py-2 text-sm font-semibold"
+                    style={{
+                      background: "var(--color-secondary)",
+                      color: "white",
+                    }}
+                  >
+                    {interest}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Mentored Works */}
+          <Card className="dashboard-card border-0">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div
+                  className="p-2 rounded-lg"
+                  style={{ background: "var(--color-secondary)" }}
+                >
+                  <Award className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <CardTitle className="text-2xl font-bold gradient-text">
+                    Mentored Works
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Papers guided to publication
+                  </p>
+                </div>
+                <Badge
+                  className="text-sm font-semibold px-4 py-2"
+                  style={{
+                    background: "var(--color-secondary)",
+                    color: "white",
+                  }}
+                >
+                  {mentor.mentoredWorks.length} Papers
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {mentor.mentoredWorks.map((work, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start justify-between p-4 rounded-lg bg-accent/30 hover:bg-accent/50 transition-all"
+                  >
+                    <div className="flex-1">
+                      <h4 className="font-bold text-base mb-1">{work.title}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        By {work.author} • {work.year}
+                      </p>
+                    </div>
+                    {work.link && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-4"
+                        onClick={() => window.open(work.link, "_blank")}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Sidebar (Right Column) */}
+        {/* Sidebar */}
         <div className="lg:col-span-1 space-y-6">
           {/* Contact Information */}
-          <Card>
+          <Card className="dashboard-card border-0">
             <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
+              <div className="flex items-center gap-3">
+                <div
+                  className="p-2 rounded-lg"
+                  style={{ background: "var(--color-secondary)" }}
+                >
+                  <Mail className="h-5 w-5 text-white" />
+                </div>
+                <CardTitle className="text-xl font-bold gradient-text">
+                  Contact
+                </CardTitle>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">{mentor.contact.email}</span>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-accent/30">
+                <Mail className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <span className="text-sm break-all">
+                  {mentor.contact.email}
+                </span>
               </div>
               {mentor.contact.website && (
-                <div className="flex items-center gap-3">
-                  <Globe className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-accent/30">
+                  <Globe className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                   <a
                     href={mentor.contact.website}
-                    className="text-sm text-primary hover:underline"
+                    className="text-sm hover:underline break-all"
+                    style={{ color: "var(--color-secondary)" }}
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
                     Personal Website
                   </a>
                 </div>
               )}
               {mentor.contact.office && (
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-accent/30">
+                  <MapPin className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                   <span className="text-sm">{mentor.contact.office}</span>
                 </div>
               )}
               {mentor.contact.officeHours && (
-                <div>
-                  <p className="text-sm font-medium mb-1">Office Hours</p>
-                  <p className="text-sm text-muted-foreground">
+                <div className="p-3 rounded-lg bg-accent/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm font-bold">Office Hours</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground pl-6">
                     {mentor.contact.officeHours}
                   </p>
                 </div>
@@ -195,36 +353,67 @@ export function MentorPublicProfile({ mentor }: MentorPublicProfileProps) {
           {(mentor.socialLinks.linkedin ||
             mentor.socialLinks.orcid ||
             mentor.socialLinks.googleScholar) && (
-            <Card>
+            <Card className="dashboard-card border-0">
               <CardHeader>
-                <CardTitle>Professional Links</CardTitle>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="p-2 rounded-lg"
+                    style={{ background: "var(--color-secondary)" }}
+                  >
+                    <ExternalLink className="h-5 w-5 text-white" />
+                  </div>
+                  <CardTitle className="text-xl font-bold gradient-text">
+                    Professional Links
+                  </CardTitle>
+                </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 {mentor.socialLinks.linkedin && (
                   <a
                     href={mentor.socialLinks.linkedin}
-                    className="flex items-center gap-3 text-sm text-primary hover:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-lg bg-accent/30 hover:bg-accent/50 transition-all"
                   >
                     <ExternalLink className="h-4 w-4" />
-                    LinkedIn Profile
+                    <span
+                      className="text-sm font-medium"
+                      style={{ color: "var(--color-secondary)" }}
+                    >
+                      LinkedIn Profile
+                    </span>
                   </a>
                 )}
                 {mentor.socialLinks.orcid && (
                   <a
                     href={mentor.socialLinks.orcid}
-                    className="flex items-center gap-3 text-sm text-primary hover:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-lg bg-accent/30 hover:bg-accent/50 transition-all"
                   >
                     <ExternalLink className="h-4 w-4" />
-                    ORCID Profile
+                    <span
+                      className="text-sm font-medium"
+                      style={{ color: "var(--color-secondary)" }}
+                    >
+                      ORCID Profile
+                    </span>
                   </a>
                 )}
                 {mentor.socialLinks.googleScholar && (
                   <a
                     href={mentor.socialLinks.googleScholar}
-                    className="flex items-center gap-3 text-sm text-primary hover:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-lg bg-accent/30 hover:bg-accent/50 transition-all"
                   >
                     <ExternalLink className="h-4 w-4" />
-                    Google Scholar
+                    <span
+                      className="text-sm font-medium"
+                      style={{ color: "var(--color-secondary)" }}
+                    >
+                      Google Scholar
+                    </span>
                   </a>
                 )}
               </CardContent>
@@ -232,87 +421,77 @@ export function MentorPublicProfile({ mentor }: MentorPublicProfileProps) {
           )}
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-5 mb-20">
-        {/* Research Interests */}
-        <Card>
-            <CardHeader>
-              <CardTitle>Research Interests</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {mentor.researchInterests.map((interest, index) => (
-                  <Badge key={index} variant="secondary">
-                    {interest}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Mentored Works */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="h-5 w-5" />
-                Mentored Works
-              </CardTitle>
-              <CardDescription>Papers guided to publication</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {mentor.mentoredWorks.map((work, index) => (
-                  <div key={index} className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium">{work.title}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        By {work.author} • {work.year}
-                      </p>
-                    </div>
-                    {work.link && (
-                      <Button variant="ghost" size="sm">
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
+      {/* Recent Publications */}
+      <Card className="dashboard-card border-0">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div
+                className="p-2 rounded-lg"
+                style={{ background: "var(--color-secondary)" }}
+              >
+                <BookOpen className="h-5 w-5 text-white" />
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Publications */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                Recent Publications
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {mentor.publications.length > 0 ? (
-                  mentor.publications.map((publication, index) => (
-                    <HorizontalCard
-                      key={index}
-                      id={index.toString()} // Use id instead of paperId
-                      title={publication.title}
-                      authors={[mentor.name]} // Placeholder author
-                      journal={publication.journal}
-                      year={publication.year}
-                      citations="N/A" // Placeholder citations
-                      abstract="No abstract available." // Placeholder abstract
-                      tags={mentor.researchInterests.slice(0, 2)} // Use research interests as tags
-                      image="https://idpdefault.s3.ap-south-1.amazonaws.com/589465a620a8be4fd4220240116115232.jpg" // Placeholder image
-                    />
-                  ))
-                ) : (
-                  <p className="text-muted-foreground text-center py-8">
-                    No publications yet
-                  </p>
-                )}
+              <div>
+                <CardTitle className="text-2xl font-bold gradient-text">
+                  Recent Publications
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Latest research papers and articles
+                </p>
               </div>
-            </CardContent>
-          </Card>
-      </div>
+            </div>
+            <Badge
+              className="text-sm font-semibold px-4 py-2"
+              style={{
+                background: "var(--color-secondary)",
+                color: "white",
+              }}
+            >
+              {mentor.publications.length} Publications
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {mentor.publications.length > 0 ? (
+            <div className="space-y-5">
+              {mentor.publications.map((publication, index) => (
+                <HorizontalCardForAuthor
+                  key={index}
+                  id={index.toString()}
+                  title={publication.title}
+                  journal={publication.journal}
+                  year={publication.year}
+                  downloads={publication.downloads || "0"}
+                  abstract={publication.abstract || "No abstract available."}
+                  tags={
+                    publication.tags || mentor.researchInterests.slice(0, 3)
+                  }
+                  image={
+                    publication.image ||
+                    "https://idpdefault.s3.ap-south-1.amazonaws.com/589465a620a8be4fd4220240116115232.jpg"
+                  }
+                  star={publication.star || "0"}
+                  onViewPaper={() =>
+                    publication.link && window.open(publication.link, "_blank")
+                  }
+                  onDownloadPDF={() =>
+                    publication.link && window.open(publication.link, "_blank")
+                  }
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <BookOpen className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <p className="text-muted-foreground text-base">
+                No publications yet
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -120,23 +120,23 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
         variant="ghost"
         size="icon"
         className={cn(
-          "fixed z-50 transition-all duration-300 ease-in-out bg-background/90 backdrop-blur-sm",
+          "fixed z-50 transition-all duration-300 ease-in-out sidebar-toggle",
           isOpen ? "left-64 top-4" : "left-16 top-4 md:left-16",
-          "rounded-full shadow-lg hover:bg-accent/20 hover:text-accent-foreground border border-border"
+          "rounded-full"
         )}
         onClick={toggleSidebar}
       >
         {isOpen ? (
-          <PanelLeftClose className="h-5 w-5 text-foreground" />
+          <PanelLeftClose className="h-5 w-5 sidebar-toggle-icon" />
         ) : (
-          <PanelLeftOpen className="h-5 w-5 text-foreground" />
+          <PanelLeftOpen className="h-5 w-5 sidebar-toggle-icon" />
         )}
       </Button>
 
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-40 bg-background border-r border-border transform transition-all duration-300 ease-in-out",
+          "fixed inset-y-0 left-0 z-40 sidebar-container transform transition-all duration-300 ease-in-out",
           isOpen
             ? "w-64 translate-x-0"
             : "w-16 md:w-16 -translate-x-full md:translate-x-0"
@@ -144,9 +144,11 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="flex items-center justify-between p-4 sidebar-header">
             <div className="flex items-center gap-2 flex-1">
-              <BookOpen className="h-6 w-6 text-primary" />
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 rounded-lg">
+                <BookOpen className="h-5 w-5 text-white" />
+              </div>
               {isOpen && (
                 <div className="flex-1">
                   <Link
@@ -163,7 +165,7 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                       priority
                     />
                   </Link>
-                  <p className="text-xs text-muted-foreground capitalize">
+                  <p className="text-xs sidebar-portal-text capitalize font-medium">
                     {userRole} Portal
                   </p>
                 </div>
@@ -176,38 +178,41 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
           </div>
 
           {/* User Profile with Dropdown */}
-          <div className="p-4 border-b border-border">
+          <div className="p-4 sidebar-profile-section">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="w-full justify-start p-2 h-auto hover:bg-accent/10 rounded-lg"
+                  className="w-full justify-start p-2.5 h-auto sidebar-profile-button rounded-xl"
                 >
-                  <div className="flex items-center gap-2 w-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage
-                        src={userAvatar || "/placeholder.svg"}
-                        alt={userName}
-                      />
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        {userName
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="relative">
+                      <Avatar className="h-10 w-10 ring-2 ring-orange-500 dark:ring-orange-600">
+                        <AvatarImage
+                          src={userAvatar || "/placeholder.svg"}
+                          alt={userName}
+                        />
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold">
+                          {userName
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 rounded-full border-2 sidebar-online-indicator"></div>
+                    </div>
                     {isOpen && (
                       <>
                         <div className="flex-1 min-w-0 text-left">
-                          <p className="text-sm font-medium text-foreground truncate">
+                          <p className="text-sm font-semibold sidebar-username truncate">
                             {userName}
                           </p>
-                          <p className="text-xs text-muted-foreground capitalize">
+                          <p className="text-xs sidebar-role-text capitalize font-medium">
                             {userRole} Account
                           </p>
                         </div>
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        <ChevronDown className="h-4 w-4 sidebar-role-text" />
                       </>
                     )}
                   </div>
@@ -215,7 +220,7 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
-                className="w-64 bg-background text-foreground border-border"
+                className="w-64 sidebar-dropdown-menu rounded-xl p-2"
               >
                 <DropdownMenuItem asChild>
                   <Link
@@ -230,10 +235,12 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                         }/settings`
                       )
                     }
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-3 px-3 py-2.5 sidebar-dropdown-item"
                   >
-                    <User className="h-4 w-4 text-foreground" />
-                    <span className="text-sm font-medium">
+                    <div className="sidebar-dropdown-icon-wrapper sidebar-dropdown-icon-wrapper-blue">
+                      <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <span className="text-sm sidebar-dropdown-text">
                       Profile Settings
                     </span>
                   </Link>
@@ -242,35 +249,41 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                   <Link
                     href="/browse"
                     onClick={(e) => handleNavigation(e, "/browse")}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-3 px-3 py-2.5 sidebar-dropdown-item sidebar-dropdown-item-orange"
                   >
-                    <BookOpen className="h-4 w-4 text-foreground" />
-                    <span className="text-sm font-medium">
+                    <div className="sidebar-dropdown-icon-wrapper sidebar-dropdown-icon-wrapper-orange">
+                      <BookOpen className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <span className="text-sm sidebar-dropdown-text">
                       Browse Publications
                     </span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-border" />
-                <div className="px-2 py-1.5">
+                <DropdownMenuSeparator className="sidebar-dropdown-separator" />
+                <div className="sidebar-dropdown-toggle-section ">
                   <ThemeToggle />
                 </div>
-                <div className="px-2 py-1.5">
+                <div className="sidebar-dropdown-toggle-section">
                   <LanguageSwitcher />
                 </div>
-                <DropdownMenuSeparator className="bg-border" />
+                <DropdownMenuSeparator className="sidebar-dropdown-separator" />
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="flex items-center gap-2 text-destructive focus:text-destructive"
+                  className="flex items-center gap-3 px-3 py-2.5 sidebar-dropdown-item sidebar-dropdown-item-danger text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
                 >
-                  <LogOut className="h-4 w-4 text-foreground" />
-                  <span className="text-sm font-medium">Sign Out</span>
+                  <div className="sidebar-dropdown-icon-wrapper sidebar-dropdown-icon-wrapper-red">
+                    <LogOut className="h-4 w-4 text-red-600 dark:text-red-400" />
+                  </div>
+                  <span className="text-sm sidebar-dropdown-text">
+                    Sign Out
+                  </span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-2 space-y-1">
+          <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
               return (
@@ -279,26 +292,25 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                   href={item.href}
                   onClick={(e) => handleNavigation(e, item.href)}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200",
-                    isActive
-                      ? "bg-primary text-foreground"
-                      : "text-foreground hover:bg-slate-800 hover:text-accent-foreground"
+                    "flex items-center gap-3 px-3 py-3 rounded-xl group relative overflow-hidden",
+                    isActive ? "sidebar-nav-item-active" : "sidebar-nav-item"
                   )}
                   title={!isOpen ? item.name : undefined}
                 >
+                  {isActive && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+                  )}
                   <item.icon
                     className={cn(
-                      "h-5 w-5 transition-colors duration-200",
-                      isActive
-                        ? "text-white"
-                        : "text-muted-foreground hover:text-accent-foreground"
+                      "h-5 w-5 transition-all duration-200 relative z-10 sidebar-nav-icon group-hover:scale-110",
+                      isActive && "text-white"
                     )}
                   />
                   {isOpen && (
                     <span
                       className={cn(
-                        "text-sm font-medium truncate",
-                        isActive ? "text-gray-100" : "text-foreground"
+                        "text-sm font-semibold truncate relative z-10 sidebar-nav-text",
+                        isActive && "text-white"
                       )}
                     >
                       {item.name}
@@ -311,16 +323,16 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
 
           {/* Footer Actions */}
           {isOpen && (
-            <div className="p-4 border-t border-border">
+            <div className="p-4 sidebar-footer">
               <div className="space-y-2">
                 <Button
                   variant="outline"
                   size="sm"
                   className={cn(
-                    "w-full justify-start text-sm font-medium transition-all duration-200 border-border",
+                    "w-full justify-start text-sm font-semibold rounded-xl",
                     pathname === "/browse"
-                      ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-                      : "bg-background text-foreground hover:bg-accent/20 hover:border-accent"
+                      ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white border-orange-500 hover:from-orange-600 hover:to-orange-700 shadow-lg shadow-orange-500/30"
+                      : "sidebar-footer-button"
                   )}
                   asChild
                 >
@@ -328,25 +340,23 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
                     href="/browse"
                     onClick={(e) => handleNavigation(e, "/browse")}
                   >
-                    <BookOpen className="h-4 w-4 mr-2 text-foreground" />
+                    <BookOpen
+                      className={cn(
+                        "h-4 w-4 mr-2",
+                        pathname === "/browse" && "text-white"
+                      )}
+                    />
                     Browse Papers
                   </Link>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className={cn(
-                    "w-full justify-start text-sm font-medium transition-all duration-200 border-border",
-                    pathname === "/directory"
-                      ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
-                      : "bg-background text-foreground hover:bg-accent/20 hover:border-accent"
-                  )}
-                  asChild
+                  className="w-full justify-start text-sm font-semibold rounded-xl sidebar-footer-button hover:!bg-red-50 dark:hover:!bg-red-950/30 hover:!border-red-400 dark:hover:!border-red-700 hover:!text-red-600 dark:hover:!text-red-400"
+                  onClick={() => handleLogout()}
                 >
-                  <Link href="" onClick={() => handleLogout()}>
-                    <Users className="h-4 w-4 mr-2 text-foreground" />
-                    Sign Out
-                  </Link>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
                 </Button>
               </div>
             </div>

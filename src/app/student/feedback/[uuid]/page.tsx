@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ArrowLeft,
@@ -46,28 +45,32 @@ export default function StudentFeedbackDetailPage() {
     switch (status.toLowerCase()) {
       case "approved":
         return (
-          <Badge variant="default" className="bg-green-500">
-            <CheckCircle className="w-3 h-3 mr-1" />
+          <span className="feedback-detail-status-approved flex items-center gap-1">
+            <CheckCircle className="w-3 h-3" />
             Approved
-          </Badge>
+          </span>
         );
-      case "REVISION":
+      case "revision":
         return (
-          <Badge variant="outline">
-            <Edit className="w-3 h-3 mr-1" />
+          <span className="feedback-detail-status-revision flex items-center gap-1">
+            <Edit className="w-3 h-3" />
             Revision Required
-          </Badge>
+          </span>
         );
-      case "REJECTED":
-      case "ADMIN_REJECTED":
+      case "rejected":
+      case "admin_rejected":
         return (
-          <Badge variant="destructive">
-            <XCircle className="w-3 h-3 mr-1" />
+          <span className="feedback-detail-status-rejected flex items-center gap-1">
+            <XCircle className="w-3 h-3" />
             Rejected
-          </Badge>
+          </span>
         );
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return (
+          <span className="feedback-detail-status-revision flex items-center gap-1">
+            {status}
+          </span>
+        );
     }
   };
 
@@ -103,121 +106,213 @@ export default function StudentFeedbackDetailPage() {
       userAvatar={userProfile?.user.imageUrl}
       userName={userProfile?.user.fullName}
     >
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+      <div className="dashboard-background min-h-screen py-8 px-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Back Button */}
           <div>
             <Button
-              variant="ghost"
               onClick={() => router.push("/student/feedback")}
+              variant="outline"
+              className="px-6 py-2 rounded-xl font-semibold bg-card hover:bg-accent text-card-foreground border-2 border-border advisor-profile-btn-secondary"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" /> Back to Feedback
+              <ArrowLeft className="h-5 w-5 mr-2" />
+              Back to Feedback
             </Button>
-            <h1 className="text-2xl font-bold mt-2">Feedback Details</h1>
-            <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                {getTypeIcon(feedbackData?.status || "")}
-              </span>
-              <span>From: {feedbackData?.advisorName}</span>
-              <span>{feedbackData?.createdAt}</span>
-              {getStatusBadge(feedbackData?.status || "")}
+          </div>
+
+          {/* Hero Header */}
+          <div className="feedback-detail-hero-card">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+              <div className="flex-1">
+                <h1 className="text-4xl font-bold gradient-text mb-4">
+                  Feedback Details
+                </h1>
+                <div className="flex flex-wrap items-center gap-4 text-base">
+                  <div className="flex items-center gap-2">
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                      {getTypeIcon(feedbackData?.status || "")}
+                    </div>
+                    <span className="font-semibold text-foreground">
+                      Status: {getStatusBadge(feedbackData?.status || "")}
+                    </span>
+                  </div>
+                  <div className="h-6 w-px bg-border"></div>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8 ring-2 ring-blue-500">
+                      <AvatarImage
+                        src={
+                          feedbackData?.adviserImageUrl || "/placeholder.svg"
+                        }
+                        alt={feedbackData?.advisorName}
+                      />
+                      <AvatarFallback className="bg-gradient-to-br from-blue-400 to-blue-600 text-white font-semibold text-xs">
+                        {feedbackData?.advisorName
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium text-muted-foreground">
+                      From:{" "}
+                      <span className="text-foreground font-semibold">
+                        {feedbackData?.advisorName}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="h-6 w-px bg-border"></div>
+                  <span className="text-muted-foreground font-medium">
+                    {feedbackData?.createdAt}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* PDF Viewer */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Annotated Document</CardTitle>
-                <CardDescription>
-                  View your document with mentor annotations and feedback
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {feedbackData?.fileUrl ? (
-                  <div>
-                    <div className="flex items-center justify-center gap-4 mb-4 rounded-lg">
-                      <PDFViewer pdfUri={feedbackData?.fileUrl || ""} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* PDF Viewer */}
+            <div className="lg:col-span-2">
+              <Card className="feedback-detail-section-card border-0">
+                <CardHeader className="border-b border-border/50 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+                      <MessageSquare className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-2xl gradient-text">
+                        Annotated Document
+                      </CardTitle>
+                      <CardDescription className="text-base mt-1">
+                        View your document with mentor annotations and feedback
+                      </CardDescription>
                     </div>
                   </div>
-                ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    No annotated PDF available for this feedback.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  {feedbackData?.fileUrl ? (
+                    <div>
+                      <div className="flex items-center justify-center gap-4 mb-4 rounded-lg">
+                        <PDFViewer pdfUri={feedbackData?.fileUrl || ""} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                      <p className="text-lg font-medium">
+                        No annotated PDF available for this feedback.
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
 
-          {/* Feedback Panel */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Mentor Feedback</CardTitle>
-                <CardDescription>
-                  Detailed feedback from your mentor
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage
-                      src={feedbackData?.adviserImageUrl || "/placeholder.svg"}
-                      alt={feedbackData?.advisorName}
-                    />
-                    <AvatarFallback>
-                      {feedbackData?.advisorName
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="font-medium">
+            {/* Feedback Panel */}
+            <div className="space-y-6">
+              <Card className="feedback-detail-section-card border-0">
+                <CardHeader className="border-b border-border/50 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+                      <MessageSquare className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-2xl gradient-text">
+                        Mentor Feedback
+                      </CardTitle>
+                      <CardDescription className="text-base mt-1">
+                        Detailed feedback from your mentor
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6 pt-6">
+                  <div className="feedback-mentor-info-box flex items-start gap-4">
+                    <Avatar className="h-14 w-14 ring-4 ring-blue-500 shadow-lg">
+                      <AvatarImage
+                        src={
+                          feedbackData?.adviserImageUrl || "/placeholder.svg"
+                        }
+                        alt={feedbackData?.advisorName}
+                      />
+                      <AvatarFallback className="bg-gradient-to-br from-blue-400 to-blue-600 text-white font-bold text-lg">
+                        {feedbackData?.advisorName
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="font-bold text-lg text-foreground mb-1">
+                        {feedbackData?.advisorName}
+                      </div>
+                      <div className="mb-2">
+                        {getStatusBadge(feedbackData?.status || "")}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="feedback-message-box">
+                    <h4 className="font-bold text-lg mb-3 flex items-center gap-2 feedback-message-title">
+                      <MessageSquare className="h-5 w-5" />
+                      Feedback Message
+                    </h4>
+                    <p className="text-base text-foreground leading-relaxed">
+                      {feedbackData?.feedbackText ||
+                        "No feedback text provided."}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="feedback-detail-section-card border-0">
+                <CardHeader className="border-b border-border/50 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+                      <MessageSquare className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-2xl gradient-text">
+                        Document Info
+                      </CardTitle>
+                      <CardDescription className="text-base mt-1">
+                        Key details at a glance
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3 pt-6">
+                  <div className="feedback-detail-info-row">
+                    <div className="text-sm font-semibold text-muted-foreground mb-1">
+                      Document Title
+                    </div>
+                    <div className="font-bold text-base text-foreground">
+                      {paperData?.paper.title}
+                    </div>
+                  </div>
+                  <div className="feedback-detail-info-row">
+                    <div className="text-sm font-semibold text-muted-foreground mb-1">
+                      Mentor
+                    </div>
+                    <div className="font-bold text-base text-foreground">
                       {feedbackData?.advisorName}
                     </div>
                   </div>
-                  {getStatusBadge(feedbackData?.status || "")}
-                </div>
-
-                <div>
-                  <h4 className="font-medium mb-2">Feedback</h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {feedbackData?.feedbackText || "No feedback text provided."}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Document Info</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <div className="text-sm text-muted-foreground">
-                    Document Title
+                  <div className="feedback-detail-info-row">
+                    <div className="text-sm font-semibold text-muted-foreground mb-1">
+                      Review Date
+                    </div>
+                    <div className="font-bold text-base text-foreground">
+                      {feedbackData?.createdAt}
+                    </div>
                   </div>
-                  <div className="font-medium">{paperData?.paper.title}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">Mentor</div>
-                  <div className="font-medium">{feedbackData?.advisorName}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">
-                    Review Date
+                  <div className="feedback-detail-info-row">
+                    <div className="text-sm font-semibold text-muted-foreground mb-1">
+                      Status
+                    </div>
+                    <div>{getStatusBadge(feedbackData?.status || "")}</div>
                   </div>
-                  <div className="font-medium">{feedbackData?.createdAt}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">Status</div>
-                  <div>{getStatusBadge(feedbackData?.status || "")}</div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

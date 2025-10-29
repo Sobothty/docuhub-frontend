@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { FC } from 'react';
-import { useTranslation } from 'react-i18next';
+import Image from "next/image";
+import Link from "next/link";
+import { FC } from "react";
+import { useTranslation } from "react-i18next";
 // import { Button } from '../ui/button';
-import { usePathname } from 'next/navigation';
+import { usePathname } from "next/navigation";
 
 interface ContactFooterProps {
   social?: string;
@@ -15,20 +15,20 @@ interface ContactFooterProps {
 
 const ContactFooter: FC<ContactFooterProps> = () => {
   const pathname = usePathname();
-  const { t } = useTranslation('common'); // Matches your JSON file
+  const { t } = useTranslation("common"); // Matches your JSON file
 
   const hiddenPaths = [
-    '/login',
-    '/register',
-    '/dashboard',
-    '/students',
-    '/advisers',
+    "/login",
+    "/register",
+    "/dashboard",
+    "/students",
+    "/advisers",
     "/users",
     "/papers",
-    '/profile',
-    '/student',
-    '/adviser',
-    '/unauthorized',
+    "/profile",
+    "/student",
+    "/adviser",
+    "/unauthorized",
   ];
   const shouldHide = hiddenPaths.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`)
@@ -38,18 +38,18 @@ const ContactFooter: FC<ContactFooterProps> = () => {
   return (
     <footer className="w-full mt-20 bg-primary text-foreground/70">
       {/* CTA Section */}
-      <div className="relative -top-30 w-[95%] max-w-6xl bg-accent rounded-xl py-12 px-6 text-center shadow-lg mx-auto">
-        <h2 className="text-2xl md:text-3xl font-bold text-white">
-          {t('cta_title')}
+      <div className="footer-cta-card relative -top-30 w-[95%] max-w-6xl rounded-xl py-12 px-6 text-center shadow-lg mx-auto">
+        <h2 className="footer-cta-title text-2xl md:text-3xl font-bold">
+          {t("cta_title")}
         </h2>
-        <p className="mt-4 text-white opacity-90 max-w-2xl mx-auto text-sm md:text-base">
-          {t('cta_desc')}
+        <p className="footer-cta-description mt-4 max-w-2xl mx-auto text-sm md:text-base">
+          {t("cta_desc")}
         </p>
         <Link
-          href="#"
+          href="/contact"
           className="inline-block mt-8 bg-secondary hover:bg-[var(--secondary-hover)] text-white px-6 py-3 rounded-lg font-semibold transition-all text-sm md:text-base"
         >
-          {t('cta_button')}
+          {t("cta_button")}
         </Link>
       </div>
 
@@ -58,9 +58,11 @@ const ContactFooter: FC<ContactFooterProps> = () => {
         {/* Transparent Section */}
         <div>
           <h3 className="text-gray-100 font-semibold text-lg">
-            {t('transparent')}
+            {t("transparent")}
           </h3>
-          <p className="mt-3 text-gray-100 text-sm opacity-80">{t('cta_desc')}</p>
+          <p className="mt-3 text-gray-100 text-sm opacity-80">
+            {t("cta_desc")}
+          </p>
           <div className="flex gap-3 mt-4">
             {/* Keep your original icons as they are */}
             <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 transition">
@@ -121,22 +123,22 @@ const ContactFooter: FC<ContactFooterProps> = () => {
         {/* Platform */}
         <div>
           <h3 className="text-gray-100 font-semibold text-lg mb-3">
-            {t('platform')}
+            {t("platform")}
           </h3>
           <ul className="space-y-2 text-sm">
             <li>
               <Link href="/" className="text-gray-100 hover:text-white">
-                {t('home')}
+                {t("home")}
               </Link>
             </li>
             <li>
               <Link href="/browse" className="text-gray-100 hover:text-white">
-                {t('browse')}
+                {t("browse")}
               </Link>
             </li>
             <li>
               <Link href="/about" className="text-gray-100 hover:text-white">
-                {t('about_us')}
+                {t("about_us")}
               </Link>
             </li>
           </ul>
@@ -144,21 +146,23 @@ const ContactFooter: FC<ContactFooterProps> = () => {
 
         {/* Help */}
         <div>
-          <h3 className="text-gray-100 font-semibold text-lg mb-3">{t('help')}</h3>
+          <h3 className="text-gray-100 font-semibold text-lg mb-3">
+            {t("help")}
+          </h3>
           <ul className="space-y-2 text-sm">
             <li>
               <Link href="/contact" className="text-gray-100 hover:text-white">
-                {t('contact_us')}
+                {t("contact_us")}
               </Link>
             </li>
             <li>
               <Link href="/feedback" className="text-gray-100 hover:text-white">
-                {t('feedback')}
+                {t("feedback")}
               </Link>
             </li>
             <li>
               <Link href="/help" className="text-gray-100 hover:text-white">
-                {t('help_center')}
+                {t("help_center")}
               </Link>
             </li>
           </ul>
@@ -167,22 +171,25 @@ const ContactFooter: FC<ContactFooterProps> = () => {
         {/* Legal */}
         <div>
           <h3 className="text-gray-100 font-semibold text-lg mb-3">
-            {t('legal')}
+            {t("legal")}
           </h3>
           <ul className="space-y-2 text-sm">
             <li>
               <Link href="/privacy" className="text-gray-100 hover:text-white">
-                {t('privacy')}
+                {t("privacy")}
               </Link>
             </li>
             <li>
               <Link href="/terms" className="text-gray-100 hover:text-white">
-                {t('terms')}
+                {t("terms")}
               </Link>
             </li>
             <li>
-              <Link href="/accessibility" className="text-gray-100 hover:text-white">
-                {t('accessibility')}
+              <Link
+                href="/accessibility"
+                className="text-gray-100 hover:text-white"
+              >
+                {t("accessibility")}
               </Link>
             </li>
           </ul>
@@ -191,7 +198,7 @@ const ContactFooter: FC<ContactFooterProps> = () => {
         {/* Sponsors */}
         <div>
           <h3 className="text-gray-100 font-semibold text-lg mb-3">
-            {t('sponsors')}
+            {t("sponsors")}
           </h3>
           <Image
             src="/logo/istad-logo.png"
@@ -205,7 +212,7 @@ const ContactFooter: FC<ContactFooterProps> = () => {
 
       {/* Divider */}
       <div className="border-t border-gray-700 py-4 text-center text-xs md:text-sm text-gray-500 relative z-10">
-        <p>{t('copyright')}</p>
+        <p>{t("copyright")}</p>
       </div>
     </footer>
   );

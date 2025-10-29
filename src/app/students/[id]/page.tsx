@@ -80,7 +80,7 @@ export default function StudentProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background py-8 px-6">
+    <div className="student-profile-page-bg">
       <StudentPublicProfile student={studentData} />
     </div>
   );

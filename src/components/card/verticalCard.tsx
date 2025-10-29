@@ -62,8 +62,7 @@ export default function VerticalCard({
   const [isStarred, setIsStarred] = useState<boolean>(false);
 
   // Get the user UUID from session
-  const userUuid: string =
-    session?.user?.id as string || "";
+  const userUuid: string = (session?.user?.id as string) || "";
 
   // Get star count for this paper
   const { data: starCount = 0 } = useGetStarCountQuery(paperId);
@@ -141,11 +140,14 @@ export default function VerticalCard({
 
   return (
     <div
-      className={`w-full max-w-[440px] mx-auto bg-card rounded-lg overflow-hidden flex flex-col shadow-md ${className} min-h-[450px] sm:min-h-[500px]`}
+      className={`vertical-paper-card w-full max-w-[440px] mx-auto flex flex-col ${className} min-h-[500px]`}
     >
+      {/* Accent Bar */}
+      <div className="vertical-paper-card-accent"></div>
+
       {/* Header Image */}
       {image && (
-        <div className="relative w-full h-32 sm:h-40 flex-shrink-0">
+        <div className="relative w-full h-48 flex-shrink-0">
           <Image
             src={image}
             alt={title}
@@ -154,33 +156,33 @@ export default function VerticalCard({
             priority={false}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
-          <div className="absolute inset-0 bg-black/20"></div>
+          <div className="vertical-paper-card-image-overlay"></div>
         </div>
       )}
 
       {/* Content */}
-      <div className="p-4 sm:p-6 flex flex-col flex-1">
+      <div className="p-6 flex flex-col flex-1">
         {/* Title */}
-        <h3 className="text-base sm:text-lg font-bold text-foreground mb-2 sm:mb-3 line-clamp-2">
+        <h3 className="vertical-paper-card-title text-xl mb-3 line-clamp-2">
           {title}
         </h3>
 
         {/* Authors */}
-        <div className="flex items-center mb-2 sm:mb-3">
+        <div className="flex items-center mb-3">
           {authorImage && (
             <Image
               src={authorImage}
               alt={authors[0] || "Author"}
-              width={24}
-              height={24}
-              className="w-6 h-6 sm:w-8 sm:h-8 rounded-full mr-2 sm:mr-3 flex-shrink-0 hover:cursor-pointer"
+              width={32}
+              height={32}
+              className="w-8 h-8 rounded-full mr-3 flex-shrink-0 hover:cursor-pointer ring-2 ring-blue-200"
               priority={false}
               unoptimized
               onClick={handleAuthorClick}
             />
           )}
           <span
-            className="text-sm sm:text-base text-foreground truncate cursor-pointer hover:text-blue-600 transition-colors"
+            className="text-base text-foreground font-medium truncate cursor-pointer hover:text-blue-600 transition-colors"
             onClick={handleAuthorClick}
           >
             {displayAuthors.join(", ")}
@@ -188,23 +190,25 @@ export default function VerticalCard({
         </div>
 
         {/* Publication Info */}
-        <div className="flex items-center flex-wrap gap-2 sm:gap-4 mb-2 sm:mb-3 text-xs sm:text-sm text-foreground">
+        <div className="flex items-center flex-wrap gap-3 mb-3 text-sm text-muted-foreground">
           {journal && (
-            <div className="flex items-center space-x-1 truncate">
-              <BookOpen className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="truncate">{journal}</span>
+            <div className="vertical-paper-card-journal">
+              <BookOpen className="w-4 h-4 text-blue-600" />
+              <span className="vertical-paper-card-journal-text truncate">
+                {journal}
+              </span>
             </div>
           )}
           {year && (
-            <div className="flex items-center space-x-1">
-              <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>{year}</span>
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-4 h-4 text-blue-600" />
+              <span className="font-medium">{year}</span>
             </div>
           )}
           {citations && (
-            <div className="flex items-center space-x-1">
-              <Award className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>{citations}</span>
+            <div className="flex items-center gap-1.5">
+              <Award className="w-4 h-4 text-blue-600" />
+              <span className="font-medium">{citations}</span>
             </div>
           )}
 
@@ -212,22 +216,22 @@ export default function VerticalCard({
           <button
             onClick={handleToggleStar}
             disabled={isLoading || status === "loading"}
-            className="flex items-center space-x-1 hover:scale-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 hover:scale-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label={isStarred ? "Remove star" : "Add star"}
             title={
               status === "unauthenticated" ? "Login to star papers" : undefined
             }
           >
             <Star
-              className={`w-3 h-3 sm:w-4 sm:h-4 transition-colors hover:cursor-pointer ${
+              className={`w-4 h-4 transition-colors hover:cursor-pointer ${
                 isStarred
                   ? "fill-yellow-500 text-yellow-500"
-                  : "text-foreground"
+                  : "text-muted-foreground"
               }`}
             />
             {starCount > 0 && (
               <span
-                className={`text-xs sm:text-sm font-medium ${
+                className={`text-sm font-semibold ${
                   isStarred ? "text-yellow-500" : "text-foreground"
                 }`}
               >
@@ -239,41 +243,38 @@ export default function VerticalCard({
 
         {/* Abstract */}
         {displayAbstract && (
-          <p className="text-sm sm:text-base text-foreground mb-2 sm:mb-3 line-clamp-3 flex-1">
+          <p className="text-sm text-muted-foreground mb-3 line-clamp-3 flex-1 leading-relaxed">
             {displayAbstract}
           </p>
         )}
 
         {/* Tags */}
         {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 sm:gap-2 mb-3 sm:mb-4">
-            {tags.map((tag: string, idx: number) => (
-              <span
-                key={idx}
-                className="px-2 py-1 text-foreground text-xs sm:text-sm rounded-full font-medium truncate"
-              >
-                #{tag}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {tags.slice(0, 3).map((tag: string, idx: number) => (
+              <span key={idx} className="vertical-paper-card-tag">
+                {tag}
               </span>
             ))}
           </div>
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-2 sm:gap-3 mt-auto">
+        <div className="flex gap-3 mt-auto">
           <button
             onClick={handleViewPaper}
-            className="flex items-center hover:cursor-pointer justify-center gap-1 px-3 py-2 sm:px-4 sm:py-2 bg-secondary text-white rounded-md hover:bg-secondary/90 transition-colors text-sm sm:text-base flex-1"
+            className="vertical-paper-card-btn-primary"
             aria-label="View paper"
           >
-            <Eye className="w-4 h-4 sm:w-5 sm:h-5 " />
+            <Eye className="w-5 h-5" />
             <span>View</span>
           </button>
           <button
             onClick={onDownloadPDF}
-            className="flex items-center justify-center gap-1 px-3 py-2 sm:px-4 sm:py-2 bg-gray-700 text-white rounded-md hover:bg-gray-800 transition-colors text-sm sm:text-base flex-1"
+            className="vertical-paper-card-btn-secondary"
             aria-label="Download PDF"
           >
-            <Download className="w-4 h-4 sm:w-5 sm:h-5 hover:cursor-pointer" />
+            <Download className="w-5 h-5" />
             <span>PDF</span>
           </button>
         </div>

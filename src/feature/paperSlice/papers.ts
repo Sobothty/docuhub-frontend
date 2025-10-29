@@ -76,7 +76,7 @@ export interface Assignment {
   updateDate: string | null;
 }
 
-export interface updatePaperRequest{
+export interface updatePaperRequest {
   title: string;
   abstractText?: string;
   fileUrl: string;
@@ -149,12 +149,16 @@ export const papersApi = createApi({
       }),
       invalidatesTags: ["Papers"],
     }),
-    updatePaper: builder.mutation<PaperCreateResponse, {uuid: string, paperData: updatePaperRequest}>({
-      query: ({uuid, paperData}) => ({
+    updatePaper: builder.mutation<
+      PaperCreateResponse,
+      { uuid: string; paperData: updatePaperRequest }
+    >({
+      query: ({ uuid, paperData }) => ({
         url: `/papers/author/${uuid}`,
         method: "PUT",
         body: paperData,
       }),
+      invalidatesTags: ["Papers"],
     }),
     getAllPublishedPapers: builder.query<ApiResponse, PaginationParams>({
       queryFn: async (arg, api, extraOptions) => {
@@ -204,6 +208,7 @@ export const papersApi = createApi({
         url: `/papers/publish/${uuid}`,
         method: "POST",
       }),
+      invalidatesTags: ["Papers"],
     }),
     getAllAssignments: builder.query<Assignment[], void>({
       query: () => ({
@@ -224,7 +229,8 @@ export const papersApi = createApi({
         url: `/papers/author/${uuid}`,
         method: "DELETE",
       }),
-    })
+      invalidatesTags: ["Papers"],
+    }),
   }),
 });
 

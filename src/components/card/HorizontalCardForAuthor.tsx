@@ -41,51 +41,58 @@ export default function HorizontalCard({
   const router = useRouter();
 
   return (
-    <div className="w-full bg-card overflow-hidden rounded-lg flex flex-col md:flex-row shadow-md h-full">
+    <div className="horizontal-paper-card flex-col md:flex-row">
+      {/* Gradient overlay on hover */}
+      <div className="horizontal-paper-card-overlay"></div>
+
       {/* Left Section - Image */}
-      <div className="relative w-full md:w-1/3 h-56 md:h-auto flex-shrink-0">
-        <Image src={image} alt={title} fill className="object-cover" priority />
+      <div className="relative w-full md:w-1/3 h-64 md:h-auto flex-shrink-0 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-[1]"></div>
+        <Image
+          src={image}
+          alt={title}
+          fill
+          className="object-cover horizontal-paper-card-image"
+          priority
+        />
       </div>
 
       {/* Right Section */}
-      <div className="w-full md:w-2/3 p-4 md:p-6 flex flex-col flex-1">
+      <div className="relative z-20 w-full md:w-2/3 p-6 md:p-7 flex flex-col flex-1">
         {/* Title */}
-        <h3 className="text-lg md:text-xl font-bold text-foreground mb-3 line-clamp-2">
+        <h3 className="horizontal-paper-card-title mb-4 line-clamp-2">
           {title}
         </h3>
 
         {/* Metadata */}
-        <div className="flex gap-4 mb-3 text-sm text-foreground">
-          <div className="flex items-center space-x-1">
-            <BookOpen className="w-4 h-4" />
-            <span>{journal}</span>
+        <div className="flex flex-wrap gap-5 mb-4 text-sm text-muted-foreground font-medium">
+          <div className="horizontal-paper-card-metadata">
+            <BookOpen className="horizontal-paper-card-metadata-icon" />
+            <span className="text-foreground">{journal}</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <Calendar className="w-4 h-4" />
-            <span>{year}</span>
+          <div className="horizontal-paper-card-metadata">
+            <Calendar className="horizontal-paper-card-metadata-icon" />
+            <span className="text-foreground">{year}</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <DownloadIcon className="w-4 h-4" />
-            <span>{downloads}</span>
+          <div className="horizontal-paper-card-metadata horizontal-paper-card-metadata-orange">
+            <DownloadIcon className="horizontal-paper-card-metadata-icon horizontal-paper-card-metadata-icon-orange" />
+            <span className="text-foreground font-semibold">{downloads}</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <Star className={`w-4 h-4 text-accent fill-accent`} />
-            <span>{star}</span>
+          <div className="horizontal-paper-card-metadata horizontal-paper-card-metadata-orange">
+            <Star className="horizontal-paper-card-metadata-icon horizontal-paper-card-metadata-icon-orange fill-orange-500" />
+            <span className="text-foreground font-semibold">{star}</span>
           </div>
         </div>
 
         {/* Abstract */}
-        <p className="text-sm text-foreground mb-4 line-clamp-3 flex-1">
+        <p className="text-sm md:text-base text-muted-foreground mb-5 line-clamp-3 flex-1 leading-relaxed">
           {abstract}
         </p>
 
         {/* Tags */}
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 mb-5">
           {tags.map((tag, index) => (
-            <span
-              key={index}
-              className="px-3 py-1 bg-muted text-foreground text-xs rounded-full font-medium"
-            >
+            <span key={index} className="horizontal-paper-card-tag">
               #{tag}
             </span>
           ))}
@@ -97,7 +104,7 @@ export default function HorizontalCard({
             onClick={
               onViewPaper || (() => router.push(`/student/submissions/${id}`))
             }
-            className="flex items-center space-x-2 px-4 py-2 bg-secondary text-white rounded-md hover:bg-secondary/90 text-sm"
+            className="horizontal-paper-card-button horizontal-paper-card-button-primary"
             aria-label="View paper"
           >
             <Eye className="w-4 h-4" />
@@ -105,7 +112,7 @@ export default function HorizontalCard({
           </button>
           <button
             onClick={onDownloadPDF}
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-foreground/90 text-sm"
+            className="horizontal-paper-card-button horizontal-paper-card-button-secondary"
             aria-label="Download PDF"
           >
             <Download className="w-4 h-4" />

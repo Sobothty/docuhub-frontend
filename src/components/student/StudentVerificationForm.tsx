@@ -81,16 +81,15 @@ export default function StudentVerificationForm({
   const {
     data: existingStudentDetail,
     isLoading: isLoadingExisting,
-    error: studentDetailError,
     refetch: refetchStudentDetail,
   } = useGetStudentDetailByUserQuery(currentUserUuid, {
     skip: !currentUserUuid,
   });
 
-  const [createStudentDetail, { isLoading: isCreating, error: createError }] =
+  const [createStudentDetail, { isLoading: isCreating }] =
     useCreateStudentDetailMutation();
 
-  const [updateStudentDetail, { isLoading: isUpdating, error: updateError }] =
+  const [updateStudentDetail, { isLoading: isUpdating }] =
     useUpdateStudentDetailMutation();
 
   const [createMedia, { isLoading: isUploadingMedia }] =
@@ -116,9 +115,6 @@ export default function StudentVerificationForm({
 
   // Determine if we should use update mode
   const shouldUseUpdate = isUpdate || !!existingStudentDetail;
-
-  // Use the appropriate error based on mode
-  const mutationError = shouldUseUpdate ? updateError : createError;
 
   // Populate form with existing data when student detail exists
   useEffect(() => {
@@ -287,8 +283,31 @@ export default function StudentVerificationForm({
       }
 
       // Send notification to admin via WebSocket
-      if (isConnected && result.message) {
-        sendPrivateMessage(ADMIN_UUID, result.message);
+      if (isConnected) {
+        const notificationMessage = {
+          type: "STUDENT_VERIFICATION",
+          action: shouldUseUpdate ? "updated" : "submitted",
+          message:
+            result.message ||
+            `New student verification ${
+              shouldUseUpdate ? "update" : "request"
+            } from ${formData.university}`,
+          studentInfo: {
+            university: formData.university,
+            major: formData.major,
+            yearsOfStudy: formData.yearsOfStudy,
+            userUuid: currentUserUuid,
+          },
+          timestamp: new Date().toISOString(),
+        };
+
+        console.log(
+          "📤 Sending WebSocket notification to admin:",
+          notificationMessage
+        );
+        sendPrivateMessage(ADMIN_UUID, JSON.stringify(notificationMessage));
+      } else {
+        console.warn("⚠️ WebSocket not connected, notification not sent");
       }
 
       setSubmitSuccess(true);
@@ -346,9 +365,30 @@ export default function StudentVerificationForm({
             data: updateData,
           }).unwrap();
 
-          if (isConnected && result.message) {
-            sendPrivateMessage(ADMIN_UUID, result.message);
+          // Send notification to admin via WebSocket
+          if (isConnected) {
+            const notificationMessage = {
+              type: "STUDENT_VERIFICATION",
+              action: "updated",
+              message:
+                result.message ||
+                `Student verification update from ${formData.university}`,
+              studentInfo: {
+                university: formData.university,
+                major: formData.major,
+                yearsOfStudy: formData.yearsOfStudy,
+                userUuid: currentUserUuid,
+              },
+              timestamp: new Date().toISOString(),
+            };
+
+            console.log(
+              "📤 Sending WebSocket notification to admin (retry):",
+              notificationMessage
+            );
+            sendPrivateMessage(ADMIN_UUID, JSON.stringify(notificationMessage));
           }
+
           setSubmitSuccess(true);
           refetchStudentDetail();
 
@@ -371,6 +411,30 @@ export default function StudentVerificationForm({
         err.originalStatus === 201 ||
         err.status === "PARSING_ERROR"
       ) {
+        // Send notification to admin via WebSocket (request was successful)
+        if (isConnected) {
+          const notificationMessage = {
+            type: "STUDENT_VERIFICATION",
+            action: shouldUseUpdate ? "updated" : "submitted",
+            message: `New student verification ${
+              shouldUseUpdate ? "update" : "request"
+            } from ${formData.university}`,
+            studentInfo: {
+              university: formData.university,
+              major: formData.major,
+              yearsOfStudy: formData.yearsOfStudy,
+              userUuid: currentUserUuid,
+            },
+            timestamp: new Date().toISOString(),
+          };
+
+          console.log(
+            "📤 Sending WebSocket notification to admin (parsing error case):",
+            notificationMessage
+          );
+          sendPrivateMessage(ADMIN_UUID, JSON.stringify(notificationMessage));
+        }
+
         setSubmitSuccess(true);
         console.log(
           `Student verification ${
@@ -396,10 +460,17 @@ export default function StudentVerificationForm({
 
   if (isLoadingExisting && isUpdate) {
     return (
-      <Card className="max-w-2xl mx-auto">
+      <Card className="dashboard-card border-0 max-w-2xl mx-auto overflow-hidden">
+        <div
+          className="h-1"
+          style={{ backgroundColor: "var(--color-secondary)" }}
+        />
         <CardContent className="p-8 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">
+          <div
+            className="animate-spin rounded-full h-10 w-10 border-b-3 mx-auto mb-4"
+            style={{ borderColor: "var(--color-secondary)" }}
+          ></div>
+          <p className="text-muted-foreground font-medium">
             Loading your student information...
           </p>
         </CardContent>
@@ -409,20 +480,35 @@ export default function StudentVerificationForm({
 
   if (submitSuccess) {
     return (
-      <Card className="max-w-2xl mx-auto">
+      <Card className="dashboard-card border-0 max-w-2xl mx-auto overflow-hidden">
+        <div
+          className="h-1"
+          style={{ backgroundColor: "var(--color-secondary)" }}
+        />
         <CardContent className="p-8 text-center">
-          <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold text-green-600 mb-2">
+          <div
+            className="inline-flex p-4 rounded-full mb-4"
+            style={{ backgroundColor: "var(--color-secondary)" }}
+          >
+            <CheckCircle className="h-12 w-12 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-card-foreground mb-2">
             {shouldUseUpdate
               ? "Verification Updated Successfully!"
               : "Verification Submitted Successfully!"}
           </h2>
-          <p className="text-muted-foreground mb-4">
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             {shouldUseUpdate
               ? "Your student verification request has been updated. Our admin team will review your updated documents."
               : "Your student verification request has been submitted. Our admin team will review your documents and notify you of the result."}
           </p>
-          <Badge variant="outline" className="text-yellow-600">
+          <Badge
+            className="px-4 py-2 text-sm font-semibold !rounded-full"
+            style={{
+              backgroundColor: "var(--color-secondary)",
+              color: "white",
+            }}
+          >
             Status:{" "}
             {shouldUseUpdate ? "Updated - Pending Review" : "Pending Review"}
           </Badge>
@@ -432,50 +518,87 @@ export default function StudentVerificationForm({
   }
 
   return (
-    <Card className="max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <GraduationCap className="h-6 w-6 text-primary" />
-          {shouldUseUpdate
-            ? "Update Student Verification"
-            : "Student Verification"}
-          {hasExistingRecord && (
-            <Badge variant="outline" className="ml-2 text-xs">
-              Existing Application
-            </Badge>
-          )}
-        </CardTitle>
-        <p className="text-muted-foreground">
-          {shouldUseUpdate
-            ? "Update your student information to get verified and access student features."
-            : "Submit your student information to get verified and access student features."}
-          {hasExistingRecord && (
-            <span className="block mt-1 text-yellow-600 text-sm">
-              You already have a pending application. Updating will replace your
-              previous submission.
-            </span>
-          )}
-        </p>
+    <Card className="dashboard-card border-0 max-w-3xl mx-auto overflow-hidden">
+      {/* Top Accent Bar */}
+      <div
+        className="h-1"
+        style={{ backgroundColor: "var(--color-secondary)" }}
+      />
+
+      <CardHeader className="pb-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3 flex-1">
+            <div
+              className="p-2.5 rounded-lg flex-shrink-0"
+              style={{ backgroundColor: "var(--color-secondary)" }}
+            >
+              <GraduationCap className="h-6 w-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap mb-2">
+                <CardTitle className="text-2xl font-bold text-card-foreground">
+                  {shouldUseUpdate
+                    ? "Update Student Verification"
+                    : "Student Verification"}
+                </CardTitle>
+                {hasExistingRecord && (
+                  <Badge
+                    className="px-2.5 py-0.5 text-xs font-semibold !rounded-full"
+                    style={{
+                      backgroundColor: "var(--color-secondary)",
+                      color: "white",
+                    }}
+                  >
+                    Existing Application
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {shouldUseUpdate
+                  ? "Update your student information to get verified and access student features."
+                  : "Submit your student information to get verified and access student features."}
+              </p>
+              {hasExistingRecord && (
+                <Alert className="mt-3 border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800">
+                  <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                  <AlertDescription className="text-sm text-yellow-700 dark:text-yellow-300">
+                    You already have a pending application. Updating will
+                    replace your previous submission.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </div>
+        </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="px-6 pb-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Student Card Upload */}
-          <div className="space-y-2">
-            <Label htmlFor="studentCard" className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
-              Student Card Image *
+          <div className="space-y-3">
+            <Label
+              htmlFor="studentCard"
+              className="flex items-center gap-2 text-base font-semibold"
+            >
+              <div
+                className="p-1 rounded"
+                style={{ backgroundColor: "var(--color-secondary)" }}
+              >
+                <Upload className="h-3.5 w-3.5 text-white" />
+              </div>
+              Student Card Image
+              <span className="text-red-500">*</span>
             </Label>
 
             {/* Preview Image */}
             {previewUrl && (
-              <div className="relative w-full max-w-md mx-auto mb-4">
+              <div className="relative w-full max-w-lg mx-auto p-4 rounded-lg bg-muted/30">
                 <Image
                   src={previewUrl}
                   alt="Student card preview"
-                  className="w-full h-auto rounded-lg border-2 border-gray-200 shadow-sm"
-                  width={400}
-                  height={400}
+                  className="w-full h-auto rounded-lg border-2 border-border shadow-md"
+                  width={500}
+                  height={300}
                   unoptimized
                 />
                 <Button
@@ -484,7 +607,7 @@ export default function StudentVerificationForm({
                   size="sm"
                   onClick={handleDeleteUploadedFile}
                   disabled={isDeletingMedia}
-                  className="absolute top-2 right-2 h-8 w-8 p-0 bg-accent/70 hover:bg-accent/90 flex items-center justify-center rounded-full"
+                  className="absolute top-6 right-6 h-9 w-9 p-0 rounded-full shadow-lg"
                 >
                   {isDeletingMedia ? (
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
@@ -497,7 +620,7 @@ export default function StudentVerificationForm({
 
             {/* Upload Area */}
             {!previewUrl && (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+              <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center hover:border-muted-foreground/50 transition-colors bg-muted/20">
                 <input
                   id="studentCard"
                   type="file"
@@ -508,103 +631,138 @@ export default function StudentVerificationForm({
                 />
                 <Label
                   htmlFor="studentCard"
-                  className="cursor-pointer flex flex-col items-center gap-2"
+                  className="cursor-pointer flex flex-col items-center gap-3"
                 >
-                  <Upload className="h-8 w-8 text-gray-400" />
-                  <span className="text-sm text-gray-600">
-                    {isUploading || isUploadingMedia
-                      ? "Uploading..."
-                      : "Click to upload your student card (JPEG, PNG, max 5MB)"}
-                  </span>
+                  <div
+                    className="p-4 rounded-full"
+                    style={{ backgroundColor: "var(--color-secondary)" }}
+                  >
+                    <Upload className="h-8 w-8 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground mb-1">
+                      {isUploading || isUploadingMedia
+                        ? "Uploading your student card..."
+                        : "Click to upload your student card"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Supported formats: JPEG, PNG (max 5MB)
+                    </p>
+                  </div>
                 </Label>
               </div>
             )}
 
             {formErrors.studentCardUrl && (
-              <p className="text-sm text-red-500">
-                {formErrors.studentCardUrl}
-              </p>
+              <Alert className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+                <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                <AlertDescription className="text-sm text-red-700 dark:text-red-300">
+                  {formErrors.studentCardUrl}
+                </AlertDescription>
+              </Alert>
             )}
           </div>
 
-          {/* University */}
+          {/* Form Fields Grid */}
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* University */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-sm font-medium">
+                <Building className="h-4 w-4 text-muted-foreground" />
+                University
+                <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={formData.university}
+                onValueChange={(value) =>
+                  handleInputChange("university", value)
+                }
+              >
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Select your university" />
+                </SelectTrigger>
+                <SelectContent>
+                  {UNIVERSITIES.map((university) => (
+                    <SelectItem key={university} value={university}>
+                      {university}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {formErrors.university && (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {formErrors.university}
+                </p>
+              )}
+            </div>
+
+            {/* Years of Study */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-sm font-medium">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                Years of Study
+                <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={formData.yearsOfStudy}
+                onValueChange={(value) =>
+                  handleInputChange("yearsOfStudy", value)
+                }
+              >
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {YEARS_OF_STUDY.map((year) => (
+                    <SelectItem key={year} value={year}>
+                      Year {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {formErrors.yearsOfStudy && (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {formErrors.yearsOfStudy}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Major - Full Width */}
           <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Building className="h-4 w-4" />
-              University *
-            </Label>
-            <Select
-              value={formData.university}
-              onValueChange={(value) => handleInputChange("university", value)}
+            <Label
+              htmlFor="major"
+              className="flex items-center gap-2 text-sm font-medium"
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Select your university" />
-              </SelectTrigger>
-              <SelectContent>
-                {UNIVERSITIES.map((university) => (
-                  <SelectItem key={university} value={university}>
-                    {university}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {formErrors.university && (
-              <p className="text-sm text-red-500">{formErrors.university}</p>
-            )}
-          </div>
-
-          {/* Major */}
-          <div className="space-y-2">
-            <Label htmlFor="major" className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4" />
-              Major *
+              <BookOpen className="h-4 w-4 text-muted-foreground" />
+              Major
+              <span className="text-red-500">*</span>
             </Label>
             <Input
               id="major"
               type="text"
-              placeholder="e.g., Computer Science, Engineering, Business"
+              placeholder="e.g., Computer Science, Engineering, Business Administration"
               value={formData.major}
               onChange={(e) => handleInputChange("major", e.target.value)}
+              className="h-11"
             />
             {formErrors.major && (
-              <p className="text-sm text-red-500">{formErrors.major}</p>
+              <p className="text-xs text-red-500 flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                {formErrors.major}
+              </p>
             )}
           </div>
 
-          {/* Years of Study */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Years of Study *
-            </Label>
-            <Select
-              value={formData.yearsOfStudy}
-              onValueChange={(value) =>
-                handleInputChange("yearsOfStudy", value)
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select year" />
-              </SelectTrigger>
-              <SelectContent>
-                {YEARS_OF_STUDY.map((year) => (
-                  <SelectItem key={year} value={year}>
-                    Year {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {formErrors.yearsOfStudy && (
-              <p className="text-sm text-red-500">{formErrors.yearsOfStudy}</p>
-            )}
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex gap-4">
+          {/* Submit Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1  text-white bg-gray-600 hover:bg-gray-700 flex items-center justify-center"
+              className="flex-1 h-11 text-white border-0 font-semibold"
+              style={{ backgroundColor: "var(--color-secondary)" }}
             >
               {isLoading ? (
                 <>
@@ -614,9 +772,9 @@ export default function StudentVerificationForm({
               ) : (
                 <>
                   {shouldUseUpdate ? (
-                    <RefreshCw className="h-4 w-4 mr-2 text-white" />
+                    <RefreshCw className="h-4 w-4 mr-2" />
                   ) : (
-                    <CheckCircle className="h-4 w-4 mr-2 text-white" />
+                    <CheckCircle className="h-4 w-4 mr-2" />
                   )}
                   {shouldUseUpdate
                     ? "Update Verification"
@@ -630,6 +788,7 @@ export default function StudentVerificationForm({
               variant="outline"
               onClick={() => router.back()}
               disabled={isLoading}
+              className="sm:w-32 h-11"
             >
               Cancel
             </Button>

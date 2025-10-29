@@ -3,7 +3,6 @@
 import { useState, useEffect, use } from "react";
 import { useGetPaperByUuidQuery } from "@/feature/paperSlice/papers";
 import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
-import { useGetAllPublishedPapersQuery } from "@/feature/paperSlice/papers";
 import {
   useGetCommentsByPaperUuidQuery,
   useCreateCommentMutation,
@@ -26,22 +25,26 @@ import {
   Download,
   MessageSquare,
   Calendar,
-  Share2,
-  Bookmark,
   Reply,
-  Link as LinkIcon,
   MoreHorizontal,
   ArrowLeft,
+  FileText,
+  User,
+  Clock,
+  CheckCircle2,
+  Eye,
+  BookOpen,
+  Tag,
 } from "lucide-react";
 import Link from "next/link";
 import Loading from "@/app/Loading";
-import PaperCard from "@/components/card/PaperCard";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import PDFViewer from "@/components/pdf/PDFView";
 import { getSession } from "next-auth/react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { useApiNotification } from "@/components/ui/api-notification";
 
 // Add type definitions
 interface Comment {
@@ -120,17 +123,19 @@ function CommentItem({
   return (
     <div className="border-b border-border pb-4 last:border-0">
       <div className="flex items-start gap-3">
-        <Avatar className="h-8 w-8">
+        <Avatar className="h-9 w-9 border-2 border-border">
           <AvatarImage
             src={commentUser?.imageUrl || "/placeholder.svg"}
             alt={userName}
           />
-          <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
+          <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-500 text-white font-semibold">
+            {userInitials}
+          </AvatarFallback>
         </Avatar>
         <div className="flex-1">
           <div className="flex items-center justify-between">
             <div>
-              <span className="font-medium text-sm">
+              <span className="font-semibold text-sm text-foreground">
                 {userLoading ? "Loading..." : userName}
               </span>
               <span className="text-xs text-muted-foreground ml-2">
@@ -142,19 +147,23 @@ function CommentItem({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 w-6 p-0 text-muted-foreground hover:text-accent"
+                  className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
                   aria-label="Comment actions"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   onClick={() => onEdit(comment.uuid, comment.content)}
+                  className="cursor-pointer"
                 >
                   Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onDelete(comment.uuid)}>
+                <DropdownMenuItem
+                  onClick={() => onDelete(comment.uuid)}
+                  className="cursor-pointer text-red-600"
+                >
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -163,7 +172,7 @@ function CommentItem({
           {editingId === comment.uuid ? (
             <div className="mt-2">
               <textarea
-                className="w-full p-2 border border-border rounded-md resize-none text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                className="w-full p-3 border border-border rounded-lg resize-none text-sm focus:outline-none focus:ring-2 focus:ring-secondary bg-card"
                 rows={3}
                 value={editContent}
                 onChange={(e) => onEditChange(e.target.value)}
@@ -181,35 +190,44 @@ function CommentItem({
                   size="sm"
                   onClick={() => onEditSave(comment.uuid)}
                   disabled={!editContent.trim()}
+                  style={{
+                    background:
+                      "linear-gradient(135deg, var(--color-secondary), var(--color-secondary-hover))",
+                  }}
+                  className="text-white"
                 >
                   Save
                 </Button>
               </div>
             </div>
           ) : (
-            <p className="text-sm text-foreground mt-1">{comment.content}</p>
+            <p className="text-sm text-foreground mt-2 leading-relaxed">
+              {comment.content}
+            </p>
           )}
-          <div className="flex items-center gap-4 mt-2">
+          <div className="flex items-center gap-4 mt-3">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onReply(comment.uuid)}
-              className="text-muted-foreground hover:text-accent"
+              className="text-muted-foreground hover:text-secondary h-7 px-2"
               aria-label="Reply to comment"
             >
-              <Reply className="h-4 w-4 mr-1" />
-              Reply
+              <Reply className="h-3.5 w-3.5 mr-1.5" />
+              <span className="text-xs font-medium">Reply</span>
             </Button>
           </div>
           {/* Reply Form */}
           {activeReplyId === comment.uuid && (
-            <div className="ml-6 mt-4 flex items-start gap-3">
-              <Avatar className="h-6 w-6">
-                <AvatarFallback className="text-xs">U</AvatarFallback>
+            <div className="ml-6 mt-4 flex items-start gap-3 p-3 rounded-lg paper-detail-reply-form">
+              <Avatar className="h-7 w-7">
+                <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-500 text-white">
+                  U
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 <textarea
-                  className="w-full p-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="w-full p-3 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-secondary bg-card"
                   rows={2}
                   placeholder="Write a reply..."
                   value={replyContent}
@@ -220,7 +238,7 @@ function CommentItem({
                     variant="ghost"
                     size="sm"
                     onClick={onReplyCancel}
-                    className="text-muted-foreground"
+                    className="text-muted-foreground h-8"
                   >
                     Cancel
                   </Button>
@@ -228,8 +246,13 @@ function CommentItem({
                     size="sm"
                     onClick={() => onReplySubmit(comment.uuid)}
                     disabled={!replyContent.trim()}
+                    style={{
+                      background:
+                        "linear-gradient(135deg, var(--color-secondary), var(--color-secondary-hover))",
+                    }}
+                    className="text-white h-8"
                   >
-                    Send
+                    Send Reply
                   </Button>
                 </div>
               </div>
@@ -237,7 +260,7 @@ function CommentItem({
           )}
           {/* Replies */}
           {comment.replies.length > 0 && (
-            <div className="ml-6 mt-4 space-y-4">
+            <div className="ml-6 mt-4 space-y-4 border-l-2 pl-4 paper-detail-replies-border">
               {(showAllReplies
                 ? comment.replies
                 : comment.replies.slice(0, 2)
@@ -259,7 +282,7 @@ function CommentItem({
                   variant="ghost"
                   size="sm"
                   onClick={onToggleReplies}
-                  className="text-muted-foreground hover:text-accent"
+                  className="text-secondary hover:text-secondary-hover font-medium"
                 >
                   {showAllReplies
                     ? `Show Less`
@@ -321,17 +344,19 @@ function ReplyItem({
 
   return (
     <div className="flex items-start gap-3">
-      <Avatar className="h-6 w-6">
+      <Avatar className="h-7 w-7 border-2 border-border">
         <AvatarImage
           src={replyUser?.imageUrl || "/placeholder.svg"}
           alt={userName}
         />
-        <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
+        <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-pink-500 text-white font-semibold">
+          {userInitials}
+        </AvatarFallback>
       </Avatar>
       <div className="flex-1">
         <div className="flex items-center justify-between">
           <div>
-            <span className="font-medium text-sm">
+            <span className="font-semibold text-sm text-foreground">
               {userLoading ? "Loading..." : userName}
             </span>
             <span className="text-xs text-muted-foreground ml-2">
@@ -339,31 +364,35 @@ function ReplyItem({
             </span>
           </div>
         </div>
-        <p className="text-sm text-foreground mt-1">{reply.content}</p>
-        
+        <p className="text-sm text-foreground mt-2 leading-relaxed">
+          {reply.content}
+        </p>
+
         {/* Reply Button for child comments */}
         <div className="flex items-center gap-4 mt-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => onReply(reply.uuid)}
-            className="text-muted-foreground hover:text-accent"
+            className="text-muted-foreground hover:text-secondary h-7 px-2"
             aria-label="Reply to comment"
           >
-            <Reply className="h-4 w-4 mr-1" />
-            Reply
+            <Reply className="h-3.5 w-3.5 mr-1.5" />
+            <span className="text-xs font-medium">Reply</span>
           </Button>
         </div>
 
         {/* Reply Form for child comments */}
         {activeReplyId === reply.uuid && (
-          <div className="ml-6 mt-4 flex items-start gap-3">
-            <Avatar className="h-6 w-6">
-              <AvatarFallback className="text-xs">U</AvatarFallback>
+          <div className="ml-6 mt-4 flex items-start gap-3 p-3 rounded-lg paper-detail-reply-form">
+            <Avatar className="h-7 w-7">
+              <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-500 text-white">
+                U
+              </AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <textarea
-                className="w-full p-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                className="w-full p-3 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-secondary bg-card"
                 rows={2}
                 placeholder="Write a reply..."
                 value={replyContent}
@@ -374,7 +403,7 @@ function ReplyItem({
                   variant="ghost"
                   size="sm"
                   onClick={onReplyCancel}
-                  className="text-muted-foreground"
+                  className="text-muted-foreground h-8"
                 >
                   Cancel
                 </Button>
@@ -382,8 +411,13 @@ function ReplyItem({
                   size="sm"
                   onClick={() => onReplySubmit(parentCommentUuid)}
                   disabled={!replyContent.trim()}
+                  style={{
+                    background:
+                      "linear-gradient(135deg, var(--color-secondary), var(--color-secondary-hover))",
+                  }}
+                  className="text-white h-8"
                 >
-                  Sent
+                  Send Reply
                 </Button>
               </div>
             </div>
@@ -401,8 +435,16 @@ export default function PaperDetailPage({
 }) {
   const { id } = use(params);
 
+  // Notification hook
+  const {
+    showSuccess,
+    showError,
+    showLoading,
+    closeNotification,
+    NotificationComponent,
+  } = useApiNotification();
+
   // All useState hooks must be at the top level, before any conditional logic
-  const [isBookmarked, setIsBookmarked] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   // Remove static comments state
@@ -433,32 +475,8 @@ export default function PaperDetailPage({
     error: paperError,
   } = useGetPaperByUuidQuery(id);
   const paper = paperData?.paper; // Extract the actual paper object from the response
-  const { data: author, isLoading: authorLoading } = useGetUserByIdQuery(
-    paper?.authorUuid || "",
-    {
-      skip: !paper?.authorUuid,
-    }
-  );
 
   const router = useRouter();
-
-  // Prefer fullName, then first+last, then userName, then name
-  const authorName =
-    (author?.fullName && author.fullName.trim()) ||
-    [author?.firstName, author?.lastName].filter(Boolean).join(" ").trim() ||
-    (author?.userName && author.userName.trim());
-
-  // Fetch related papers (similar papers)
-  const { data: relatedPapersData } = useGetAllPublishedPapersQuery({
-    page: 0,
-    size: 4,
-    sortBy: "publishedAt",
-    direction: "desc",
-  });
-  const relatedPapers =
-    relatedPapersData?.papers?.content
-      ?.filter((p) => p.uuid !== id)
-      ?.slice(0, 3) || [];
 
   // Fetch comments from API
   const {
@@ -501,10 +519,15 @@ export default function PaperDetailPage({
     e.stopPropagation(); // Prevent triggering parent div onClick
 
     if (!paper.fileUrl) {
-      console.error("No file URL available");
-      alert("No feedback file available to download");
+      showError("Download Failed", "No file available to download.");
       return;
     }
+
+    // Show loading notification
+    showLoading(
+      "Downloading PDF",
+      "Please wait while we prepare your document..."
+    );
 
     try {
       // Create filename from paper title or use default
@@ -514,6 +537,11 @@ export default function PaperDetailPage({
 
       // Fetch the file as blob to force download
       const response = await fetch(paper.fileUrl);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch PDF");
+      }
+
       const blob = await response.blob();
 
       // Create blob URL
@@ -532,10 +560,27 @@ export default function PaperDetailPage({
       // Clean up blob URL
       window.URL.revokeObjectURL(blobUrl);
 
+      // Close loading and show success
+      closeNotification();
+      setTimeout(() => {
+        showSuccess(
+          "Download Complete!",
+          `Your document "${paper.title}" has been downloaded successfully.`
+        );
+      }, 100);
+
       console.log(`Downloaded: ${filename}`);
     } catch (error) {
       console.error("Error downloading file:", error);
-      alert("Failed to download file. Please try again.");
+
+      // Close loading and show error
+      closeNotification();
+      setTimeout(() => {
+        showError(
+          "Download Failed",
+          "Failed to download the file. Please check your connection and try again."
+        );
+      }, 100);
     }
   };
 
@@ -545,53 +590,12 @@ export default function PaperDetailPage({
     }
   };
 
-  const handleToggleBookmark = () => {
-    setIsBookmarked(!isBookmarked);
-    console.log("Toggling bookmark for paper:", paper?.uuid);
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
-  };
-
-  const handleShare = (platform: string) => {
-    // Use window only on client side
-    if (typeof window === "undefined") return;
-
-    const url = window.location.href;
-    const title = paper?.title || "Paper";
-    let shareUrl = "";
-    switch (platform) {
-      case "twitter":
-        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-          title
-        )}&url=${encodeURIComponent(url)}`;
-        window.open(shareUrl, "_blank", "noopener,noreferrer");
-        break;
-      case "linkedin":
-        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-          url
-        )}`;
-        window.open(shareUrl, "_blank", "noopener,noreferrer");
-        break;
-      case "email":
-        shareUrl = `mailto:?subject=${encodeURIComponent(
-          title
-        )}&body=${encodeURIComponent(url)}`;
-        window.open(shareUrl, "_blank", "noopener,noreferrer");
-        break;
-      case "copy":
-        navigator.clipboard.writeText(url);
-        console.log("Copied link:", url);
-        break;
-      default:
-        return;
-    }
-    console.log(`Sharing paper ${paper?.uuid} on ${platform}`);
   };
 
   const handleAddComment = async () => {
@@ -623,7 +627,7 @@ export default function PaperDetailPage({
   const handleAddReply = async (parentCommentUuid: string) => {
     // Find the reply ID that was used to trigger this
     const replyCommentId = activeReplyCommentId;
-    
+
     if (replyCommentId && newReply[replyCommentId]?.trim()) {
       try {
         await createComment({
@@ -690,289 +694,317 @@ export default function PaperDetailPage({
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 sm:py-8 max-w-6xl">
+    <div className="paper-detail-page-bg">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="space-y-6">
           {/* Back Button */}
-          <div className="flex items-center mt-10 gap-2 text-sm text-muted-foreground">
-            <Link
-              href="#"
-              className="hover:text-foreground flex items-center gap-2"
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
               onClick={handleOnClickBack}
+              className="paper-detail-hero-card px-4 py-2 font-semibold hover:shadow-md transition-all"
+              style={{ color: "var(--color-secondary)" }}
             >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Papers
-            </Link>
-            <span>/</span>
-            <span>{paper.categoryNames?.[0] || "Research"}</span>
-            <span>/</span>
-            <span className="text-foreground">Paper Details</span>
+              <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+              Back
+            </Button>
           </div>
 
-          {/* Header */}
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-            <div className="flex-1 space-y-4">
-              <div className="flex items-start gap-3">
-                <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight">
-                  {paper.title}
-                </h1>
-              </div>
+          {/* Hero Header Card */}
+          <Card className="paper-detail-hero-card border-0 overflow-hidden">
+            <div
+              className="h-1 w-full"
+              style={{
+                background: `linear-gradient(90deg, var(--color-secondary), var(--color-accent))`,
+              }}
+            />
+            <CardHeader className="pb-6 pt-8 px-8">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
+                <div className="flex-1 space-y-6">
+                  {/* Title */}
+                  <h1 className="text-4xl sm:text-5xl font-extrabold leading-tight text-foreground">
+                    {paper.title}
+                  </h1>
 
-              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Link
-                    href={
-                      paper?.authorUuid ? `/users/${paper.authorUuid}` : "#"
-                    }
-                    className="flex items-center gap-2"
-                  >
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage
-                        src={author?.imageUrl || "/placeholder.svg"}
-                        alt={authorName || "Author"}
-                      />
-                      <AvatarFallback className="text-xs">
-                        {(authorName || "A")
-                          .split(" ")
-                          .map((n: string) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="hover:text-foreground">
-                      {authorLoading
-                        ? "Loading..."
-                        : authorName || "Unknown Author"}
-                    </span>
-                  </Link>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>
-                    Published:{" "}
-                    {formatDate(
-                      paper?.publishedAt ||
-                        paper?.createdAt ||
-                        new Date().toISOString()
+                  {/* Status Badges */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    {paper.status === "APPROVED" && (
+                      <Badge
+                        className="px-4 py-2 text-sm font-bold shadow-lg"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #22c55e, #10b981)",
+                          color: "white",
+                        }}
+                      >
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        APPROVED
+                      </Badge>
                     )}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>
-                    Submitted:{" "}
-                    {formatDate(paper?.submittedAt || new Date().toISOString())}
-                  </span>
-                </div>
-              </div>
+                    {(paper.categoryNames || []).map((category, index) => (
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="px-4 py-2 text-sm font-semibold border-2 bg-accent/20"
+                        style={{
+                          borderColor: "var(--color-secondary)",
+                          color: "var(--color-secondary)",
+                        }}
+                      >
+                        <Tag className="w-3.5 h-3.5 mr-1.5" />
+                        {category}
+                      </Badge>
+                    ))}
+                  </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                {(paper.categoryNames || []).map((category, index) => (
-                  <Badge key={index} variant="secondary">
-                    {category}
-                  </Badge>
-                ))}
-                <Badge variant={paper.isApproved ? "approved" : "outline"}>
-                  {paper.isApproved ? "Approved" : "Pending"}
-                </Badge>
-                <div className="flex items-center gap-1">
-                  <span className="text-sm text-muted-foreground">
-                    ({comments.length} comments)
-                  </span>
+                  {/* Metadata */}
+                  <div className="flex flex-wrap gap-6 text-sm">
+                    <div className="flex items-center gap-2 font-medium text-muted-foreground bg-accent/30 px-4 py-2 rounded-lg">
+                      <Calendar
+                        className="h-4 w-4"
+                        style={{ color: "var(--color-secondary)" }}
+                      />
+                      <span className="font-semibold">Submitted:</span>
+                      <span className="text-foreground">
+                        {formatDate(
+                          paper?.submittedAt || new Date().toISOString()
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 font-medium text-muted-foreground bg-accent/30 px-4 py-2 rounded-lg">
+                      <MessageSquare
+                        className="h-4 w-4"
+                        style={{ color: "var(--color-secondary)" }}
+                      />
+                      <span className="font-semibold">Comments:</span>
+                      <span className="text-foreground">{comments.length}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="flex flex-row lg:flex-col gap-2 lg:w-48 ">
-              <Button
-                className="flex-1 lg:flex-none bg-card hover:text-accent hover:bg-accent/10 w-full"
-                onClick={handleDownloadPDF}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download PDF
-              </Button>
-              <Button
-                className="flex-1 lg:flex-none bg-card hover:text-accent hover:bg-accent/10 w-full"
-                onClick={handleToggleBookmark}
-                aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
-              >
-                <Bookmark
-                  className={`h-4 w-4 mr-2 ${
-                    isBookmarked ? "fill-accent text-accent" : ""
-                  }`}
-                />
-                {isBookmarked ? "Saved" : "Save"}
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+                {/* Action Buttons */}
+                <div className="flex flex-row lg:flex-col gap-3 lg:min-w-[220px]">
                   <Button
-                    className="flex-1 lg:flex-none bg-card hover:text-accent hover:bg-accent/10 w-full"
-                    aria-label="Share paper"
+                    onClick={handleDownloadPDF}
+                    className="flex-1 lg:flex-none font-bold shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 paper-detail-btn-primary"
+                    size="lg"
                   >
-                    <Share2 className="h-4 w-4 mr-2" />
-                    Share
+                    <Download className="h-5 w-5 mr-2" />
+                    Download PDF
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-48">
-                  <DropdownMenuItem onClick={() => handleShare("twitter")}>
-                    <svg
-                      className="h-4 w-4 mr-2"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                    </svg>
-                    Twitter/X
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleShare("linkedin")}>
-                    <svg
-                      className="h-4 w-4 mr-2"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.024-3.037-1.85-3.037-1.85 0-2.132 1.447-2.132 2.941v5.665H9.352V9h3.414v1.561h.048c.476-.9 1.636-1.85 3.365-1.85 3.602 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.924 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                    </svg>
-                    LinkedIn
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleShare("email")}>
-                    <svg
-                      className="h-4 w-4 mr-2"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M0 3v18h24V3H0zm21.518 2L12 12.713 2.482 5h19.036zM2 19V7.287L12 15l10-7.713V19H2z" />
-                    </svg>
-                    Email
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleShare("copy")}>
-                    <LinkIcon className="h-4 w-4 mr-2" />
-                    Copy Link
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
+                  <Button
+                    onClick={handleViewPDFInNewTab}
+                    variant="outline"
+                    className="flex-1 lg:flex-none font-bold transition-all paper-detail-btn-secondary"
+                    size="lg"
+                  >
+                    <Eye className="h-5 w-5 mr-2" />
+                    Open in New Tab
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+
           {/* Content */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <Tabs defaultValue="content" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 bg-muted/30 p-1 rounded-lg gap-1">
-                  <TabsTrigger
-                    value="content"
-                    className="font-semibold transition-all duration-300 ease-in-out data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-accent/50 data-[state=inactive]:text-muted-foreground rounded-md
-                    bg-card hover:text-accent hover:bg-accent/10"
-                  >
-                    Content
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="abstract"
-                    className="font-semibold transition-all duration-300 ease-in-out data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-accent/50 data-[state=inactive]:text-muted-foreground rounded-md
-                    bg-card hover:text-accent hover:bg-accent/10"
-                  >
-                    Description
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="comments"
-                    className="font-semibold transition-all duration-300 ease-in-out data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-accent/50 data-[state=inactive]:text-muted-foreground rounded-md
-                    bg-card hover:text-accent hover:bg-accent/10"
-                  >
-                    Comments
-                  </TabsTrigger>
-                </TabsList>
+              {/* Main Content Card */}
+              <Card className="paper-detail-section-card border-0">
+                <CardContent className="pt-6">
+                  <Tabs defaultValue="about" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3 p-1.5 rounded-xl gap-2 bg-accent">
+                      <TabsTrigger
+                        value="about"
+                        className="paper-detail-tab font-bold rounded-lg transition-all duration-300"
+                      >
+                        <BookOpen className="w-4 h-4 mr-2" />
+                        About
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="files"
+                        className="paper-detail-tab font-bold rounded-lg transition-all duration-300"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Files
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="feedback"
+                        className="paper-detail-tab font-bold rounded-lg transition-all duration-300"
+                      >
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Feedback ({comments.length})
+                      </TabsTrigger>
+                    </TabsList>
 
-                <TabsContent value="abstract" className="space-y-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Abstract</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-muted-foreground leading-relaxed">
-                        {paper?.abstractText || "No abstract available."}
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Categories</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-wrap gap-2">
-                        {(paper.categoryNames || []).map((category, index) => (
-                          <Badge key={index} variant="outline">
-                            {category}
-                          </Badge>
-                        ))}
+                    {/* About Tab */}
+                    <TabsContent value="about" className="mt-6 space-y-6">
+                      {/* Abstract Section */}
+                      <div className="space-y-3 p-6 rounded-xl paper-detail-accent-bg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div
+                            className="p-2 rounded-lg"
+                            style={{
+                              backgroundColor: "var(--color-secondary)",
+                            }}
+                          >
+                            <BookOpen className="w-4 h-4 text-white" />
+                          </div>
+                          <h3 className="text-lg font-bold text-foreground">
+                            Abstract
+                          </h3>
+                        </div>
+                        <p className="text-base text-muted-foreground leading-relaxed">
+                          {paper?.abstractText || "No abstract available."}
+                        </p>
                       </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
 
-                <TabsContent value="content" className="space-y-4">
-                  <Card>
-                    <CardContent>
-                      {pdfError ? (
-                        <div className="text-center text-muted-foreground">
-                          <p className="text-red-500 mb-4">{pdfError}</p>
-                          <div className="flex gap-2 justify-center">
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                setPdfError(null);
-                              }}
+                      <Separator />
+
+                      {/* Details Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Mentor Info */}
+                        <div className="p-6 rounded-xl bg-card shadow-sm hover:shadow-md transition-all">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div
+                              className="p-2.5 rounded-lg"
+                              style={{ backgroundColor: "#6b7280" }}
                             >
-                              Retry Loading PDF
-                            </Button>
-                            <Button
-                              variant="default"
-                              onClick={handleViewPDFInNewTab}
-                            >
-                              Open PDF in New Tab
-                            </Button>
+                              <User className="w-5 h-5 text-white" />
+                            </div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                              MENTOR
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-11 w-11 border-2 border-border shadow-sm">
+                              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-bold">
+                                NA
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="font-bold text-foreground">
+                              Not assigned
+                            </span>
                           </div>
                         </div>
-                      ) : !isClient ? (
-                        <div className="text-center text-muted-foreground py-8">
-                          <p>Loading PDF viewer...</p>
+
+                        {/* Status Info */}
+                        <div className="p-6 rounded-xl bg-card shadow-sm hover:shadow-md transition-all">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div
+                              className="p-2.5 rounded-lg animate-pulse"
+                              style={{ backgroundColor: "#22c55e" }}
+                            >
+                              <CheckCircle2 className="w-5 h-5 text-white" />
+                            </div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                              STATUS
+                            </p>
+                          </div>
+                          <Badge
+                            className="px-4 py-2 text-sm font-bold shadow-lg"
+                            style={{
+                              background:
+                                "linear-gradient(135deg, #22c55e, #10b981)",
+                              color: "white",
+                            }}
+                          >
+                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                            APPROVED
+                          </Badge>
                         </div>
-                      ) : (
-                        <div className="relative bg-card rounded-lg overflow-hidden">
-                          <div className="rounded-lg">
+                      </div>
+                    </TabsContent>
+
+                    {/* Files Tab */}
+                    <TabsContent value="files" className="mt-6 space-y-4">
+                      <div className="space-y-4">
+                        {pdfError ? (
+                          <div className="text-center text-muted-foreground p-12 rounded-xl paper-detail-accent-bg-light">
+                            <FileText className="w-16 h-16 mx-auto mb-4 text-red-500" />
+                            <p className="text-red-500 mb-6 font-semibold text-lg">
+                              {pdfError}
+                            </p>
+                            <div className="flex gap-3 justify-center">
+                              <Button
+                                variant="outline"
+                                onClick={() => setPdfError(null)}
+                                className="font-semibold"
+                              >
+                                Retry Loading PDF
+                              </Button>
+                              <Button
+                                onClick={handleViewPDFInNewTab}
+                                className="font-semibold text-white"
+                                style={{
+                                  background:
+                                    "linear-gradient(135deg, var(--color-secondary), var(--color-secondary-hover))",
+                                }}
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                Open PDF in New Tab
+                              </Button>
+                            </div>
+                          </div>
+                        ) : !isClient ? (
+                          <div className="text-center text-muted-foreground py-16 rounded-xl paper-detail-accent-bg-light">
+                            <Clock
+                              className="w-16 h-16 mx-auto mb-4 animate-spin"
+                              style={{ color: "var(--color-secondary)" }}
+                            />
+                            <p className="font-semibold text-lg">
+                              Loading PDF viewer...
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="relative bg-card rounded-2xl overflow-hidden shadow-sm">
                             <PDFViewer pdfUri={paper.fileUrl} />
                           </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+                        )}
+                      </div>
+                    </TabsContent>
 
-                <TabsContent value="comments" className="space-y-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>
-                        Comments & Reviews (
-                        {commentsLoading ? "..." : comments.length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
+                    {/* Feedback Tab */}
+                    <TabsContent value="feedback" className="mt-6 space-y-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+                          <MessageSquare
+                            className="w-5 h-5"
+                            style={{ color: "var(--color-secondary)" }}
+                          />
+                          Feedback & Comments
+                          <span className="text-muted-foreground text-base">
+                            ({commentsLoading ? "..." : comments.length})
+                          </span>
+                        </h3>
+                      </div>
+
                       {/* New Comment Form */}
-                      <div className="flex items-start gap-3 mb-6">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="text-xs">U</AvatarFallback>
+                      <div className="flex items-start gap-3 mb-6 p-4 rounded-xl paper-detail-accent-bg">
+                        <Avatar className="h-9 w-9 border-2 border-border">
+                          <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-500 text-white">
+                            U
+                          </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <textarea
-                            className="w-full p-2 border border-border rounded-md resize-none text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                            className="w-full p-3 border border-border rounded-lg resize-none text-sm focus:outline-none focus:ring-2 focus:ring-secondary bg-card"
                             rows={3}
-                            placeholder="Write a comment..."
+                            placeholder="Share your thoughts about this paper..."
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
                           />
                           <Button
-                            className="mt-2 bg-blue-600 hover:bg-blue-700 text-white"
+                            className="mt-3 font-semibold text-white shadow-md hover:shadow-lg transition-all"
                             size="sm"
                             onClick={handleAddComment}
                             disabled={!newComment.trim()}
+                            style={{
+                              background:
+                                "linear-gradient(135deg, var(--color-secondary), var(--color-secondary-hover))",
+                            }}
                           >
+                            <MessageSquare className="w-4 h-4 mr-2" />
                             Post Comment
                           </Button>
                         </div>
@@ -980,25 +1012,35 @@ export default function PaperDetailPage({
 
                       {/* Loading State */}
                       {commentsLoading && (
-                        <div className="text-center py-8 text-muted-foreground">
-                          Loading comments...
+                        <div className="text-center py-12 text-muted-foreground">
+                          <Clock
+                            className="w-12 h-12 mx-auto mb-4 animate-spin"
+                            style={{ color: "var(--color-secondary)" }}
+                          />
+                          <p className="font-medium">Loading comments...</p>
                         </div>
                       )}
 
                       {/* Error State */}
                       {commentsError && (
-                        <div className="text-center py-8 text-red-500">
-                          Failed to load comments
+                        <div className="text-center py-12 text-red-500">
+                          <p className="font-semibold">
+                            Failed to load comments
+                          </p>
                         </div>
                       )}
 
                       {/* Comments List */}
                       {!commentsLoading && !commentsError && (
-                        <div className="space-y-4">
+                        <div className="space-y-6 bg-card p-6 rounded-xl shadow-sm">
                           {comments.length === 0 ? (
-                            <p className="text-center text-muted-foreground py-4">
-                              No comments yet. Be the first to comment!
-                            </p>
+                            <div className="text-center py-12">
+                              <MessageSquare className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                              <p className="text-center text-muted-foreground font-medium">
+                                No comments yet. Be the first to share your
+                                thoughts!
+                              </p>
+                            </div>
                           ) : (
                             comments
                               .filter((comment) => !comment.parentUuid)
@@ -1010,7 +1052,9 @@ export default function PaperDetailPage({
                                   onDelete={handleDeleteComment}
                                   onReply={handleReplyClick}
                                   activeReplyId={activeReplyCommentId}
-                                  replyContent={newReply[activeReplyCommentId || ""] || ""}
+                                  replyContent={
+                                    newReply[activeReplyCommentId || ""] || ""
+                                  }
                                   onReplyChange={(uuid, content) =>
                                     setNewReply((prev) => ({
                                       ...prev,
@@ -1037,169 +1081,133 @@ export default function PaperDetailPage({
                           )}
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                <TabsContent value="citations" className="space-y-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Citation Information</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <h4 className="font-medium mb-2">APA Citation</h4>
-                        <div className="p-3 bg-muted rounded-lg text-sm font-mono">
-                          {author?.fullName || "Unknown Author"} (
-                          {new Date(
-                            paper.publishedAt || paper.createdAt
-                          ).getFullYear()}
-                          ). {paper.title}. <em>IPUB Academic Platform</em>.
-                        </div>
-                      </div>
-                      <div>
-                        <h4 className="font-medium mb-2">BibTeX</h4>
-                        <div className="p-3 bg-muted rounded-lg text-sm font-mono">
-                          @article{"{"}paper{paper.uuid?.slice(0, 8)},{"}"},
-                          <br />
-                          &nbsp;&nbsp;title={"{"} {paper.title} {"}"},<br />
-                          &nbsp;&nbsp;author={"{"}{" "}
-                          {author?.fullName || "Unknown Author"} {"}"},
-                          <br />
-                          &nbsp;&nbsp;year={"{"}{" "}
-                          {new Date(
-                            paper.publishedAt || paper.createdAt
-                          ).getFullYear()}{" "}
-                          {"}"},
-                          <br />
-                          &nbsp;&nbsp;abstract={"{"} {paper.abstractText} {"}"}
-                          <br />
-                          {"}"}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
             </div>
 
-            <div className="space-y-6 mb-20">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Paper Statistics</CardTitle>
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Document Info Card */}
+              <Card className="paper-detail-section-card border-0 sticky top-6">
+                <CardHeader className="border-b paper-detail-accent-bg">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl shadow-md paper-detail-document-info-icon-bg">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl font-bold paper-detail-document-info-title">
+                        Document Info
+                      </CardTitle>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Key details at a glance
+                      </p>
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                      <span>Comments</span>
-                    </div>
-                    <span className="font-medium">{comments.length}</span>
+                <CardContent className="paper-detail-document-info-content space-y-5">
+                  {/* Category */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-muted-foreground">
+                      Category
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="px-3 py-1.5 font-semibold border-2"
+                      style={{
+                        borderColor: "var(--color-secondary)",
+                        color: "var(--color-secondary)",
+                        background: "rgba(37, 99, 235, 0.1)",
+                      }}
+                    >
+                      {paper.categoryNames?.[0] || "General"}
+                    </Badge>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                    </div>
-                  </div>
+
                   <Separator />
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Published</span>
-                    <span className="font-medium">
-                      {formatDate(paper.publishedAt || paper.createdAt)}
+
+                  {/* Mentor */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-muted-foreground">
+                      Mentor
+                    </span>
+                    <span className="text-sm font-bold text-foreground">
+                      Not assigned
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Submitted</span>
-                    <span className="font-medium">
+
+                  <Separator />
+
+                  {/* Submitted */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-muted-foreground">
+                      Submitted
+                    </span>
+                    <span className="text-sm font-bold text-foreground">
                       {formatDate(paper.submittedAt)}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Categories</span>
-                    <span className="font-medium">{paper.categoryNames}</span>
+
+                  <Separator />
+
+                  {/* Last updated */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-muted-foreground">
+                      Last updated
+                    </span>
+                    <span className="text-sm font-bold text-foreground">
+                      {formatDate(paper.submittedAt)}
+                    </span>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>About the Author</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-3 mb-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage
-                        src={author?.imageUrl || "/placeholder.svg"}
-                        alt={author?.fullName || "Author"}
-                      />
-                      <AvatarFallback>
-                        {(author?.fullName || "U")
-                          .split(" ")
-                          .map((n: string) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h4 className="font-medium">
-                        {authorLoading
-                          ? "Loading..."
-                          : author?.fullName || "Unknown Author"}
-                      </h4>
-                      <p className="text-sm text-muted-foreground">Author</p>
+              {/* Quick Actions Card */}
+              <Card className="paper-detail-section-card border-0">
+                <CardHeader className="border-b paper-detail-accent-bg">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-lg paper-detail-quick-actions-icon-bg">
+                      <MessageSquare className="w-4 h-4 text-white" />
                     </div>
+                    <CardTitle className="text-lg font-bold paper-detail-quick-actions-title">
+                      Quick Actions
+                    </CardTitle>
                   </div>
-                  {author?.email && (
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {author.email}
-                    </p>
-                  )}
+                </CardHeader>
+                <CardContent className="paper-detail-quick-actions-content space-y-3">
+                  <Button
+                    onClick={handleDownloadPDF}
+                    className="w-full font-bold shadow-md hover:shadow-xl hover:scale-105 transition-all paper-detail-btn-primary"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download PDF
+                  </Button>
                   <Button
                     variant="outline"
-                    size="sm"
-                    className="w-full bg-transparent"
-                    asChild
-                    disabled={!author}
+                    className="w-full font-semibold transition-all paper-detail-btn-secondary"
+                    onClick={handleViewPDFInNewTab}
                   >
-                    <Link href={`/users/${paper?.authorUuid || ""}`}>
-                      View Profile
-                    </Link>
+                    <Eye className="w-4 h-4 mr-2" />
+                    View in New Tab
                   </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Related Papers</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {relatedPapers.length > 0 ? (
-                      relatedPapers.map((relatedPaper) => (
-                        <PaperCard
-                          key={relatedPaper.uuid}
-                          paper={relatedPaper}
-                          onDownloadPDF={() =>
-                            window.open(relatedPaper.fileUrl, "_blank")
-                          }
-                          onToggleBookmark={() =>
-                            console.log(
-                              `Toggle bookmark for paper ${relatedPaper.uuid}`
-                            )
-                          }
-                          isBookmarked={false}
-                        />
-                      ))
-                    ) : (
-                      <p className="text-muted-foreground">
-                        No related papers found.
-                      </p>
-                    )}
-                  </div>
+                  <Button
+                    variant="outline"
+                    className="w-full font-semibold transition-all paper-detail-btn-secondary"
+                    onClick={handleOnClickBack}
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Go Back
+                  </Button>
                 </CardContent>
               </Card>
             </div>
           </div>
         </div>
       </div>
+
+      {/* API Notification Component */}
+      <NotificationComponent />
     </div>
   );
 }

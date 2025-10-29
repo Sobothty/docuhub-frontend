@@ -26,6 +26,10 @@ import DocuhubLoader from "../loader/docuhub-loading";
 interface PDFEditProps {
   pdfUri: string;
   onUploadSuccess?: (fileUri: string) => void;
+  showSuccess?: (title: string, message: string) => void;
+  showError?: (title: string, message: string) => void;
+  showLoading?: (title: string, message: string) => void;
+  closeNotification?: () => void;
 }
 
 interface UploadMediaResponse {
@@ -82,7 +86,14 @@ interface RenderPageParams {
   pageNumber: number;
 }
 
-const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
+const PDFEdit = ({
+  pdfUri,
+  onUploadSuccess,
+  showSuccess,
+  showError,
+  showLoading,
+  closeNotification,
+}: PDFEditProps) => {
   const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -94,9 +105,9 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadType, setDownloadType] = useState("");
 
-  const [tool, setTool] = useState<"none" | "draw" | "text" | "highlight">(
-    "none"
-  );
+  const [tool, setTool] = useState<
+    "none" | "draw" | "text" | "highlight" | "eraser"
+  >("none");
   const [isDrawing, setIsDrawing] = useState(false);
   const [isHighlighting, setIsHighlighting] = useState(false);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
@@ -111,6 +122,11 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
   const [drawColor, setDrawColor] = useState("#ff0000");
   const [highlightColor, setHighlightColor] = useState("#ffff00");
   const [strokeWidth, setStrokeWidth] = useState(2);
+  const [eraserSize, setEraserSize] = useState(20);
+  const [isErasing, setIsErasing] = useState(false);
+  const [annotationsToRemove, setAnnotationsToRemove] = useState<Set<number>>(
+    new Set()
+  );
 
   const [scale, setScale] = useState(1.5);
   const [rotation, setRotation] = useState(0);
@@ -401,9 +417,11 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
 
       setIsDrawing(false);
       setIsHighlighting(false);
+      setIsErasing(false);
       setShowTextInput(false);
       setCurrentDrawingAnnotation(null);
       setCurrentHighlightAnnotation(null);
+      setAnnotationsToRemove(new Set());
 
       if (overlayCanvasRef.current) {
         const overlayCtx = overlayCanvasRef.current.getContext("2d");
@@ -528,6 +546,13 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
       setDownloadProgress(0);
       setDownloadType("Initializing PDF Creation");
       setError("");
+
+      if (showLoading) {
+        showLoading(
+          "Uploading to Student",
+          "Please wait while we process and upload your annotated PDF..."
+        );
+      }
 
       setRenderingCache(new Map());
 
@@ -668,7 +693,17 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
         }
       }, 100);
 
-      toast.success("PDF uploaded successfully!");
+      if (closeNotification) {
+        closeNotification();
+      }
+      if (showSuccess) {
+        showSuccess(
+          "Upload Successful",
+          "Your annotated PDF has been uploaded successfully and is ready for review submission."
+        );
+      } else {
+        toast.success("PDF uploaded successfully!");
+      }
       return uploadedUri;
     } catch (error) {
       console.error("Error creating/uploading PDF:", error);
@@ -681,6 +716,18 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
       }
 
       setError(`Failed to create/upload PDF: ${errorMessage}`);
+
+      if (closeNotification) {
+        closeNotification();
+      }
+      if (showError) {
+        showError(
+          "Upload Failed",
+          "Failed to upload the annotated PDF. Please check your connection and try again."
+        );
+      } else {
+        toast.error("Failed to upload PDF. Please try again.");
+      }
 
       setRenderingCache(new Map());
 
@@ -704,6 +751,10 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
     createMedia,
     onUploadSuccess,
     goToPage,
+    showLoading,
+    showSuccess,
+    showError,
+    closeNotification,
   ]);
 
   const DownloadProgressModal = () => {
@@ -736,6 +787,13 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
     try {
       setLoading(true);
       setError("");
+
+      if (showLoading) {
+        showLoading(
+          "Preparing Download",
+          "Please wait while we prepare your PDF for download..."
+        );
+      }
 
       const jsPDFModule = await import("jspdf");
       const jsPDF = jsPDFModule.default;
@@ -780,19 +838,63 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
       await goToPage(originalPage);
 
       pdf.save(`annotated-pdf-${Date.now()}.pdf`);
+
+      if (closeNotification) {
+        closeNotification();
+      }
+      if (showSuccess) {
+        showSuccess(
+          "Download Complete",
+          "Your annotated PDF has been downloaded successfully!"
+        );
+      } else {
+        toast.success("PDF downloaded successfully!");
+      }
     } catch (error) {
       console.log("Error creating PDF:", error);
       setError(`Failed to create PDF: ${error}`);
+
+      if (closeNotification) {
+        closeNotification();
+      }
+      if (showError) {
+        showError(
+          "Download Failed",
+          "Failed to create the PDF. Please try again."
+        );
+      } else {
+        toast.error("Failed to download PDF. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
-  }, [pdfDoc, currentPage, totalPages, goToPage, renderPageSilent]);
+  }, [
+    pdfDoc,
+    currentPage,
+    totalPages,
+    goToPage,
+    renderPageSilent,
+    showLoading,
+    showSuccess,
+    showError,
+    closeNotification,
+  ]);
 
   useEffect(() => {
-    if (pdfUri && pdfjsLib) {
+    if (pdfUri && pdfjsLib && !pdfDoc) {
       loadPdf(pdfUri);
     }
-  }, [pdfUri, pdfjsLib, loadPdf]);
+    // Only reload if pdfUri or pdfjsLib changes, not on every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pdfUri, pdfjsLib]);
+
+  // Re-render current page when scale or rotation changes
+  useEffect(() => {
+    if (pdfDoc && currentPage > 0) {
+      renderPage({ pdf: pdfDoc, pageNumber: currentPage });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scale, rotation]);
 
   useEffect(() => {
     if (showTextInput && textInputRef.current) {
@@ -858,6 +960,9 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
       }
       setShowTextInput(true);
       setTextValue("");
+    } else if (tool === "eraser") {
+      setIsErasing(true);
+      markAnnotationsForRemoval(coords.x, coords.y);
     }
   };
 
@@ -982,6 +1087,9 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
 
       // Draw current highlight annotation
       drawAnnotation(ctx, currentHighlightAnnotation);
+    } else if (isErasing && tool === "eraser") {
+      // Continue marking annotations for removal while dragging
+      markAnnotationsForRemoval(coords.x, coords.y);
     }
   };
 
@@ -995,10 +1103,14 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
       setAnnotations((prev) => [...prev, currentHighlightAnnotation]);
       setCurrentHighlightAnnotation(null);
       // Don't redraw - the annotation is already visible on canvas
+    } else if (isErasing) {
+      // Apply all eraser removals at once when mouse is released
+      applyEraserRemovals();
     }
 
     setIsDrawing(false);
     setIsHighlighting(false);
+    setIsErasing(false);
   };
 
   const handleTextSubmit = () => {
@@ -1031,12 +1143,165 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
     setTextValue("");
   };
 
+  // Helper function to check if a point is near an annotation
+  const isPointNearAnnotation = useCallback(
+    (x: number, y: number, annotation: Annotation, size: number): boolean => {
+      if (annotation.type === "draw") {
+        return annotation.points.some(
+          (point) =>
+            Math.abs(point.x - x) < size && Math.abs(point.y - y) < size
+        );
+      } else if (
+        annotation.type === "highlight" ||
+        annotation.type === "text"
+      ) {
+        return (
+          x >= annotation.x - size &&
+          x <=
+            annotation.x +
+              (annotation.type === "highlight" ? annotation.width : 100) +
+              size &&
+          y >= annotation.y - size &&
+          y <=
+            annotation.y +
+              (annotation.type === "highlight" ? annotation.height : 20) +
+              size
+        );
+      }
+      return false;
+    },
+    []
+  );
+
+  // Mark annotations for removal with immediate visual feedback
+  const markAnnotationsForRemoval = useCallback(
+    (x: number, y: number) => {
+      let needsRedraw = false;
+      const newMarkedIds = new Set(annotationsToRemove);
+
+      annotations.forEach((ann) => {
+        if (
+          ann.page === currentPage &&
+          isPointNearAnnotation(x, y, ann, eraserSize) &&
+          !newMarkedIds.has(ann.id)
+        ) {
+          newMarkedIds.add(ann.id);
+          needsRedraw = true;
+        }
+      });
+
+      if (needsRedraw) {
+        setAnnotationsToRemove(newMarkedIds);
+
+        // Immediate visual feedback - redraw without the marked annotations
+        if (overlayCanvasRef.current) {
+          const ctx = overlayCanvasRef.current.getContext("2d");
+          if (ctx) {
+            ctx.clearRect(
+              0,
+              0,
+              overlayCanvasRef.current.width,
+              overlayCanvasRef.current.height
+            );
+
+            // Draw only annotations that are NOT marked for removal
+            const pageAnnotations = annotations.filter(
+              (ann) => ann.page === currentPage && !newMarkedIds.has(ann.id)
+            );
+
+            pageAnnotations.forEach((annotation) => {
+              ctx.save();
+              try {
+                if (annotation.type === "draw") {
+                  ctx.strokeStyle = annotation.color;
+                  ctx.lineWidth = annotation.strokeWidth;
+                  ctx.lineCap = "round";
+                  ctx.lineJoin = "round";
+                  ctx.beginPath();
+
+                  if (annotation.points && annotation.points.length > 0) {
+                    ctx.moveTo(annotation.points[0].x, annotation.points[0].y);
+                    for (let i = 1; i < annotation.points.length; i++) {
+                      ctx.lineTo(
+                        annotation.points[i].x,
+                        annotation.points[i].y
+                      );
+                    }
+                  }
+                  ctx.stroke();
+                } else if (annotation.type === "highlight") {
+                  ctx.fillStyle = annotation.color + "80";
+                  ctx.fillRect(
+                    annotation.x,
+                    annotation.y,
+                    annotation.width,
+                    annotation.height
+                  );
+                } else if (annotation.type === "text") {
+                  ctx.fillStyle = annotation.color || "#000000";
+                  ctx.font = `${annotation.fontSize || 16}px Arial`;
+                  ctx.fillText(annotation.text, annotation.x, annotation.y);
+                }
+              } catch (error) {
+                console.log(`Error drawing annotation:`, error);
+              }
+              ctx.restore();
+            });
+          }
+        }
+      }
+    },
+    [
+      annotations,
+      currentPage,
+      eraserSize,
+      isPointNearAnnotation,
+      annotationsToRemove,
+    ]
+  );
+
+  // Apply all eraser removals at once (final cleanup)
+  const applyEraserRemovals = useCallback(() => {
+    if (annotationsToRemove.size > 0) {
+      setAnnotations((prev) =>
+        prev.filter((ann) => !annotationsToRemove.has(ann.id))
+      );
+      setAnnotationsToRemove(new Set());
+    }
+  }, [annotationsToRemove]);
+
   const clearAnnotations = useCallback(() => {
     setAnnotations((prev) => prev.filter((ann) => ann.page !== currentPage));
+
+    // Clear the overlay canvas visually
+    if (overlayCanvasRef.current) {
+      const ctx = overlayCanvasRef.current.getContext("2d");
+      if (ctx) {
+        ctx.clearRect(
+          0,
+          0,
+          overlayCanvasRef.current.width,
+          overlayCanvasRef.current.height
+        );
+      }
+    }
   }, [currentPage]);
 
   const clearAllAnnotations = useCallback(() => {
     setAnnotations([]);
+
+    // Clear the overlay canvas visually
+    if (overlayCanvasRef.current) {
+      const ctx = overlayCanvasRef.current.getContext("2d");
+      if (ctx) {
+        ctx.clearRect(
+          0,
+          0,
+          overlayCanvasRef.current.width,
+          overlayCanvasRef.current.height
+        );
+      }
+    }
   }, []);
 
   if (!pdfjsLib) {
@@ -1106,18 +1371,22 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
                   <Type size={14} className="sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Text</span>
                 </button>
+                <button
+                  onClick={() => setTool("eraser")}
+                  className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all flex items-center gap-1 sm:gap-2 ${
+                    tool === "eraser"
+                      ? "bg-white text-orange-600 shadow-sm"
+                      : "text-gray-600 hover:text-primary"
+                  }`}
+                >
+                  <Eraser size={14} className="sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Eraser</span>
+                </button>
               </div>
             </div>
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-              <button
-                onClick={clearAnnotations}
-                className="px-2 sm:px-4 py-1.5 sm:py-2 bg-orange-50 text-orange-600 hover:bg-orange-100 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1 sm:gap-2 border border-orange-200"
-              >
-                <Eraser size={14} className="sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">Clear Page</span>
-              </button>
               <button
                 onClick={clearAllAnnotations}
                 className="px-2 sm:px-4 py-1.5 sm:py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1 sm:gap-2 border border-red-200"
@@ -1277,19 +1546,23 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
             {/* Stroke Width */}
             <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-[150px] sm:min-w-[200px]">
               <label className="text-xs sm:text-sm whitespace-nowrap">
-                Stroke
+                {tool === "eraser" ? "Eraser" : "Stroke"}
               </label>
               <div className="flex items-center gap-2 sm:gap-3 flex-1">
                 <input
                   type="range"
-                  min="1"
-                  max="10"
-                  value={strokeWidth}
-                  onChange={(e) => setStrokeWidth(Number(e.target.value))}
+                  min={tool === "eraser" ? "10" : "1"}
+                  max={tool === "eraser" ? "50" : "10"}
+                  value={tool === "eraser" ? eraserSize : strokeWidth}
+                  onChange={(e) =>
+                    tool === "eraser"
+                      ? setEraserSize(Number(e.target.value))
+                      : setStrokeWidth(Number(e.target.value))
+                  }
                   className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
                 />
                 <span className="text-xs sm:text-body-text font-semibold bg-background px-2 sm:px-3 py-1 rounded-lg min-w-[2.5rem] sm:min-w-[3rem] text-center">
-                  {strokeWidth}px
+                  {tool === "eraser" ? eraserSize : strokeWidth}px
                 </span>
               </div>
             </div>
@@ -1338,7 +1611,12 @@ const PDFEdit = ({ pdfUri, onUploadSuccess }: PDFEditProps) => {
               className="absolute top-0 left-0 pointer-events-auto"
               style={{
                 display: pdfDoc ? "block" : "none",
-                cursor: tool !== "none" ? "crosshair" : "default",
+                cursor:
+                  tool === "eraser"
+                    ? "grab"
+                    : tool !== "none"
+                    ? "crosshair"
+                    : "default",
                 width: canvasRef.current?.offsetWidth + "px",
                 height: canvasRef.current?.offsetHeight + "px",
                 zIndex: 10,

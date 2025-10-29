@@ -47,7 +47,7 @@ import {
   Upload,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { toast } from "sonner";
+import { useApiNotification } from "@/components/ui/api-notification";
 
 // Type definitions
 interface ApiError {
@@ -144,6 +144,16 @@ export default function StudentSettingsPage() {
   const [isEditingAcademic, setIsEditingAcademic] = useState(false);
   const [showExportProfile, setShowExportProfile] = useState(false);
 
+  // Notification system
+  const {
+    showSuccess,
+    showError,
+    showInfo,
+    showLoading,
+    closeNotification,
+    NotificationComponent,
+  } = useApiNotification();
+
   const [profileForm, setProfileForm] = useState<ProfileFormState>({
     userName: "",
     firstName: "",
@@ -202,12 +212,12 @@ export default function StudentSettingsPage() {
     }
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
+      showError("Invalid File Type", "Please select an image file");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size should be less than 5MB");
+      showError("File Too Large", "Image size should be less than 5MB");
       return;
     }
 
@@ -215,7 +225,10 @@ export default function StudentSettingsPage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      toast.info("Uploading image...");
+      showLoading(
+        "Uploading Image",
+        "Please wait while we upload your profile picture..."
+      );
 
       console.log("Step 1: Uploading file to /media endpoint");
       const uploadResponse = (await uploadFile(
@@ -241,7 +254,8 @@ export default function StudentSettingsPage() {
           imageUrl: imageUrl,
         }).unwrap();
 
-        toast.success("Profile image updated successfully");
+        closeNotification();
+        showSuccess("Upload Successful", "Profile image updated successfully");
         refetch();
       } else {
         throw new Error("User UUID not available");
@@ -252,7 +266,7 @@ export default function StudentSettingsPage() {
         error,
         "Failed to upload profile image. Please try again."
       );
-      toast.error(errorMessage);
+      showError("Upload Failed", errorMessage);
     }
   };
 
@@ -264,21 +278,29 @@ export default function StudentSettingsPage() {
   const handleProfileUpdate = async () => {
     try {
       if (!studentProfile?.user?.uuid) {
-        toast.error("User UUID not found");
+        showError("Update Failed", "User UUID not found");
         return;
       }
 
       const updateData = prepareDataForBackend(profileForm);
 
-
       if (Object.keys(updateData).length === 0) {
-        toast.info("No changes to save");
+        showInfo("No Changes", "No changes to save");
         setIsEditingProfile(false);
         return;
       }
 
+      showLoading(
+        "Updating Profile",
+        "Please wait while we save your changes..."
+      );
+      await updateUserProfile({
+        uuid: studentProfile.user.uuid,
+        updateData: updateData,
+      }).unwrap();
 
-      toast.success("Profile updated successfully");
+      closeNotification();
+      showSuccess("Update Successful", "Profile updated successfully");
       setIsEditingProfile(false);
       refetch();
     } catch (error) {
@@ -287,7 +309,7 @@ export default function StudentSettingsPage() {
         error,
         "Failed to update profile. Please check your input and try again."
       );
-      toast.error(errorMessage);
+      showError("Update Failed", errorMessage);
     }
   };
 
@@ -295,24 +317,32 @@ export default function StudentSettingsPage() {
   const handleAcademicUpdate = async () => {
     try {
       if (!studentProfile?.user?.uuid) {
-        toast.error("User UUID not found");
+        showError("Update Failed", "User UUID not found");
         return;
       }
 
       const updateData = prepareDataForBackend(academicForm);
 
       if (Object.keys(updateData).length === 0) {
-        toast.info("No changes to save");
+        showInfo("No Changes", "No changes to save");
         setIsEditingAcademic(false);
         return;
       }
 
+      showLoading(
+        "Updating Academic Info",
+        "Please wait while we save your academic information..."
+      );
       await updateStudentDetails({
         uuid: studentProfile.user.uuid,
         updateData: updateData,
       }).unwrap();
 
-      toast.success("Academic information updated successfully");
+      closeNotification();
+      showSuccess(
+        "Update Successful",
+        "Academic information updated successfully"
+      );
       setIsEditingAcademic(false);
       refetch();
     } catch (error) {
@@ -320,7 +350,7 @@ export default function StudentSettingsPage() {
         error,
         "Failed to update academic information. Please check your input and try again."
       );
-      toast.error(errorMessage);
+      showError("Update Failed", errorMessage);
     }
   };
 
@@ -363,120 +393,165 @@ export default function StudentSettingsPage() {
     >
       <motion.div
         initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 2, y: 0 }}
-        className="space-y-6 sm:space-y-8 max-w-6xl mx-auto px-3 sm:px-4 lg:px-6"
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6 sm:space-y-8 max-w-7xl mx-auto px-3 sm:px-4 lg:px-6"
       >
-        {/* Enhanced Header Section - Updated to match adviser layout */}
-        <div className="text-center space-y-3 sm:space-y-4">
-          <motion.div
-            className="relative inline-block group"
-            whileHover={{ scale: 1.12 }}
-            transition={{ type: "spring", stiffness: 400 }}
-          >
-            <div className="relative">
-              <Image
-                src={user?.imageUrl || "/placeholder.svg"}
-                alt={user?.fullName || "Profile"}
-                width={140}
-                height={140}
-                className="rounded-full border-4 border-accent shadow-lg object-cover"
-                unoptimized
-              />
-              <button
-                onClick={handleCameraClick}
-                disabled={isUpdatingImage || isUploadingFile}
-                className="absolute bottom-2 right-2 bg-primary rounded-full p-2 shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+        {/* Modern Header Section */}
+        <Card className="dashboard-card border-0 mb-8 overflow-hidden">
+          {/* Top Accent Bar */}
+          <div
+            className="h-1"
+            style={{ backgroundColor: "var(--color-secondary)" }}
+          />
+
+          <CardContent className="p-6 sm:p-8">
+            <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
+              {/* Profile Image Section */}
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.4 }}
+                className="relative flex-shrink-0"
               >
-                {isUpdatingImage || isUploadingFile ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-white" />
-                ) : (
-                  <Camera className="h-4 w-4 text-white" />
-                )}
-              </button>
+                <div className="relative group">
+                  <Image
+                    src={user?.imageUrl || "/placeholder.svg"}
+                    alt={user?.fullName || "Profile"}
+                    width={120}
+                    height={120}
+                    className="rounded-full object-cover shadow-lg border-4 border-white dark:border-gray-800"
+                    unoptimized
+                  />
+
+                  {/* Camera Button */}
+                  <button
+                    onClick={handleCameraClick}
+                    disabled={isUpdatingImage || isUploadingFile}
+                    className="absolute bottom-1 right-1 p-2 rounded-full shadow-lg transition-all duration-200 disabled:opacity-50 hover:scale-110 border-2 border-white dark:border-gray-800"
+                    style={{ backgroundColor: "var(--color-secondary)" }}
+                  >
+                    {isUpdatingImage || isUploadingFile ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
+                    ) : (
+                      <Camera className="h-3.5 w-3.5 text-white" />
+                    )}
+                  </button>
+                </div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  accept="image/*"
+                  className="hidden"
+                />
+              </motion.div>
+
+              {/* User Info Section */}
+              <div className="flex-1 text-center lg:text-left">
+                <h1 className="text-2xl sm:text-3xl font-bold text-card-foreground mb-1">
+                  {user.fullName}
+                </h1>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {student?.university || "University Student"}
+                </p>
+
+                {/* Badges */}
+                <div className="flex flex-wrap gap-2 justify-center lg:justify-start mb-4">
+                  <Badge
+                    className="gap-1 px-3 py-1 text-xs font-semibold text-white border-0"
+                    style={{ backgroundColor: "var(--color-secondary)" }}
+                  >
+                    <User className="h-3 w-3" />
+                    {user.gender || "N/A"}
+                  </Badge>
+                  <Badge
+                    className="gap-1 px-3 py-1 text-xs font-semibold text-white border-0"
+                    style={{ backgroundColor: "var(--color-secondary)" }}
+                  >
+                    <BookOpen className="h-3 w-3" />
+                    {student?.major || "Undeclared"}
+                  </Badge>
+                  <Badge
+                    className="gap-1 px-3 py-1 text-xs font-semibold text-white border-0"
+                    style={{ backgroundColor: "var(--color-secondary)" }}
+                  >
+                    <Shield className="h-3 w-3" />
+                    Student
+                  </Badge>
+                </div>
+
+                {/* Export Button */}
+                <Button
+                  onClick={() => setShowExportProfile(true)}
+                  size="sm"
+                  className="gap-2 text-white shadow-md hover:opacity-90 transition-opacity font-semibold border-0"
+                  style={{ backgroundColor: "var(--color-secondary)" }}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Export Profile
+                </Button>
+              </div>
             </div>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-              accept="image/*"
-              className="hidden"
-            />
-          </motion.div>
+          </CardContent>
+        </Card>
 
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text">
-              {user.fullName}
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              {student?.university || "University Student"}
-            </p>
-            <div className="flex flex-wrap gap-2 justify-center">
-              <Badge variant="secondary" className="gap-1">
-                <User className="h-3 w-3" />
-                {user.gender || "N/A"}
-              </Badge>
-              <Badge variant="outline" className="gap-1">
-                <BookOpen className="h-3 w-3" />
-                {student?.major || "Undeclared"}
-              </Badge>
-              <Badge variant="default" className="gap-1">
-                <Shield className="h-3 w-3" />
-                Student
-              </Badge>
-            </div>
-          </div>
-
-          {/* Export Profile Button - Positioned like adviser page */}
-          <div className="flex justify-center mt-4">
-            <Button
-              onClick={() => setShowExportProfile(true)}
-              className="gap-2 bg-blue-600 hover:bg-blue-600/90 text-white"
-              size="lg"
-            >
-              <Download className="h-4 w-4" />
-              Export Profile
-            </Button>
-          </div>
-
-          {/* Export Profile Modal */}
-          {showExportProfile && (
-            <ProfileExport
-              userType="student"
-              onClose={() => setShowExportProfile(false)}
-            />
-          )}
-        </div>
+        {/* Export Profile Modal */}
+        {showExportProfile && (
+          <ProfileExport
+            userType="student"
+            onClose={() => setShowExportProfile(false)}
+          />
+        )}
 
         {/* Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Left Column - Profile Information */}
           <div className="space-y-4 sm:space-y-6">
             {/* Profile Information Card */}
-            <Card className="border border-border/30 bg-card/60 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3 sm:pb-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-                  <div className="space-y-1">
-                    <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                      <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                      Profile Information
-                    </CardTitle>
-                    <CardDescription className="text-sm sm:text-base">
-                      Your personal and contact details
-                    </CardDescription>
+            <Card className="dashboard-card border-0 overflow-hidden">
+              {/* Top Accent Bar */}
+              <div
+                className="h-1"
+                style={{ backgroundColor: "var(--color-secondary)" }}
+              />
+
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="p-2 rounded-lg"
+                      style={{ backgroundColor: "var(--color-secondary)" }}
+                    >
+                      <User className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-bold text-card-foreground">
+                        Profile Information
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        Personal and contact details
+                      </CardDescription>
+                    </div>
                   </div>
+
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setIsEditingProfile(!isEditingProfile)}
                     disabled={isUpdatingUser}
-                    className="gap-2 w-full sm:w-auto"
+                    className="gap-1.5"
                   >
                     {isEditingProfile ? (
-                      <X className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <>
+                        <X className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Cancel</span>
+                      </>
                     ) : (
-                      <Edit2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <>
+                        <Edit2 className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Edit</span>
+                      </>
                     )}
-                    {isEditingProfile ? "Cancel" : "Edit"}
                   </Button>
                 </div>
               </CardHeader>
@@ -738,26 +813,35 @@ export default function StudentSettingsPage() {
 
                 {/* Save/Cancel Buttons */}
                 {isEditingProfile && (
-                  <div className="flex flex-col sm:flex-row gap-2 pt-3 sm:pt-4 border-t">
+                  <div className="flex gap-2 pt-3 border-t">
                     <Button
                       variant="outline"
                       onClick={() => setIsEditingProfile(false)}
                       disabled={isUpdatingUser}
+                      size="sm"
                       className="flex-1"
                     >
+                      <X className="h-3.5 w-3.5 mr-1.5" />
                       Cancel
                     </Button>
                     <Button
                       onClick={handleProfileUpdate}
                       disabled={isUpdatingUser}
-                      className="flex-1 gap-2"
+                      size="sm"
+                      className="flex-1 gap-1.5 text-white border-0"
+                      style={{ backgroundColor: "var(--color-secondary)" }}
                     >
                       {isUpdatingUser ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Saving...
+                        </>
                       ) : (
-                        <Save className="h-4 w-4" />
+                        <>
+                          <Save className="h-3.5 w-3.5" />
+                          Save
+                        </>
                       )}
-                      {isUpdatingUser ? "Saving..." : "Save Changes"}
                     </Button>
                   </div>
                 )}
@@ -765,15 +849,30 @@ export default function StudentSettingsPage() {
             </Card>
 
             {/* Account Details Card */}
-            <Card className="border border-border/30 bg-card/60 backdrop-blur-sm shadow-sm">
-              <CardHeader className="pb-3 sm:pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                  <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                  Account Details
-                </CardTitle>
-                <CardDescription className="text-sm sm:text-base">
-                  Account metadata and information
-                </CardDescription>
+            <Card className="dashboard-card border-0 overflow-hidden">
+              {/* Top Accent Bar */}
+              <div
+                className="h-1"
+                style={{ backgroundColor: "var(--color-secondary)" }}
+              />
+
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="p-2 rounded-lg"
+                    style={{ backgroundColor: "var(--color-secondary)" }}
+                  >
+                    <Shield className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-bold text-card-foreground">
+                      Account Details
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Account metadata and information
+                    </CardDescription>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="space-y-3 sm:space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -815,31 +914,50 @@ export default function StudentSettingsPage() {
           {/* Right Column - Academic Information */}
           <div className="space-y-4 sm:space-y-6">
             {/* Academic Information Card */}
-            <Card className="border border-border/30 bg-card/60 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3 sm:pb-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-                  <div className="space-y-1">
-                    <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                      <GraduationCap className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                      Academic Information
-                    </CardTitle>
-                    <CardDescription className="text-sm sm:text-base">
-                      Your university and study details
-                    </CardDescription>
+            <Card className="dashboard-card border-0 overflow-hidden">
+              {/* Top Accent Bar */}
+              <div
+                className="h-1"
+                style={{ backgroundColor: "var(--color-secondary)" }}
+              />
+
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="p-2 rounded-lg"
+                      style={{ backgroundColor: "var(--color-secondary)" }}
+                    >
+                      <GraduationCap className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-bold text-card-foreground">
+                        Academic Information
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        University and study details
+                      </CardDescription>
+                    </div>
                   </div>
+
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setIsEditingAcademic(!isEditingAcademic)}
                     disabled={isUpdatingStudent}
-                    className="gap-2 w-full sm:w-auto"
+                    className="gap-1.5"
                   >
                     {isEditingAcademic ? (
-                      <X className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <>
+                        <X className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Cancel</span>
+                      </>
                     ) : (
-                      <Edit2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <>
+                        <Edit2 className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Edit</span>
+                      </>
                     )}
-                    {isEditingAcademic ? "Cancel" : "Edit"}
                   </Button>
                 </div>
               </CardHeader>
@@ -993,26 +1111,62 @@ export default function StudentSettingsPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => {
+                                onClick={async () => {
                                   const url = student?.studentCardUrl;
                                   if (!url) {
-                                    toast.error(
+                                    showError(
+                                      "Download Failed",
                                       "Student card not available for download"
                                     );
                                     return;
                                   }
-                                  const link = document.createElement("a");
-                                  link.href = url;
-                                  link.download = `student-card-${
-                                    user.userName ?? "student"
-                                  }.jpg`;
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
+
+                                  // Show loading notification
+                                  showLoading(
+                                    "Preparing Download",
+                                    "Please wait while we prepare your student card..."
+                                  );
+
+                                  try {
+                                    // Fetch the file to ensure it downloads instead of previewing
+                                    const response = await fetch(url);
+                                    const blob = await response.blob();
+                                    const downloadUrl =
+                                      window.URL.createObjectURL(blob);
+
+                                    const link = document.createElement("a");
+                                    link.href = downloadUrl;
+                                    link.download = `student-card-${
+                                      user.userName ?? "student"
+                                    }.jpg`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+
+                                    // Clean up the object URL
+                                    window.URL.revokeObjectURL(downloadUrl);
+
+                                    // Close loading and show success
+                                    closeNotification();
+                                    setTimeout(() => {
+                                      showSuccess(
+                                        "Download Complete!",
+                                        "Your student card has been downloaded successfully."
+                                      );
+                                    }, 100);
+                                  } catch (error) {
+                                    closeNotification();
+                                    setTimeout(() => {
+                                      showError(
+                                        "Download Failed",
+                                        "Failed to download student card. Please try again."
+                                      );
+                                    }, 100);
+                                  }
                                 }}
                                 className="gap-2 flex-1 sm:flex-none"
                               >
-                                <Save className="h-4 w-4" />
+                                <Download className="h-4 w-4" />
                                 Download
                               </Button>
                             </div>
@@ -1051,7 +1205,8 @@ export default function StudentSettingsPage() {
                           variant="outline"
                           size="sm"
                           onClick={() =>
-                            toast.info(
+                            showInfo(
+                              "Upload Request",
                               "Please contact administration to upload your student card"
                             )
                           }
@@ -1081,26 +1236,35 @@ export default function StudentSettingsPage() {
 
                 {/* Save/Cancel Buttons */}
                 {isEditingAcademic && (
-                  <div className="flex flex-col sm:flex-row gap-2 pt-3 sm:pt-4 border-t">
+                  <div className="flex gap-2 pt-3 border-t">
                     <Button
                       variant="outline"
                       onClick={() => setIsEditingAcademic(false)}
                       disabled={isUpdatingStudent}
+                      size="sm"
                       className="flex-1"
                     >
+                      <X className="h-3.5 w-3.5 mr-1.5" />
                       Cancel
                     </Button>
                     <Button
                       onClick={handleAcademicUpdate}
                       disabled={isUpdatingStudent}
-                      className="flex-1 gap-2"
+                      size="sm"
+                      className="flex-1 gap-1.5 text-white border-0"
+                      style={{ backgroundColor: "var(--color-secondary)" }}
                     >
                       {isUpdatingStudent ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Saving...
+                        </>
                       ) : (
-                        <Save className="h-4 w-4" />
+                        <>
+                          <Save className="h-3.5 w-3.5" />
+                          Save
+                        </>
                       )}
-                      {isUpdatingStudent ? "Saving..." : "Save Changes"}
                     </Button>
                   </div>
                 )}
@@ -1109,6 +1273,9 @@ export default function StudentSettingsPage() {
           </div>
         </div>
       </motion.div>
+
+      {/* Notification Component */}
+      <NotificationComponent />
     </DashboardLayout>
   );
 }

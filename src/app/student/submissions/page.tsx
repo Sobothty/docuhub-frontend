@@ -1,24 +1,10 @@
 "use client";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +33,7 @@ import {
   CheckCircle,
   Clock,
   XCircle,
+  Sparkles,
 } from "lucide-react";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import {
@@ -67,7 +54,6 @@ import {
 } from "@/feature/media/mediaSlice";
 import Image from "next/image";
 import { toast } from "sonner";
-import TableRowPlaceholder from "@/components/card/SubmissionPlaceholder";
 
 interface PaperData {
   assignment: Assignment | undefined;
@@ -88,6 +74,8 @@ export default function StudentSubmissionsPage() {
   const assignments = useMemo(() => assignmentData || [], [assignmentData]);
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   // Create a mapping of paper UUID to assignment data
   const paperDataMap = useMemo(() => {
@@ -103,29 +91,49 @@ export default function StudentSubmissionsPage() {
     }, {} as Record<string, PaperData>);
   }, [papers, assignments]);
 
-  // Filter papers based on search query
-  const filteredPapers = papers.filter(
-    (paper) =>
-      paper.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      paper.abstractText?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      paper.categoryNames
-        .join(" ")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
-  );
+  // Filter and sort papers (latest first)
+  const filteredAndSortedPapers = useMemo(() => {
+    const filtered = papers.filter(
+      (paper) =>
+        paper.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        paper.abstractText?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        paper.categoryNames
+          .join(" ")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase())
+    );
+
+    // Sort by creation date - latest first
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA; // Descending order (newest first)
+    });
+  }, [papers, searchQuery]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredAndSortedPapers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPapers = filteredAndSortedPapers.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search query changes
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "PENDING":
         return (
-          <Badge variant="secondary" className="capitalize">
+          <Badge className="capitalize bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800 shadow-sm">
             <Clock className="h-3 w-3 mr-1" />
             Pending
           </Badge>
         );
       case "APPROVED":
         return (
-          <Badge variant="default" className="capitalize bg-green-500">
+          <Badge className="capitalize bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800 shadow-sm">
             <CheckCircle className="h-3 w-3 mr-1" />
             Approved
           </Badge>
@@ -133,14 +141,14 @@ export default function StudentSubmissionsPage() {
       case "REJECTED":
       case "ADMIN_REJECTED":
         return (
-          <Badge variant="destructive" className="capitalize">
+          <Badge className="capitalize bg-orange-100 text-orange-900 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700 shadow-sm">
             <XCircle className="h-3 w-3 mr-1" />
             Rejected
           </Badge>
         );
       default:
         return (
-          <Badge variant="secondary" className="capitalize">
+          <Badge className="capitalize bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800 shadow-sm">
             {status}
           </Badge>
         );
@@ -231,63 +239,68 @@ export default function StudentSubmissionsPage() {
     >
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              My Submissions
-            </h1>
-            <p className="text-muted-foreground">
-              Manage your paper submissions and track their progress
-            </p>
+        <div className="dashboard-header rounded-2xl p-6 mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-4xl font-bold gradient-text mb-2">
+                My Submissions
+              </h1>
+              <p className="text-muted-foreground text-lg">
+                Manage your paper submissions and track their progress
+              </p>
+            </div>
+            <Dialog>
+              <DialogTrigger asChild></DialogTrigger>
+              <DialogContent className="max-w-2xl dashboard-card border-0">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl gradient-text">
+                    Upload New Paper
+                  </DialogTitle>
+                  <DialogDescription className="text-base">
+                    Submit your paper for mentor review and approval
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Paper Title</Label>
+                    <Input id="title" placeholder="Enter your paper title" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Input
+                      id="category"
+                      placeholder="e.g., Computer Science, Biology, etc."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="abstract">Abstract</Label>
+                    <Textarea
+                      id="abstract"
+                      placeholder="Brief summary of your paper"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="file">Paper File</Label>
+                    <Input id="file" type="file" accept=".pdf,.doc,.docx" />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline">Save as Draft</Button>
+                  <Button>Submit for Review</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
-          <Dialog>
-            <DialogTrigger asChild>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Upload New Paper</DialogTitle>
-                <DialogDescription>
-                  Submit your paper for mentor review and approval
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Paper Title</Label>
-                  <Input id="title" placeholder="Enter your paper title" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Input
-                    id="category"
-                    placeholder="e.g., Computer Science, Biology, etc."
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="abstract">Abstract</Label>
-                  <Textarea
-                    id="abstract"
-                    placeholder="Brief summary of your paper"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="file">Paper File</Label>
-                  <Input id="file" type="file" accept=".pdf,.doc,.docx" />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline">Save as Draft</Button>
-                <Button>Submit for Review</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
 
         {/* Edit Paper Dialog */}
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl dashboard-card border-0">
             <DialogHeader>
-              <DialogTitle>Edit Paper</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-2xl gradient-text">
+                Edit Paper
+              </DialogTitle>
+              <DialogDescription className="text-base">
                 Update your paper details below.
               </DialogDescription>
             </DialogHeader>
@@ -455,96 +468,251 @@ export default function StudentSubmissionsPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Search */}
-        <Card>
-          <CardHeader>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        {/* Modern Search Bar */}
+        <Card className="dashboard-card border-0">
+          <CardContent className="p-6">
+            <div className="relative group">
+              {/* Search icon with animated background */}
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+                <div className="relative">
+                  <div
+                    className="absolute inset-0 rounded-full blur-md opacity-40 group-hover:opacity-60 transition-opacity"
+                    style={{
+                      background:
+                        "linear-gradient(to right, var(--color-secondary), var(--color-accent))",
+                    }}
+                  ></div>
+                  <div
+                    className="relative p-2 rounded-full shadow-lg"
+                    style={{
+                      background:
+                        "linear-gradient(to right, var(--color-secondary), var(--color-accent))",
+                    }}
+                  >
+                    <Search className="h-5 w-5 text-white" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Search input */}
               <Input
-                placeholder="Search your submissions..."
-                className="pl-10"
+                placeholder="Search your submissions by title, abstract, or category..."
+                className="pl-16 pr-4 py-7 text-base bg-card text-card-foreground border-border rounded-xl focus:shadow-lg transition-all duration-300 placeholder:text-muted-foreground/60"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+
+              {/* Clear button (shows when there's text) */}
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-accent hover:bg-accent/80 text-accent-foreground transition-all duration-200"
+                  aria-label="Clear search"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
             </div>
-          </CardHeader>
+
+            {/* Search suggestions/info */}
+            <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+              <Sparkles
+                className="w-3.5 h-3.5"
+                style={{ color: "var(--color-secondary)" }}
+              />
+              <span>
+                Filter by title, abstract, category, or submission date
+              </span>
+            </div>
+          </CardContent>
         </Card>
 
-        {/* Submissions Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>All Submissions</CardTitle>
-            <CardDescription>
-              Track the status and progress of your submitted papers
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {papersLoading ? (
-              <div className="py-12">
-                <Table>
-                  <TableBody>
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <TableRowPlaceholder key={index} />
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : filteredPapers.length === 0 ? (
-              <div className="py-12 text-center">
+        {/* Submissions Grid */}
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-bold gradient-text">
+                All Submissions
+              </h2>
+              <p className="text-muted-foreground text-base mt-1">
+                Track the status and progress of your submitted papers
+              </p>
+            </div>
+            <Badge
+              className="text-sm font-semibold px-4 py-2"
+              style={{
+                background: "var(--color-secondary)",
+                color: "white",
+              }}
+            >
+              {filteredAndSortedPapers.length} Papers
+            </Badge>
+          </div>
+
+          {/* Loading State */}
+          {papersLoading ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <SubmissionCardSkeleton key={index} />
+              ))}
+            </div>
+          ) : filteredAndSortedPapers.length === 0 ? (
+            // Empty State
+            <Card className="dashboard-card border-0">
+              <CardContent className="py-16 text-center">
+                <Upload className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
                 <div className="mx-auto max-w-md space-y-2">
-                  <h3 className="text-lg font-semibold">
+                  <h3 className="text-xl font-semibold">
                     {searchQuery ? "No results found" : "No submissions yet"}
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground text-base">
                     {searchQuery
                       ? "Try adjusting your search query."
                       : "Upload your first paper to get started."}
                   </p>
                 </div>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Thumbnail</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Publish</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Mentor</TableHead>
-                    <TableHead>Submitted</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredPapers.map((paper) => {
-                    const paperData = paperDataMap[paper.uuid];
-                    const assignment = paperData?.assignment;
-                    const adviserUuid = paperData?.adviserUuid;
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Submissions Grid */}
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {currentPapers.map((paper) => {
+                  const paperData = paperDataMap[paper.uuid];
+                  const assignment = paperData?.assignment;
+                  const adviserUuid = paperData?.adviserUuid;
 
-                    return (
-                      <SubmissionRow
-                        key={paper.uuid}
-                        paper={paper}
-                        assignment={assignment}
-                        adviserUuid={adviserUuid}
-                        getStatusBadge={getStatusBadge}
-                        onEdit={() => handleEditClick(paper)}
-                      />
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                  return (
+                    <SubmissionCard
+                      key={paper.uuid}
+                      paper={paper}
+                      assignment={assignment}
+                      adviserUuid={adviserUuid}
+                      getStatusBadge={getStatusBadge}
+                      onEdit={() => handleEditClick(paper)}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <Card className="dashboard-card border-0 mt-6">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      {/* Page Info */}
+                      <div className="text-sm text-muted-foreground">
+                        Showing {startIndex + 1} to{" "}
+                        {Math.min(endIndex, filteredAndSortedPapers.length)} of{" "}
+                        {filteredAndSortedPapers.length} submissions
+                      </div>
+
+                      {/* Pagination Controls */}
+                      <div className="flex items-center gap-2">
+                        {/* Previous Button */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setCurrentPage((prev) => Math.max(prev - 1, 1))
+                          }
+                          disabled={currentPage === 1}
+                          className="font-semibold"
+                        >
+                          Previous
+                        </Button>
+
+                        {/* Page Numbers */}
+                        <div className="flex items-center gap-1">
+                          {Array.from(
+                            { length: totalPages },
+                            (_, i) => i + 1
+                          ).map((page) => {
+                            // Show first page, last page, current page, and pages around current
+                            if (
+                              page === 1 ||
+                              page === totalPages ||
+                              (page >= currentPage - 1 &&
+                                page <= currentPage + 1)
+                            ) {
+                              return (
+                                <Button
+                                  key={page}
+                                  variant={
+                                    page === currentPage ? "default" : "outline"
+                                  }
+                                  size="sm"
+                                  onClick={() => setCurrentPage(page)}
+                                  className={
+                                    page === currentPage
+                                      ? "font-bold text-white"
+                                      : "font-semibold"
+                                  }
+                                  style={
+                                    page === currentPage
+                                      ? { background: "var(--color-secondary)" }
+                                      : {}
+                                  }
+                                >
+                                  {page}
+                                </Button>
+                              );
+                            } else if (
+                              page === currentPage - 2 ||
+                              page === currentPage + 2
+                            ) {
+                              return (
+                                <span key={page} className="px-2">
+                                  ...
+                                </span>
+                              );
+                            }
+                            return null;
+                          })}
+                        </div>
+
+                        {/* Next Button */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setCurrentPage((prev) =>
+                              Math.min(prev + 1, totalPages)
+                            )
+                          }
+                          disabled={currentPage === totalPages}
+                          className="font-semibold"
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </DashboardLayout>
   );
 }
 
-// Separate component for each row to use hooks properly
-function SubmissionRow({
+// Modern Card Component for each submission
+function SubmissionCard({
   paper,
   assignment,
   adviserUuid,
@@ -596,14 +764,14 @@ function SubmissionRow({
     switch (isPublished) {
       case true:
         return (
-          <Badge variant="default" className="capitalize bg-green-500">
+          <Badge className="capitalize bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800 shadow-sm">
             <CheckCircle className="h-3 w-3 mr-1" />
             Published
           </Badge>
         );
       case false:
         return (
-          <Badge variant="secondary" className="capitalize">
+          <Badge className="capitalize bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800 shadow-sm">
             <Clock className="h-3 w-3 mr-1" />
             Draft
           </Badge>
@@ -612,103 +780,223 @@ function SubmissionRow({
   };
 
   return (
-    <TableRow>
-      <TableCell>
-        {paper.thumbnailUrl ? (
-          <div className="relative w-16 h-10">
-            <Image
-              src={paper.thumbnailUrl}
-              alt={paper.title}
-              layout="fill"
-              objectFit="cover"
-              className="rounded-md"
-            />
-          </div>
-        ) : (
-          <div className="relative w-16 h-10">
-            <Image
-              src="/placeholder.svg"
-              alt="Placeholder"
-              layout="fill"
-              objectFit="cover"
-              className="rounded-md"
-            />
-          </div>
-        )}
-      </TableCell>
-      <TableCell>
-        <div className="w-36">
-          <div className="font-medium truncate p-2">
-            <Link
-              href={`/student/submissions/${paper.uuid}`}
-              className="hover:underline"
-            >
-              {paper.title}
+    <Card className="dashboard-card border-0 overflow-hidden hover:shadow-xl transition-all duration-300 group">
+      {/* Top Accent Bar */}
+      <div
+        className="h-1.5"
+        style={{
+          background: "var(--color-secondary)",
+        }}
+      ></div>
+
+      <CardContent className="p-6">
+        {/* Thumbnail & Title Section */}
+        <div className="space-y-4">
+          {/* Thumbnail */}
+          <Link href={`/student/submissions/${paper.uuid}`}>
+            {paper.thumbnailUrl ? (
+              <div className="relative w-full h-48 rounded-xl overflow-hidden shadow-lg group-hover:shadow-2xl transition-all">
+                <Image
+                  src={paper.thumbnailUrl}
+                  alt={paper.title}
+                  layout="fill"
+                  objectFit="cover"
+                  className="rounded-xl group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+            ) : (
+              <div
+                className="relative w-full h-48 rounded-xl overflow-hidden flex items-center justify-center shadow-lg group-hover:shadow-2xl transition-all"
+                style={{
+                  background: "var(--color-secondary)",
+                  opacity: 0.8,
+                }}
+              >
+                <Upload className="h-16 w-16 text-white" />
+              </div>
+            )}
+          </Link>
+
+          {/* Title & Status Row */}
+          <div className="space-y-3">
+            <Link href={`/student/submissions/${paper.uuid}`} className="block">
+              <h3 className="text-xl font-bold text-card-foreground group-hover:text-blue-600 transition-colors line-clamp-2">
+                {paper.title}
+              </h3>
             </Link>
+
+            {/* Status Badges */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {getStatusBadge(paper.status)}
+              {getStatusPublication(paper.isPublished)}
+            </div>
+          </div>
+
+          {/* Categories */}
+          <div className="flex flex-wrap gap-2">
+            {Array.isArray(paper.categoryNames) ? (
+              paper.categoryNames.map((category, index) => (
+                <Badge
+                  key={index}
+                  className="text-xs font-semibold"
+                  style={{
+                    background: "var(--color-secondary)",
+                    color: "white",
+                  }}
+                >
+                  {category}
+                </Badge>
+              ))
+            ) : (
+              <Badge
+                className="text-xs font-semibold"
+                style={{
+                  background: "var(--color-secondary)",
+                  color: "white",
+                }}
+              >
+                {paper.categoryNames}
+              </Badge>
+            )}
+          </div>
+
+          {/* Mentor & Date Info */}
+          <div className="space-y-3 pt-4 border-t border-border/50">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground font-medium">Mentor:</span>
+              <span className="font-semibold text-card-foreground">
+                {adviserData ? (
+                  adviserData.fullName
+                ) : assignment ? (
+                  "Assigned"
+                ) : (
+                  <span className="text-muted-foreground italic">
+                    Not assigned
+                  </span>
+                )}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground font-medium">
+                Submitted:
+              </span>
+              <span className="font-semibold text-card-foreground">
+                {paper.submittedAt || paper.createdAt}
+              </span>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 pt-4">
+            <Button
+              asChild
+              className="flex-1 font-semibold text-white"
+              style={{
+                background: "var(--color-secondary)",
+              }}
+            >
+              <Link href={`/student/submissions/${paper.uuid}`}>
+                <Eye className="h-4 w-4 mr-2" />
+                View
+              </Link>
+            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="border-2">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="bg-background shadow-lg"
+              >
+                <DropdownMenuItem onClick={handleDownload}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </DropdownMenuItem>
+                {paper.status === "APPROVED" && !paper.isPublished && (
+                  <DropdownMenuItem onClick={handlePublish}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Publish
+                  </DropdownMenuItem>
+                )}
+                {paper.status === "PENDING" && (
+                  <DropdownMenuItem onClick={onEdit}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  className="text-red-600"
+                  onClick={handleDeletePaper}
+                  disabled={isDeleting}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
-      </TableCell>
-      <TableCell>{getStatusBadge(paper.status)}</TableCell>
-      <TableCell>{getStatusPublication(paper.isPublished)}</TableCell>
-      <TableCell>
-        {Array.isArray(paper.categoryNames)
-          ? paper.categoryNames.join(", ")
-          : paper.categoryNames}
-      </TableCell>
-      <TableCell>
-        {adviserData
-          ? adviserData.fullName
-          : assignment
-          ? "Assigned"
-          : "Not assigned"}
-      </TableCell>
-      <TableCell className="text-sm text-muted-foreground">
-        {paper.submittedAt || paper.createdAt}
-      </TableCell>
-      <TableCell className="text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-background">
-            <DropdownMenuItem>
-              <Link
-                href={`/student/submissions/${paper.uuid}`}
-                className="flex"
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                View Details
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleDownload}>
-              <Download className="h-4 w-4 mr-2" />
-              Download
-            </DropdownMenuItem>
-            {paper.status === "APPROVED" && !paper.isPublished && (
-              <DropdownMenuItem onClick={handlePublish}>
-                <Edit className="h-4 w-4 mr-2" />
-                Publish
-              </DropdownMenuItem>
-            )}
-            {paper.status === "PENDING" && (
-              <DropdownMenuItem onClick={onEdit}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem
-              className="text-red-600"
-              onClick={handleDeletePaper}
-              disabled={isDeleting}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              {isDeleting ? "Deleting..." : "Delete"}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </TableCell>
-    </TableRow>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Skeleton component for loading state
+function SubmissionCardSkeleton() {
+  return (
+    <Card className="dashboard-card border-0 overflow-hidden">
+      {/* Top Accent Bar */}
+      <div
+        className="h-1.5 animate-pulse"
+        style={{
+          background: "var(--color-secondary)",
+        }}
+      ></div>
+
+      <CardContent className="p-6">
+        <div className="space-y-4">
+          {/* Thumbnail Skeleton */}
+          <div className="relative w-full h-48 rounded-xl overflow-hidden bg-accent/30 animate-pulse"></div>
+
+          {/* Title Skeleton */}
+          <div className="space-y-3">
+            <div className="h-6 bg-accent/30 rounded w-3/4 animate-pulse"></div>
+
+            {/* Status Badges Skeleton */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="h-6 w-20 bg-accent/30 rounded-full animate-pulse"></div>
+              <div className="h-6 w-16 bg-accent/30 rounded-full animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Categories Skeleton */}
+          <div className="flex flex-wrap gap-2">
+            <div className="h-5 w-24 bg-accent/30 rounded animate-pulse"></div>
+            <div className="h-5 w-28 bg-accent/30 rounded animate-pulse"></div>
+          </div>
+
+          {/* Mentor & Date Info Skeleton */}
+          <div className="space-y-3 pt-4 border-t border-border/50">
+            <div className="flex items-center justify-between">
+              <div className="h-4 w-16 bg-accent/30 rounded animate-pulse"></div>
+              <div className="h-4 w-32 bg-accent/30 rounded animate-pulse"></div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="h-4 w-20 bg-accent/30 rounded animate-pulse"></div>
+              <div className="h-4 w-28 bg-accent/30 rounded animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Action Buttons Skeleton */}
+          <div className="flex gap-2 pt-4">
+            <div className="flex-1 h-10 bg-accent/30 rounded-md animate-pulse"></div>
+            <div className="h-10 w-10 bg-accent/30 rounded-md animate-pulse"></div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

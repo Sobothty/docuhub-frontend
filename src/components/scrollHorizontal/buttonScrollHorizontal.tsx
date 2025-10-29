@@ -1,48 +1,56 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const subjects = [
-  { id: 'all', name: 'All' },
-  { id: 'spring', name: 'Spring Framework' },
-  { id: 'java', name: 'Java Programming' },
-  { id: 'sql', name: 'SQL & Data Modeling with PostgreSQL' },
-  { id: 'blockchain', name: 'Blockchain Development' },
-  { id: 'linux', name: 'Linux Administration' },
-  { id: 'android', name: 'Android Development' },
-  { id: 'ios', name: 'iOS Development' },
-  { id: 'flutter', name: 'Flutter Development' },
-  { id: 'web', name: 'Web Development' },
-  { id: 'nextjs', name: 'Next.js Development' },
-  { id: 'docker', name: 'Docker & DevOps' },
-  { id: 'dataanalytics', name: 'Data Analytics' },
-  { id: 'c', name: 'C Programming' },
+  { id: "all", name: "All" },
+  { id: "spring", name: "Spring Framework" },
+  { id: "java", name: "Java Programming" },
+  { id: "sql", name: "SQL & Data Modeling with PostgreSQL" },
+  { id: "blockchain", name: "Blockchain Development" },
+  { id: "linux", name: "Linux Administration" },
+  { id: "android", name: "Android Development" },
+  { id: "ios", name: "iOS Development" },
+  { id: "flutter", name: "Flutter Development" },
+  { id: "web", name: "Web Development" },
+  { id: "nextjs", name: "Next.js Development" },
+  { id: "docker", name: "Docker & DevOps" },
+  { id: "dataanalytics", name: "Data Analytics" },
+  { id: "c", name: "C Programming" },
 ];
 
-export default function ButtonScrollHorizontal() {
-  const [activeSubject, setActiveSubject] = useState('all');
+interface ButtonScrollHorizontalProps {
+  onFilterChange?: (filter: string) => void;
+}
+
+export default function ButtonScrollHorizontal({
+  onFilterChange,
+}: ButtonScrollHorizontalProps) {
+  const [activeSubject, setActiveSubject] = useState("all");
   const [scrollPosition, setScrollPosition] = useState(0);
 
   const scrollLeft = () => {
-    const container = document.getElementById('scroll-container');
+    const container = document.getElementById("scroll-container");
     if (container) {
-      container.scrollBy({ left: -200, behavior: 'smooth' });
+      container.scrollBy({ left: -200, behavior: "smooth" });
       setScrollPosition(Math.max(0, scrollPosition - 200));
     }
   };
 
   const scrollRight = () => {
-    const container = document.getElementById('scroll-container');
+    const container = document.getElementById("scroll-container");
     if (container) {
-      container.scrollBy({ left: 200, behavior: 'smooth' });
+      container.scrollBy({ left: 200, behavior: "smooth" });
       setScrollPosition(scrollPosition + 200);
     }
   };
 
   const handleSubjectClick = (subjectId: string) => {
     setActiveSubject(subjectId);
-    console.log('Selected subject:', subjectId);
+    // Get the full name for filtering
+    const subjectName = subjects.find((s) => s.id === subjectId)?.name || "All";
+    onFilterChange?.(subjectName);
   };
 
   return (
@@ -68,7 +76,7 @@ export default function ButtonScrollHorizontal() {
       <div
         id="scroll-container"
         className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide px-4 sm:px-6 md:px-8 py-2 sm:py-3"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {subjects.map((subject) => (
           <button
@@ -79,8 +87,8 @@ export default function ButtonScrollHorizontal() {
               transition-all duration-200 hover:scale-105
               ${
                 activeSubject === subject.id
-                  ? 'bg-[var(--accent)] border-2 border-[var(--accent)] shadow-lg'
-                  : 'bg-transparent border-2 border-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--dark-text)]'
+                  ? "bg-[var(--accent)] border-2 border-[var(--accent)] shadow-lg"
+                  : "bg-transparent border-2 border-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--dark-text)]"
               }
             `}
           >

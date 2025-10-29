@@ -21,6 +21,7 @@ interface WebSocketContextType {
   allChats: Record<string, Message[]>;
   currentUser: UserProfile | null;
   stompClient: Client | null;
+  lastMessage: string | null;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(
@@ -44,11 +45,18 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [allChats, setAllChats] = useState<Record<string, Message[]>>({});
+  const [lastMessage, setLastMessage] = useState<string | null>(null);
 
   const stompClientRef = useRef<Client | null>(null);
   const subscriptionRef = useRef<StompSubscription | null>(null);
+  const sessionRef = useRef(session); // Store session in ref to avoid re-connections
 
   const { data: allUsers } = useGetAllUsersQuery();
+
+  // Update session ref when session changes
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   // Get current user from all users based on session email
   useEffect(() => {
@@ -61,8 +69,16 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
 
   // WebSocket connection setup
   useEffect(() => {
-    if (!currentUser?.uuid || !session?.accessToken) {
+    const currentSession = sessionRef.current;
+
+    if (!currentUser?.uuid || !currentSession?.accessToken) {
       setIsConnected(false);
+      return;
+    }
+
+    // Prevent reconnection if already connected with same user
+    if (stompClientRef.current?.connected) {
+      console.log("🔌 WebSocket already connected, skipping reconnection");
       return;
     }
 
@@ -75,13 +91,20 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
     const stompClient = new Client({
       webSocketFactory: () => socket,
       connectHeaders: {
-        Authorization: `Bearer ${session.accessToken}`,
+        Authorization: `Bearer ${currentSession.accessToken}`,
       },
-      reconnectDelay: 3000,
-      heartbeatIncoming: 4000,
-      heartbeatOutgoing: 4000,
+      reconnectDelay: 5000, // Increased from 3000 to reduce reconnection frequency
+      heartbeatIncoming: 10000, // Increased from 4000
+      heartbeatOutgoing: 10000, // Increased from 4000
       debug: (str) => {
-        console.log("🔵 WebSocket:", str);
+        // Only log important messages, not all debug info
+        if (
+          str.includes("ERROR") ||
+          str.includes("CONNECTED") ||
+          str.includes("DISCONNECT")
+        ) {
+          console.log("🔵 WebSocket:", str);
+        }
       },
       onConnect: () => {
         console.log("✅ WebSocket connected successfully");
@@ -97,6 +120,9 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
             try {
               const payload: Message = JSON.parse(msg.body);
               console.log("📩 Received message:", payload);
+
+              // Update lastMessage for real-time notifications
+              setLastMessage(msg.body);
 
               const otherUserId =
                 payload.senderUuid === currentUser.uuid
@@ -141,7 +167,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
       stompClient.deactivate();
       setIsConnected(false);
     };
-  }, [currentUser?.uuid, session?.accessToken]);
+  }, [currentUser?.uuid]); // Only reconnect when user changes, not on every token refresh
 
   const sendPrivateMessage = (receiverUuid: string, message: string) => {
     if (!stompClientRef.current?.connected || !message.trim() || !currentUser) {
@@ -178,6 +204,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
     allChats,
     currentUser,
     stompClient: stompClientRef.current,
+    lastMessage,
   };
 
   return (

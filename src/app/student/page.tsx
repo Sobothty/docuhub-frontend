@@ -35,6 +35,7 @@ import {
 } from "@/feature/star/StarSlice";
 import { useRouter } from "next/navigation";
 import ProposalCardPlaceholder from "./proposals/PaperSkeleton";
+import { useApiNotification } from "@/components/ui/api-notification";
 
 // Type definitions
 interface User {
@@ -60,6 +61,7 @@ interface Paper {
   categoryNames: string[];
   abstractText?: string;
   thumbnailUrl?: string;
+  fileUrl?: string;
 }
 
 interface PapersResponse {
@@ -69,6 +71,7 @@ interface PapersResponse {
 }
 
 interface FilteredDocument {
+  
   id: string;
   title: string;
   status: string;
@@ -85,6 +88,7 @@ interface FilteredDocument {
   tags: string[];
   image: string;
   starCount: number;
+  fileUrl?: string;
 }
 
 // Add this above the main component
@@ -101,74 +105,101 @@ interface MentorInfo {
 
 function MentorCard({ mentor }: { mentor: MentorInfo }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Your Mentor</CardTitle>
-        <CardDescription>Connect with your assigned mentor</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-4 mb-4">
-          <Avatar className="h-12 w-12">
-            <AvatarImage
-              src={mentor.imageUrl || "/placeholder.svg?height=48&width=48"}
-              alt={mentor.fullName}
+    <Card className="overview-section-card">
+      <CardHeader className="border-b border-gray-200 dark:border-gray-700 pb-4">
+        <CardTitle className="text-2xl gradient-text flex items-center gap-2">
+          <svg
+            className="h-6 w-6 text-blue-600 dark:text-blue-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
             />
-            <AvatarFallback>
-              {mentor.fullName
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .toUpperCase()
-                .slice(0, 2)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <h4 className="font-medium">{mentor.fullName}</h4>
-            <p className="text-sm text-muted-foreground">
-              {mentor.title || "Mentor"}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {mentor.university || ""}
-            </p>
+          </svg>
+          Your Mentor
+        </CardTitle>
+        <CardDescription className="text-base">
+          Connect with your assigned mentor
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pt-6">
+        <div className="mentor-profile-section">
+          <div className="flex items-center gap-4 mb-4">
+            <Avatar className="mentor-avatar">
+              <AvatarImage
+                src={mentor.imageUrl || "/placeholder.svg?height=48&width=48"}
+                alt={mentor.fullName}
+              />
+              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-700 text-white font-semibold text-lg">
+                {mentor.fullName
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <h4 className="font-bold text-lg text-gray-900 dark:text-white">
+                {mentor.fullName}
+              </h4>
+              <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                {mentor.title || "Mentor"}
+              </p>
+              <p className="text-sm text-blue-500 dark:text-blue-400">
+                {mentor.university || ""}
+              </p>
+            </div>
           </div>
         </div>
-        <div className="space-y-2 mb-4">
+        <div className="mentor-info-card space-y-3 mb-6">
           <div className="flex justify-between text-sm">
-            <span>Last interaction:</span>
-            <span className="text-muted-foreground">
+            <span className="font-semibold text-gray-900 dark:text-white">
+              Last interaction:
+            </span>
+            <span className="text-gray-600 dark:text-gray-400 font-medium">
               {mentor.lastInteraction || "-"}
             </span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span>Total feedback received:</span>
-            <span className="text-muted-foreground">
-              {mentor.feedbackCount ?? "-"} comments
+          <div className="flex justify-between text-sm items-center">
+            <span className="font-semibold text-gray-900 dark:text-white">
+              Total feedback received:
             </span>
+            <Badge
+              variant="outline"
+              className="bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700 font-semibold"
+            >
+              {mentor.feedbackCount ?? "-"} comments
+            </Badge>
           </div>
           <div className="flex justify-between text-sm">
-            <span>Response time:</span>
-            <span className="text-muted-foreground">
+            <span className="font-semibold text-gray-900 dark:text-white">
+              Response time:
+            </span>
+            <span className="text-gray-600 dark:text-gray-400 font-medium">
               {mentor.responseTime || "-"}
             </span>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button size="sm" className="flex-1" asChild>
-            <Link href="/student/mentorship">
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Message
-            </Link>
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="flex-1 bg-transparent"
-            asChild
+        <div className="flex gap-3">
+          <Link
+            href="/student/mentorship"
+            className="mentor-action-button mentor-action-button-primary flex-1"
           >
-            <Link href={mentor.uuid ? `/mentors/${mentor.uuid}` : "#"}>
-              View Profile
-            </Link>
-          </Button>
+            <MessageSquare className="h-4 w-4" />
+            Message
+          </Link>
+          <Link
+            href={mentor.uuid ? `/mentors/${mentor.uuid}` : "#"}
+            className="mentor-action-button mentor-action-button-secondary flex-1"
+          >
+            View Profile
+          </Link>
         </div>
       </CardContent>
     </Card>
@@ -178,7 +209,19 @@ function MentorCard({ mentor }: { mentor: MentorInfo }) {
 export default function StudentOverviewPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeTab, setActiveTab] = useState<string>("documents");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
   const router = useRouter();
+
+  // Initialize API notification
+  const {
+    showSuccess,
+    showError,
+    showLoading,
+    closeNotification,
+    NotificationComponent,
+  } = useApiNotification();
+
   const { data: user } = useGetUserProfileQuery() as {
     data: UserProfileResponse | undefined;
   };
@@ -235,7 +278,65 @@ export default function StudentOverviewPage() {
       tags: paper.categoryNames,
       image: paper.thumbnailUrl || "/placeholder.svg?height=200&width=300",
       starCount: 0,
+      fileUrl: paper.fileUrl,
     }));
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredDocuments.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentDocuments = filteredDocuments.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  // Handle direct file download
+  const handleDownload = async (fileUrl: string | undefined, title: string) => {
+    try {
+      if (!fileUrl) {
+        showError("Download Failed", "No file URL available for this paper");
+        return;
+      }
+
+      showLoading(
+        "Preparing Download",
+        "Please wait while we prepare your file..."
+      );
+
+      // Fetch the file as a blob to force download
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+
+      // Create a blob URL
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      // Create download link
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `${title
+        .replace(/[^a-z0-9\-\s]/gi, "")
+        .replace(/\s+/g, "-")}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+
+      // Cleanup
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+
+      // Close loading and show success
+      closeNotification();
+      showSuccess("Download Started!", "Your paper file is now downloading");
+    } catch (error) {
+      console.log("Failed to download:", error);
+      closeNotification();
+      showError(
+        "Download Failed",
+        "Failed to download paper. Please try again."
+      );
+    }
+  };
 
   return (
     <DashboardLayout
@@ -246,89 +347,117 @@ export default function StudentOverviewPage() {
         "https://www.shutterstock.com/image-vector/avatar-gender-neutral-silhouette-vector-600nw-2470054311.jpg"
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-5">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              Student Dashboard
-            </h1>
-            <p className="text-muted-foreground">
-              Track your saved documents and manage your wishlist
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button asChild className="text-white">
-              <Link href="/student/proposals">
-                <Plus className="h-4 w-4 mr-2" />
-                New Documents
-              </Link>
-            </Button>
+        <div className="dashboard-header rounded-3xl p-8 mb-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-5xl font-bold gradient-text mb-3 tracking-tight">
+                Student Dashboard
+              </h1>
+              <p className="text-muted-foreground text-lg font-medium">
+                Track your academic journey and manage your research
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                asChild
+                size="lg"
+                className="text-white shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 px-8 rounded-xl font-semibold"
+              >
+                <Link href="/student/proposals">
+                  <Plus className="h-5 w-5 mr-2" />
+                  New Document
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Enhanced Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Documents</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <Card className="stat-card border-0 group relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wide">
+                Total Documents
+              </CardTitle>
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{authorPapers.length}</div>
-              <p className="text-xs text-muted-foreground">
-                {papersLoading ? "Loading..." : "Total papers submitted"}
+            <CardContent className="relative z-10">
+              <div className="text-4xl font-black gradient-text mb-1">
+                {authorPapers.length}
+              </div>
+              <p className="text-sm text-muted-foreground font-medium">
+                {papersLoading ? "Loading..." : "Papers submitted"}
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+          <Card className="stat-card border-0 group relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wide">
                 Approved Papers
               </CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <CheckCircle className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="relative z-10">
+              <div className="text-4xl font-black text-blue-600 dark:text-blue-400 mb-1">
                 {authorPapers.filter((p: Paper) => p.isApproved).length}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground font-medium">
                 Published documents
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Downloads</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <Card className="stat-card border-0 group relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-orange-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wide">
+                Total Downloads
+              </CardTitle>
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/20 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <TrendingUp className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="relative z-10">
+              <div className="text-4xl font-black text-orange-600 dark:text-orange-400 mb-1">
                 {authorPapers.reduce(
                   (sum: number, p: Paper) => sum + (p.downloads || 0),
                   0
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                All time downloads of documents
+              <p className="text-sm text-muted-foreground font-medium">
+                All time downloads
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Star</CardTitle>
-              <Star className="h-4 w-4 text-muted-foreground" />
+          <Card className="stat-card border-0 group relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-orange-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wide">
+                Star Rating
+              </CardTitle>
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/20 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <Star className="h-6 w-6 text-orange-600 dark:text-orange-400 fill-orange-500/20" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="relative z-10">
+              <div className="text-4xl font-black text-orange-600 dark:text-orange-400 mb-1">
                 {starLoading
                   ? "..."
                   : (starData as StarResponse[])?.length || 0}
               </div>
-              <p className="text-xs text-muted-foreground">Academic impact</p>
+              <p className="text-sm text-muted-foreground font-medium">
+                Academic impact
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -336,51 +465,55 @@ export default function StudentOverviewPage() {
         {/* Main Content Tabs */}
         <Tabs
           defaultValue={activeTab}
-          className="space-y-6"
+          className="space-y-4"
           onValueChange={setActiveTab}
         >
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2 gap-2 ">
             <TabsTrigger
               value="documents"
-              className="data-[state=active]:bg-accent transition-colors duration-700"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-xl transition-all duration-300 rounded-xl font-bold text-base py-4 data-[state=inactive]:text-muted-foreground data-[state=inactive]:bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50"
             >
               My Papers
             </TabsTrigger>
             <TabsTrigger
               value="overview"
-              className="data-[state=active]:bg-accent transition-colors duration-700"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-xl transition-all duration-300 rounded-xl font-bold text-base py-4 data-[state=inactive]:text-muted-foreground data-[state=inactive]:bg-transparent hover:bg-white/50 dark:hover:bg-gray-700/50"
             >
               Overview
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Recent Papers */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Papers</CardTitle>
-                  <CardDescription>
+              <Card className="overview-section-card">
+                <CardHeader className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                  <CardTitle className="text-2xl gradient-text flex items-center gap-2">
+                    <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    Recent Papers
+                  </CardTitle>
+                  <CardDescription className="text-base">
                     Your recently submitted papers
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   {papersLoading ? (
                     <div className="text-center py-4">Loading papers...</div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {authorPapers.slice(0, 3).map((paper: Paper) => (
-                        <PaperWithStarCount key={paper.uuid} paper={paper} />
+                        <PaperItemOverview key={paper.uuid} paper={paper} />
                       ))}
                     </div>
                   )}
-                  <Button
-                    variant="outline"
-                    className="w-full mt-4 bg-transparent"
-                    asChild
-                  >
-                    <Link href="/student/proposals">View All Papers</Link>
-                  </Button>
+                  <button className="view-all-button mt-6">
+                    <Link
+                      href="/student/proposals"
+                      className="flex items-center justify-center gap-2"
+                    >
+                      View All Papers
+                    </Link>
+                  </button>
                 </CardContent>
               </Card>
 
@@ -400,26 +533,37 @@ export default function StudentOverviewPage() {
             </div>
 
             {/* Research Interests */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Research Interests</CardTitle>
-                <CardDescription>
+            <Card className="overview-section-card">
+              <CardHeader className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                <CardTitle className="text-2xl gradient-text flex items-center gap-2">
+                  <Star className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  Research Interests
+                </CardTitle>
+                <CardDescription className="text-base">
                   Your areas of academic focus and interest
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
+              <CardContent className="pt-6">
+                <div className="flex flex-wrap gap-3">
                   {[
                     "Machine Learning",
                     "Healthcare Technology",
                     "Data Analysis",
                     "Computer Vision",
                   ].map((interest: string, index: number) => (
-                    <Badge key={index} variant="secondary">
+                    <Badge
+                      key={index}
+                      className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md hover:shadow-lg transition-all cursor-pointer"
+                    >
                       {interest}
                     </Badge>
                   ))}
-                  <Button variant="outline" size="sm" asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 font-semibold"
+                  >
                     <Link href="/student/settings">Edit Interests</Link>
                   </Button>
                 </div>
@@ -427,98 +571,264 @@ export default function StudentOverviewPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="documents" className="space-y-6">
+          <TabsContent value="documents" className="space-y-4">
             {/* Document Management */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
+            <Card className="dashboard-card border-0 shadow-xl">
+              <CardHeader className="papers-section-header">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <CardTitle>My Papers</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-3xl font-black gradient-text mb-2">
+                      My Papers
+                    </CardTitle>
+                    <CardDescription className="text-base font-medium">
                       Manage your submitted academic papers
                     </CardDescription>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <div className="relative">
-                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                       <Input
                         placeholder="Search papers..."
-                        className="pl-8 w-64"
+                        className="pl-10 w-full md:w-72 h-11 rounded-xl border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 font-medium"
                         value={searchQuery}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setSearchQuery(e.target.value)
                         }
                       />
                     </div>
-                    <Button variant="outline" size="sm">
-                      <Filter className="h-4 w-4 mr-2" />
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="rounded-xl border-2 border-blue-300 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 font-bold"
+                    >
+                      <Filter className="h-5 w-5 mr-2" />
                       Filter
                     </Button>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6">
                 {papersLoading ? (
                   <ProposalCardPlaceholder />
                 ) : filteredDocuments.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No papers found. Start by submitting your first paper!
+                  <div className="text-center py-16">
+                    <FileText className="h-20 w-20 mx-auto mb-4 text-muted-foreground opacity-30" />
+                    <p className="text-lg font-semibold text-muted-foreground">
+                      No papers found. Start by submitting your first paper!
+                    </p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {filteredDocuments.map((doc: FilteredDocument) => (
-                      <HorizontalCardWithStarCount
-                        key={doc.id}
-                        doc={doc}
-                        onDownloadPDF={() =>
-                          window.open(
-                            `/student/submissions/${doc.id}`,
-                            "_blank"
-                          )
-                        }
-                      />
-                    ))}
-                  </div>
+                  <>
+                    <div className="space-y-5">
+                      {currentDocuments.map((doc: FilteredDocument) => (
+                        <HorizontalCardWithStarCount
+                          key={doc.id}
+                          doc={doc}
+                          onDownloadPDF={() =>
+                            handleDownload(doc.fileUrl, doc.title)
+                          }
+                        />
+                      ))}
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <Card className="dashboard-card border-0 mt-6">
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            {/* Page Info */}
+                            <div className="text-sm text-muted-foreground">
+                              Showing {startIndex + 1} to{" "}
+                              {Math.min(endIndex, filteredDocuments.length)} of{" "}
+                              {filteredDocuments.length} papers
+                            </div>
+
+                            {/* Pagination Controls */}
+                            <div className="flex items-center gap-2">
+                              {/* Previous Button */}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  setCurrentPage((prev) =>
+                                    Math.max(prev - 1, 1)
+                                  )
+                                }
+                                disabled={currentPage === 1}
+                                className="font-semibold"
+                              >
+                                Previous
+                              </Button>
+
+                              {/* Page Numbers */}
+                              <div className="flex items-center gap-1">
+                                {Array.from(
+                                  { length: totalPages },
+                                  (_, i) => i + 1
+                                ).map((page) => {
+                                  // Show first page, last page, current page, and pages around current
+                                  if (
+                                    page === 1 ||
+                                    page === totalPages ||
+                                    (page >= currentPage - 1 &&
+                                      page <= currentPage + 1)
+                                  ) {
+                                    return (
+                                      <Button
+                                        key={page}
+                                        variant={
+                                          page === currentPage
+                                            ? "default"
+                                            : "outline"
+                                        }
+                                        size="sm"
+                                        onClick={() => setCurrentPage(page)}
+                                        className={
+                                          page === currentPage
+                                            ? "font-bold text-white"
+                                            : "font-semibold"
+                                        }
+                                        style={
+                                          page === currentPage
+                                            ? {
+                                                background:
+                                                  "linear-gradient(to right, #2563eb, #1951cc)",
+                                              }
+                                            : {}
+                                        }
+                                      >
+                                        {page}
+                                      </Button>
+                                    );
+                                  } else if (
+                                    page === currentPage - 2 ||
+                                    page === currentPage + 2
+                                  ) {
+                                    return (
+                                      <span key={page} className="px-2">
+                                        ...
+                                      </span>
+                                    );
+                                  }
+                                  return null;
+                                })}
+                              </div>
+
+                              {/* Next Button */}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  setCurrentPage((prev) =>
+                                    Math.min(prev + 1, totalPages)
+                                  )
+                                }
+                                disabled={currentPage === totalPages}
+                                className="font-semibold"
+                              >
+                                Next
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* API Notification */}
+      <NotificationComponent />
     </DashboardLayout>
   );
 }
 
-// Component to display paper with star count in Recent Papers section
-interface PaperWithStarCountProps {
+// Component for Overview tab Recent Papers section
+interface PaperItemOverviewProps {
   paper: Paper;
 }
 
-function PaperWithStarCount({ paper }: PaperWithStarCountProps) {
-  const { data: starCount = 0, isLoading } = useGetStarCountQuery(paper.uuid);
+function PaperItemOverview({ paper }: PaperItemOverviewProps) {
+  const router = useRouter();
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return (
+          <Badge className="capitalize bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800 text-xs px-2 py-0.5">
+            Pending
+          </Badge>
+        );
+      case "APPROVED":
+        return (
+          <Badge className="capitalize bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800 text-xs px-2 py-0.5">
+            Approved
+          </Badge>
+        );
+      case "REJECTED":
+      case "ADMIN_REJECTED":
+        return (
+          <Badge className="capitalize bg-orange-100 text-orange-900 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700 text-xs px-2 py-0.5">
+            Rejected
+          </Badge>
+        );
+      case "UNDER_REVIEW":
+        return (
+          <Badge className="capitalize bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800 text-xs px-2 py-0.5">
+            Under Review
+          </Badge>
+        );
+      default:
+        return (
+          <Badge className="capitalize bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800 text-xs px-2 py-0.5">
+            {status}
+          </Badge>
+        );
+    }
+  };
 
   return (
-    <div className="p-3 rounded-lg border">
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="font-medium text-sm">{paper.title}</h4>
-        <div className="flex items-center gap-2">
-          <Badge
-            variant={paper.isApproved ? "approved" : "pending"}
-            className="capitalize"
-          >
-            {paper.status}
-          </Badge>
-          {!isLoading && starCount > 0 && (
-            <div className="flex items-center gap-1 text-xs text-yellow-600">
-              <Star className="h-3 w-3 fill-yellow-500" />
-              <span>{starCount}</span>
-            </div>
-          )}
+    <div
+      className="recent-paper-item cursor-pointer"
+      onClick={() => router.push(`/student/submissions/${paper.uuid}`)}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <h4 className="recent-paper-title mb-2 line-clamp-2">
+            {paper.title}
+          </h4>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+              <svg
+                className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              {new Date(paper.createdAt).toLocaleDateString()}
+            </span>
+            {paper.categoryNames && paper.categoryNames.length > 0 && (
+              <>
+                <span className="text-gray-400">•</span>
+                <span className="text-blue-600 dark:text-blue-400 font-medium">
+                  {paper.categoryNames[0]}
+                </span>
+              </>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="flex justify-between text-xs text-muted-foreground">
-        <span>Submitted: {new Date(paper.createdAt).toLocaleDateString()}</span>
-        <span>{paper.categoryNames.join(", ")}</span>
+        <div className="flex-shrink-0">{getStatusBadge(paper.status)}</div>
       </div>
     </div>
   );

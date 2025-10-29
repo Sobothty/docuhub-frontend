@@ -11,6 +11,7 @@ import {
   RotateCcw,
   AlertCircle,
   X,
+  Layout,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
@@ -35,7 +36,10 @@ const DEFAULT_COLORS = {
   textSecondary: "#1f2937",
 };
 
-export default function ProfileExport({ userType, onClose }: ProfileExportProps) {
+export default function ProfileExport({
+  userType,
+  onClose,
+}: ProfileExportProps) {
   // Use existing queries with proper error handling
   const {
     data: userProfile,
@@ -85,6 +89,27 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
   const [researchCategory, setResearchCategory] = useState("all");
   const [previewContent, setPreviewContent] = useState<string>("");
   const [customColors, setCustomColors] = useState(DEFAULT_COLORS);
+  const [selectedTemplate, setSelectedTemplate] = useState<
+    "modern" | "classic" | "minimal"
+  >("modern");
+
+  const templates = [
+    {
+      id: "modern" as const,
+      name: "Modern Professional",
+      description: "Two-column layout with sidebar and colored header",
+    },
+    {
+      id: "classic" as const,
+      name: "Classic Academic",
+      description: "Traditional single-column layout with elegant typography",
+    },
+    {
+      id: "minimal" as const,
+      name: "Minimal Clean",
+      description: "Simple and clean design with focus on content",
+    },
+  ];
 
   const categories = [
     { key: "papers", label: "Papers & Publications", icon: BookOpen },
@@ -180,8 +205,8 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
     }));
   };
 
-  // ✅ Wrapped with useCallback
-  const generatePDFPreview = useCallback(
+  // ✅ Modern Template (Original Design)
+  const generateModernTemplate = useCallback(
     (data: ExportData, colors: typeof DEFAULT_COLORS) => {
       const styles = `
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -495,13 +520,562 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
     [userType]
   );
 
-  // ✅ Auto-generate preview when colors or data changes - now includes generatePDFPreview
+  // ✅ Classic Template (Traditional Academic Layout)
+  const generateClassicTemplate = useCallback(
+    (data: ExportData, colors: typeof DEFAULT_COLORS) => {
+      const styles = `
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { 
+        font-family: 'Georgia', 'Times New Roman', serif !important; 
+        line-height: 1.8; 
+        color: ${colors.textSecondary} !important;
+        background: #f8fafc !important;
+        padding: 20px;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white !important;
+        padding: 50px 60px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      }
+      .cv-header {
+        text-align: center;
+        padding-bottom: 30px;
+        border-bottom: 3px solid ${colors.primary} !important;
+        margin-bottom: 40px;
+      }
+      .profile-photo {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid ${colors.primary} !important;
+        margin: 0 auto 20px;
+        display: block;
+      }
+      .profile-photo-placeholder {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: ${colors.primary}20 !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 3px solid ${colors.primary} !important;
+        color: ${colors.primary} !important;
+        margin: 0 auto 20px;
+        font-weight: bold;
+      }
+      .name-section h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0 0 10px 0;
+        color: ${colors.primary} !important;
+        letter-spacing: 2px;
+      }
+      .name-section p {
+        font-size: 1.3rem;
+        margin: 0;
+        color: ${colors.textSecondary} !important;
+        font-style: italic;
+      }
+      .contact-info {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 20px;
+        font-size: 0.9rem;
+        color: ${colors.textSecondary} !important;
+        margin-top: 20px;
+      }
+      .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .section {
+        margin-bottom: 35px;
+      }
+      .section h3 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: ${colors.primary} !important;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid ${colors.secondary} !important;
+      }
+      .section p, .section li {
+        font-size: 1rem;
+        line-height: 1.8;
+        color: ${colors.textSecondary} !important;
+        margin-bottom: 12px;
+      }
+      .info-grid {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        gap: 10px 20px;
+        margin-bottom: 20px;
+      }
+      .info-label {
+        font-weight: 600;
+        color: ${colors.primary} !important;
+      }
+      .info-value {
+        color: ${colors.textSecondary} !important;
+      }
+      .publication-item {
+        margin-bottom: 25px;
+        padding-left: 20px;
+        border-left: 3px solid ${colors.accent} !important;
+      }
+      .item-title {
+        font-weight: 700;
+        color: ${colors.textSecondary} !important;
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+      }
+      .item-meta {
+        color: #6b7280 !important;
+        font-size: 0.9rem;
+        font-style: italic;
+      }
+      @media print {
+        body { background: white !important; padding: 0; }
+        .container { box-shadow: none; }
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+      }
+    `;
+
+      const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Professional Profile Export</title>
+          <style>${styles}</style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="cv-header">
+              ${
+                data.studentInfo?.imageUrl &&
+                data.studentInfo.imageUrl !== "/placeholder.svg"
+                  ? `<img class="profile-photo" src="${data.studentInfo.imageUrl}" alt="Profile" />`
+                  : `<div class="profile-photo-placeholder">Photo</div>`
+              }
+              <div class="name-section">
+                <h1>${
+                  data.studentInfo?.fullName?.toUpperCase() ||
+                  "PROFESSIONAL NAME"
+                }</h1>
+                <p>${
+                  userType === "student"
+                    ? data.studentInfo?.major || "Student"
+                    : "Academic Researcher"
+                }</p>
+              </div>
+              <div class="contact-info">
+                <div class="contact-item">${
+                  data.studentInfo?.email || "email@example.com"
+                }</div>
+                <div class="contact-item">${
+                  data.studentInfo?.contactNumber || "+123-456-7890"
+                }</div>
+                <div class="contact-item">${
+                  data.studentInfo?.address || "University Address"
+                }</div>
+              </div>
+            </div>
+            
+            ${
+              data.studentInfo
+                ? `
+            <div class="section">
+              <h3>PERSONAL INFORMATION</h3>
+              <div class="info-grid">
+                <div class="info-label">Full Name:</div>
+                <div class="info-value">${
+                  data.studentInfo.fullName || "N/A"
+                }</div>
+                <div class="info-label">Email:</div>
+                <div class="info-value">${data.studentInfo.email || "N/A"}</div>
+                <div class="info-label">Contact:</div>
+                <div class="info-value">${
+                  data.studentInfo.contactNumber || "N/A"
+                }</div>
+                <div class="info-label">Telegram:</div>
+                <div class="info-value">${
+                  data.studentInfo.telegramId || "N/A"
+                }</div>
+              </div>
+              <p><strong>About:</strong> ${data.studentInfo.bio || "N/A"}</p>
+            </div>
+            `
+                : ""
+            }
+            
+            ${
+              data.studentInfo?.university
+                ? `
+            <div class="section">
+              <h3>EDUCATION</h3>
+              <div class="info-grid">
+                <div class="info-label">University:</div>
+                <div class="info-value">${data.studentInfo.university}</div>
+                <div class="info-label">Major:</div>
+                <div class="info-value">${data.studentInfo.major || "N/A"}</div>
+                <div class="info-label">Year:</div>
+                <div class="info-value">${
+                  data.studentInfo.yearsOfStudy || "N/A"
+                }</div>
+              </div>
+            </div>
+            `
+                : ""
+            }
+            
+            ${
+              data.papers && data.papers.length > 0
+                ? `
+            <div class="section">
+              <h3>PUBLICATIONS & RESEARCH</h3>
+              ${data.papers
+                .map(
+                  (paper) => `
+                <div class="publication-item">
+                  <div class="item-title">${paper.title}</div>
+                  <div class="item-meta">${paper.categories} • ${paper.status} • ${paper.downloads} downloads</div>
+                  <p style="margin-top: 8px; font-size: 0.95rem;">${paper.abstract}</p>
+                </div>
+              `
+                )
+                .join("")}
+            </div>
+            `
+                : ""
+            }
+            
+            ${
+              data.studentAdviser && data.studentAdviser.length > 0
+                ? `
+            <div class="section">
+              <h3>ACADEMIC ADVISORS</h3>
+              ${data.studentAdviser
+                .map(
+                  (adviser) => `
+                <div class="publication-item">
+                  <div class="item-title">${adviser.adviserName}</div>
+                  <p>${adviser.adviserBio}</p>
+                </div>
+              `
+                )
+                .join("")}
+            </div>
+            `
+                : ""
+            }
+          </div>
+        </body>
+      </html>
+    `;
+
+      return htmlContent;
+    },
+    [userType]
+  );
+
+  // ✅ Minimal Template (Clean and Simple Design)
+  const generateMinimalTemplate = useCallback(
+    (data: ExportData, colors: typeof DEFAULT_COLORS) => {
+      const styles = `
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { 
+        font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif !important; 
+        line-height: 1.6; 
+        color: #333 !important;
+        background: #ffffff !important;
+        padding: 20px;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white !important;
+        padding: 40px;
+      }
+      .cv-header {
+        margin-bottom: 40px;
+        display: flex;
+        gap: 30px;
+        align-items: flex-start;
+        padding-bottom: 30px;
+        border-bottom: 1px solid #e5e7eb !important;
+      }
+      .profile-photo {
+        width: 100px;
+        height: 100px;
+        border-radius: 8px;
+        object-fit: cover;
+        flex-shrink: 0;
+      }
+      .profile-photo-placeholder {
+        width: 100px;
+        height: 100px;
+        border-radius: 8px;
+        background: #f3f4f6 !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9ca3af !important;
+        flex-shrink: 0;
+      }
+      .header-content {
+        flex: 1;
+      }
+      .name-section h1 {
+        font-size: 2rem;
+        font-weight: 600;
+        margin: 0 0 8px 0;
+        color: #111827 !important;
+      }
+      .name-section p {
+        font-size: 1rem;
+        margin: 0 0 15px 0;
+        color: #6b7280 !important;
+      }
+      .contact-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        font-size: 0.85rem;
+        color: #6b7280 !important;
+      }
+      .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .section {
+        margin-bottom: 30px;
+      }
+      .section h3 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #6b7280 !important;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .section p {
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: #4b5563 !important;
+        margin-bottom: 10px;
+      }
+      .info-row {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+      }
+      .info-label {
+        min-width: 120px;
+        color: #6b7280 !important;
+        font-weight: 500;
+      }
+      .info-value {
+        color: #111827 !important;
+      }
+      .publication-item {
+        margin-bottom: 20px;
+      }
+      .item-title {
+        font-weight: 600;
+        color: #111827 !important;
+        font-size: 1rem;
+        margin-bottom: 5px;
+      }
+      .item-meta {
+        color: #6b7280 !important;
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+      }
+      .item-description {
+        color: #4b5563 !important;
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+      @media print {
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+      }
+    `;
+
+      const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Professional Profile Export</title>
+          <style>${styles}</style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="cv-header">
+              ${
+                data.studentInfo?.imageUrl &&
+                data.studentInfo.imageUrl !== "/placeholder.svg"
+                  ? `<img class="profile-photo" src="${data.studentInfo.imageUrl}" alt="Profile" />`
+                  : `<div class="profile-photo-placeholder">Photo</div>`
+              }
+              <div class="header-content">
+                <div class="name-section">
+                  <h1>${data.studentInfo?.fullName || "Professional Name"}</h1>
+                  <p>${
+                    userType === "student"
+                      ? data.studentInfo?.major || "Student"
+                      : "Academic Researcher"
+                  }</p>
+                </div>
+                <div class="contact-info">
+                  <div class="contact-item">${
+                    data.studentInfo?.email || "email@example.com"
+                  }</div>
+                  <div class="contact-item">${
+                    data.studentInfo?.contactNumber || "+123-456-7890"
+                  }</div>
+                  <div class="contact-item">${
+                    data.studentInfo?.telegramId || "@username"
+                  }</div>
+                </div>
+              </div>
+            </div>
+            
+            ${
+              data.studentInfo?.bio
+                ? `
+            <div class="section">
+              <h3>About</h3>
+              <p>${data.studentInfo.bio}</p>
+            </div>
+            `
+                : ""
+            }
+            
+            ${
+              data.studentInfo?.university
+                ? `
+            <div class="section">
+              <h3>Education</h3>
+              <div class="info-row">
+                <div class="info-label">University</div>
+                <div class="info-value">${data.studentInfo.university}</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Major</div>
+                <div class="info-value">${data.studentInfo.major || "N/A"}</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Year of Study</div>
+                <div class="info-value">${
+                  data.studentInfo.yearsOfStudy || "N/A"
+                }</div>
+              </div>
+            </div>
+            `
+                : ""
+            }
+            
+            ${
+              data.papers && data.papers.length > 0
+                ? `
+            <div class="section">
+              <h3>Publications</h3>
+              ${data.papers
+                .map(
+                  (paper) => `
+                <div class="publication-item">
+                  <div class="item-title">${paper.title}</div>
+                  <div class="item-meta">${paper.categories} • ${paper.status} • ${paper.downloads} downloads</div>
+                  <div class="item-description">${paper.abstract}</div>
+                </div>
+              `
+                )
+                .join("")}
+            </div>
+            `
+                : ""
+            }
+            
+            ${
+              data.studentAdviser && data.studentAdviser.length > 0
+                ? `
+            <div class="section">
+              <h3>Advisors</h3>
+              ${data.studentAdviser
+                .map(
+                  (adviser) => `
+                <div class="publication-item">
+                  <div class="item-title">${adviser.adviserName}</div>
+                  <div class="item-description">${adviser.adviserBio}</div>
+                </div>
+              `
+                )
+                .join("")}
+            </div>
+            `
+                : ""
+            }
+          </div>
+        </body>
+      </html>
+    `;
+
+      return htmlContent;
+    },
+    [userType]
+  );
+
+  // ✅ Template selector function
+  const generatePDFPreview = useCallback(
+    (
+      data: ExportData,
+      colors: typeof DEFAULT_COLORS,
+      template: "modern" | "classic" | "minimal"
+    ) => {
+      switch (template) {
+        case "classic":
+          return generateClassicTemplate(data, colors);
+        case "minimal":
+          return generateMinimalTemplate(data, colors);
+        case "modern":
+        default:
+          return generateModernTemplate(data, colors);
+      }
+    },
+    [generateModernTemplate, generateClassicTemplate, generateMinimalTemplate]
+  );
+
+  // ✅ Auto-generate preview when colors, data, or template changes
   useEffect(() => {
     if (exportData) {
-      const preview = generatePDFPreview(exportData, customColors);
+      const preview = generatePDFPreview(
+        exportData,
+        customColors,
+        selectedTemplate
+      );
       setPreviewContent(preview);
     }
-  }, [exportData, customColors, generatePDFPreview]);
+  }, [exportData, customColors, selectedTemplate, generatePDFPreview]);
 
   const handleColorChange = (
     colorType: keyof typeof DEFAULT_COLORS,
@@ -528,7 +1102,11 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
       tempContainer.style.overflow = "visible";
 
       // Create a complete HTML document with all styles inline
-      const completeHTML = generatePDFPreview(data, customColors);
+      const completeHTML = generatePDFPreview(
+        data,
+        customColors,
+        selectedTemplate
+      );
       tempContainer.innerHTML = completeHTML;
 
       // Append to body
@@ -635,10 +1213,12 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
         heightLeft -= pageHeight;
       }
 
-      // Generate filename
+      // Generate filename with template name
+      const templateName =
+        selectedTemplate.charAt(0).toUpperCase() + selectedTemplate.slice(1);
       const fileName = `${
         data.studentInfo?.fullName?.replace(/\s+/g, "_") || "profile"
-      }_CV_${new Date().toISOString().split("T")[0]}.pdf`;
+      }_CV_${templateName}_${new Date().toISOString().split("T")[0]}.pdf`;
 
       // Save the PDF
       pdf.save(fileName);
@@ -686,9 +1266,22 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-6 max-w-4xl mx-auto">
-        <div className="flex items-center justify-center py-8">
-          <DocuhubLoader />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          onClick={onClose}
+        />
+        <div className="relative bg-card rounded-xl shadow-2xl p-8 max-w-md mx-auto border">
+          <div
+            className="h-1 w-full rounded-full mb-6"
+            style={{ backgroundColor: "var(--color-secondary)" }}
+          />
+          <div className="flex flex-col items-center gap-4">
+            <DocuhubLoader />
+            <p className="text-card-foreground font-semibold">
+              Loading profile data...
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -696,79 +1289,200 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
 
   if (hasErrors) {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-6 max-w-4xl mx-auto">
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Failed to Load Data
-          </h3>
-          <p className="text-gray-600 mb-4">
-            There was an error loading your profile data. Please try again.
-          </p>
-          <button
-            onClick={handleRetry}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Retry
-          </button>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          onClick={onClose}
+        />
+        <div className="relative bg-card rounded-xl shadow-2xl p-8 max-w-md mx-auto border">
+          <div
+            className="h-1 w-full rounded-full mb-6"
+            style={{ backgroundColor: "var(--color-secondary)" }}
+          />
+          <div className="flex flex-col items-center text-center gap-4">
+            <div className="p-4 rounded-full bg-red-100 dark:bg-red-900/30">
+              <AlertCircle className="w-8 h-8 text-red-500" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-card-foreground mb-2">
+                Failed to Load Data
+              </h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                There was an error loading your profile data. Please try again.
+              </p>
+            </div>
+            <div className="flex gap-3 w-full">
+              <button
+                onClick={onClose}
+                className="flex-1 px-4 py-2 border rounded-lg hover:bg-accent transition-colors"
+              >
+                Close
+              </button>
+              <button
+                onClick={handleRetry}
+                className="flex-1 px-4 py-2 text-white rounded-lg hover:opacity-90 transition-all font-semibold"
+                style={{ backgroundColor: "var(--color-secondary)" }}
+              >
+                Retry
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Dark overlay with blur */}
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
 
       {/* Main container */}
-      <div className="relative h-[90%] overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {/* Close button - always visible */}
-        <div className="sticky top-4 right-4 z-50 flex justify-end px-4">
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors border border-border/50 shadow-lg"
-          >
-            <X className="h-5 w-5" />
-            <span className="sr-only">Close</span>
-          </button>
-        </div>
+      <div className="relative w-full max-w-7xl h-[90vh] bg-card rounded-xl shadow-2xl overflow-hidden border">
+        {/* Modern Header */}
+        <div className="relative overflow-hidden">
+          {/* Top accent bar */}
+          <div
+            className="h-1"
+            style={{ backgroundColor: "var(--color-secondary)" }}
+          />
 
-        {/* Content wrapper */}
-        <div className="min-h-screen p-4 lg:p-6">
-          <div className="max-w-[1400px] mx-auto bg-card rounded-lg shadow-xl border border-border/50">
-            {/* Header */}
-            <div className="sticky top-0 z-40 bg-card backdrop-blur-sm border-b border-border/50 p-4 lg:p-6">
-              <div className="flex items-center justify-between">
+          {/* Header content */}
+          <div className="p-6 bg-card border-b">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div
+                  className="p-3 rounded-xl"
+                  style={{ backgroundColor: "var(--color-secondary)" }}
+                >
+                  <Download className="h-6 w-6 text-white" />
+                </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-foreground">
+                  <h2 className="text-2xl font-bold text-card-foreground">
                     Export Profile
                   </h2>
-                  <p className="text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     Customize and download your professional CV
                   </p>
                 </div>
-                <span className="inline-flex items-center h-8 px-3 text-sm font-medium rounded border border-border bg-muted/50">
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-white"
+                  style={{ backgroundColor: "var(--color-secondary)" }}
+                >
                   PDF Export
                 </span>
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded-lg hover:bg-accent transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
             </div>
+          </div>
+        </div>
 
+        {/* Main content area with scroll */}
+        <div className="flex-1 overflow-hidden">
+          <div className="h-[calc(90vh-145px)] overflow-y-auto">
             {/* Main grid layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 p-4 lg:p-6">
-              {/* Controls Column - Make it sticky on desktop */}
-              <div className="lg:col-span-2">
-                <div className="lg:sticky lg:top-[120px] space-y-6">
-                  {/* Color Customization */}
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <label className="block text-sm font-medium text-gray-700">
-                        <Palette className="w-4 h-4 inline mr-1" />
-                        Customize Colors
-                      </label>
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 p-6">
+              {/* Controls Column */}
+              <div className="lg:col-span-2 space-y-5">
+                {/* Template Selection */}
+                <div className="bg-card border rounded-xl overflow-hidden">
+                  <div
+                    className="h-1"
+                    style={{ backgroundColor: "var(--color-secondary)" }}
+                  />
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div
+                        className="p-2 rounded-lg"
+                        style={{ backgroundColor: "var(--color-secondary)" }}
+                      >
+                        <Layout className="w-4 h-4 text-white" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-card-foreground">
+                        Choose Template
+                      </h3>
+                    </div>
+                    <div className="space-y-3">
+                      {templates.map((template) => (
+                        <div
+                          key={template.id}
+                          className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                            selectedTemplate === template.id
+                              ? "border-2 bg-accent/30"
+                              : "border hover:bg-accent/20"
+                          }`}
+                          onClick={() => setSelectedTemplate(template.id)}
+                          style={{
+                            borderColor:
+                              selectedTemplate === template.id
+                                ? "var(--color-secondary)"
+                                : undefined,
+                          }}
+                        >
+                          <div className="flex items-start gap-3">
+                            <input
+                              type="radio"
+                              checked={selectedTemplate === template.id}
+                              onChange={() => setSelectedTemplate(template.id)}
+                              className="mt-1 w-4 h-4 cursor-pointer"
+                              style={{ accentColor: "var(--color-secondary)" }}
+                            />
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-card-foreground mb-1">
+                                {template.name}
+                              </h4>
+                              <p className="text-xs text-muted-foreground">
+                                {template.description}
+                              </p>
+                            </div>
+                          </div>
+                          {selectedTemplate === template.id && (
+                            <div
+                              className="absolute top-2 right-2 w-2 h-2 rounded-full"
+                              style={{
+                                backgroundColor: "var(--color-secondary)",
+                              }}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Color Customization */}
+                <div className="bg-card border rounded-xl overflow-hidden">
+                  <div
+                    className="h-1"
+                    style={{ backgroundColor: "var(--color-secondary)" }}
+                  />
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="p-2 rounded-lg"
+                          style={{ backgroundColor: "var(--color-secondary)" }}
+                        >
+                          <Palette className="w-4 h-4 text-white" />
+                        </div>
+                        <h3 className="text-sm font-semibold text-card-foreground">
+                          Customize Colors
+                        </h3>
+                      </div>
                       <button
                         onClick={resetToDefaultColors}
-                        className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors px-2 py-1 rounded hover:bg-gray-100"
+                        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-accent"
                       >
                         <RotateCcw className="w-3 h-3" />
                         Reset
@@ -806,13 +1520,13 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
                       ).map(({ key, label, description }) => (
                         <div
                           key={key}
-                          className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                          className="flex items-center gap-3 p-3 bg-accent/30 rounded-lg border"
                         >
                           <div className="flex-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-xs font-semibold text-card-foreground mb-0.5">
                               {label}
                             </label>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                               {description}
                             </p>
                           </div>
@@ -823,7 +1537,7 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
                               onChange={(e) =>
                                 handleColorChange(key, e.target.value)
                               }
-                              className="w-10 h-10 rounded-lg border-2 border-gray-300 cursor-pointer hover:border-gray-400 transition-colors"
+                              className="w-9 h-9 rounded-lg border-2 cursor-pointer hover:scale-110 transition-transform"
                               title={`Choose ${label.toLowerCase()}`}
                             />
                             <input
@@ -832,7 +1546,7 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
                               onChange={(e) =>
                                 handleColorChange(key, e.target.value)
                               }
-                              className="w-20 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              className="w-20 px-2 py-1.5 text-xs border rounded-lg bg-card focus:ring-2 focus:ring-offset-0"
                               placeholder="#000000"
                             />
                           </div>
@@ -840,31 +1554,40 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
                       ))}
                     </div>
                   </div>
+                </div>
 
-                  {/* Research Category Filter */}
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      <Search className="w-4 h-4 inline mr-1" />
-                      Filter by Research Category
-                    </label>
+                {/* Research Category Filter */}
+                <div className="bg-card border rounded-xl overflow-hidden">
+                  <div
+                    className="h-1"
+                    style={{ backgroundColor: "var(--color-secondary)" }}
+                  />
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div
+                        className="p-2 rounded-lg"
+                        style={{ backgroundColor: "var(--color-secondary)" }}
+                      >
+                        <Search className="w-4 h-4 text-white" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-card-foreground">
+                        Filter Research Category
+                      </h3>
+                    </div>
                     <select
                       value={researchCategory}
                       onChange={(e) => setResearchCategory(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none cursor-pointer"
+                      className="w-full px-3 py-2.5 bg-card border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all appearance-none cursor-pointer"
                       style={{
                         backgroundImage:
-                          "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23667'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\")",
+                          "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\")",
                         backgroundRepeat: "no-repeat",
-                        backgroundPosition: "right 1rem center",
+                        backgroundPosition: "right 0.75rem center",
                         backgroundSize: "1.2em",
                       }}
                     >
                       {categoryNames.map((categoryName) => (
-                        <option
-                          key={categoryName}
-                          value={categoryName}
-                          className="text-sm bg-white text-gray-700"
-                        >
+                        <option key={categoryName} value={categoryName}>
                           {categoryName === "all"
                             ? "All Categories"
                             : categoryName}
@@ -872,24 +1595,37 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
                       ))}
                     </select>
                   </div>
+                </div>
 
-                  {/* Category Selection */}
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                {/* Category Selection */}
+                <div className="bg-card border rounded-xl overflow-hidden">
+                  <div
+                    className="h-1"
+                    style={{ backgroundColor: "var(--color-secondary)" }}
+                  />
+                  <div className="p-4">
+                    <h3 className="text-sm font-semibold text-card-foreground mb-3">
                       Select Data to Export
-                    </label>
-                    <div className="grid grid-cols-1 gap-3">
+                    </h3>
+                    <div className="grid grid-cols-1 gap-2">
                       {categories.map(({ key, label, icon: Icon }) => (
                         <div
                           key={key}
-                          className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                          className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${
                             selectedCategories[
                               key as keyof typeof selectedCategories
                             ]
-                              ? "bg-blue-50 border-blue-300"
-                              : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                              ? "bg-accent border-2"
+                              : "bg-card border hover:bg-accent/50"
                           }`}
                           onClick={() => handleCategoryToggle(key)}
+                          style={{
+                            borderColor: selectedCategories[
+                              key as keyof typeof selectedCategories
+                            ]
+                              ? "var(--color-secondary)"
+                              : undefined,
+                          }}
                         >
                           <input
                             type="checkbox"
@@ -899,75 +1635,98 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
                               ]
                             }
                             onChange={() => handleCategoryToggle(key)}
-                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                            className="w-4 h-4 rounded focus:ring-2 focus:ring-offset-0"
+                            style={{ accentColor: "var(--color-secondary)" }}
                           />
-                          <Icon className="w-4 h-4 text-gray-600" />
-                          <span className="text-sm font-medium text-gray-700">
+                          <Icon className="w-4 h-4" />
+                          <span className="text-sm font-medium text-card-foreground">
                             {label}
                           </span>
                         </div>
                       ))}
                     </div>
                   </div>
+                </div>
 
-                  {/* Export Button */}
-                  <div className="flex flex-col gap-2">
-                    <button
-                      onClick={handleExport}
-                      disabled={
-                        isExporting || !hasAnySelectedCategories || !exportData
-                      }
-                      className="flex items-center justify-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
-                    >
-                      <Download className="w-5 h-5" />
-                      {isExporting ? "Generating PDF..." : "Download as PDF"}
-                    </button>
-                    <p className="text-xs text-gray-500 text-center">
-                      Downloads directly as a PDF file with all colors and
-                      formatting preserved.
-                    </p>
-                  </div>
+                {/* Export Button */}
+                <div className="space-y-3">
+                  <button
+                    onClick={handleExport}
+                    disabled={
+                      isExporting || !hasAnySelectedCategories || !exportData
+                    }
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3.5 text-white rounded-xl hover:opacity-90 focus:ring-4 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl font-semibold"
+                    style={{
+                      backgroundColor: "var(--color-secondary)",
+                    }}
+                  >
+                    <Download className="w-5 h-5" />
+                    {isExporting ? "Generating PDF..." : "Download as PDF"}
+                  </button>
+                  <p className="text-xs text-muted-foreground text-center px-2">
+                    Downloads directly as a PDF file with all colors and
+                    formatting preserved.
+                  </p>
                 </div>
               </div>
 
               {/* Preview Column */}
-              <div className="lg:col-span-3 bg-muted rounded-lg border border-border/50">
+              <div className="lg:col-span-3">
+                <div className="bg-card border rounded-xl overflow-hidden h-[calc(90vh-200px)]">
+                  {/* Preview Header */}
+                  <div
+                    className="h-1"
+                    style={{ backgroundColor: "var(--color-secondary)" }}
+                  />
+                  <div className="p-3 border-b bg-card">
+                    <h3 className="text-sm font-semibold text-card-foreground">
+                      Live Preview
+                    </h3>
+                  </div>
 
-                <div className="h-full w-full bg-white overflow-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {!previewContent ? (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="text-center">
-                        <DocuhubLoader />
-                        <p className="text-muted-foreground mt-4">
-                          Generating preview...
-                        </p>
+                  {/* Preview Content */}
+                  <div className="h-[calc(100%-49px)] w-full bg-muted overflow-hidden">
+                    {!previewContent ? (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-center">
+                          <DocuhubLoader />
+                          <p className="text-muted-foreground mt-4 text-sm">
+                            Generating preview...
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <iframe
-                      srcDoc={previewContent}
-                      className="w-full h-full "
-                      style={{
-                        transform: "scale(0.75)",
-                        transformOrigin: "top left",
-                        width: "133.33%",
-                        height: "133.33%",
-                      }}
-                      title="Live Preview"
-                    />
-                  )}
+                    ) : (
+                      <iframe
+                        srcDoc={previewContent}
+                        className="w-full h-full"
+                        style={{
+                          transform: "scale(0.75)",
+                          transformOrigin: "top left",
+                          width: "133.33%",
+                          height: "133.33%",
+                        }}
+                        title="Live Preview"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Loading Overlay */}
-        {isExporting && (
-          <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center">
-            <div className="bg-card rounded-lg p-8 flex flex-col items-center gap-4 shadow-2xl border border-border/50">
-              <DocuhubLoader />
-              <p className="text-foreground font-medium text-lg">
+      {/* Loading Overlay */}
+      {isExporting && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[60] flex items-center justify-center">
+          <div className="bg-card rounded-xl p-8 flex flex-col items-center gap-4 shadow-2xl border max-w-md mx-4">
+            <div
+              className="h-1 w-full rounded-full"
+              style={{ backgroundColor: "var(--color-secondary)" }}
+            />
+            <DocuhubLoader />
+            <div className="text-center">
+              <p className="text-card-foreground font-semibold text-lg mb-1">
                 Generating your PDF...
               </p>
               <p className="text-muted-foreground text-sm">
@@ -975,8 +1734,8 @@ export default function ProfileExport({ userType, onClose }: ProfileExportProps)
               </p>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

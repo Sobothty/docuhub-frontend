@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import FeatureCard from '@/components/card/FeatureCard';
-import { useTranslation } from 'react-i18next';
-import { FC } from 'react';
+import FeatureCard from "@/components/card/FeatureCard";
+import { useTranslation } from "react-i18next";
+import { FC } from "react";
 
 const FeatureCardGrid: FC = () => {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
 
   const cardData = [
     {
-      title: t('feature1_title'),
-      description: t('feature1_desc'),
+      title: t("feature1_title"),
+      description: t("feature1_desc"),
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -26,8 +26,8 @@ const FeatureCardGrid: FC = () => {
       ),
     },
     {
-      title: t('feature2_title'),
-      description: t('feature2_desc'),
+      title: t("feature2_title"),
+      description: t("feature2_desc"),
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -43,8 +43,8 @@ const FeatureCardGrid: FC = () => {
       ),
     },
     {
-      title: t('feature3_title'),
-      description: t('feature3_desc'),
+      title: t("feature3_title"),
+      description: t("feature3_desc"),
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -60,8 +60,8 @@ const FeatureCardGrid: FC = () => {
       ),
     },
     {
-      title: t('feature4_title'),
-      description: t('feature4_desc'),
+      title: t("feature4_title"),
+      description: t("feature4_desc"),
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -77,8 +77,8 @@ const FeatureCardGrid: FC = () => {
       ),
     },
     {
-      title: t('feature5_title'),
-      description: t('feature5_desc'),
+      title: t("feature5_title"),
+      description: t("feature5_desc"),
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -94,8 +94,8 @@ const FeatureCardGrid: FC = () => {
       ),
     },
     {
-      title: t('feature6_title'),
-      description: t('feature6_desc'),
+      title: t("feature6_title"),
+      description: t("feature6_desc"),
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -113,12 +113,12 @@ const FeatureCardGrid: FC = () => {
   ];
 
   return (
-    <section className="min-h-screen bg-light-bg ">
-      <h2 className="text-section-headings text-center mb-20 mt-20">
-        {t('our_features')}
+    <section className="features-section min-h-screen">
+      <h2 className="features-section-title text-section-headings text-center">
+        {t("our_features")}
       </h2>
-      <div className="max-w-7xl mx-auto px-4 mt-20">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {cardData.map((card, index) => (
             <FeatureCard
               key={index}

@@ -11,14 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -44,9 +36,11 @@ import {
   Eye,
   Trash2,
   X,
+  XCircle,
   Loader2,
   ImageIcon,
   File,
+  Sparkles,
 } from "lucide-react";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import {
@@ -60,7 +54,7 @@ import {
   useDeleteMediaMutation,
 } from "@/feature/media/mediaSlice";
 import { useGetAllCategoriesQuery } from "@/feature/categoriesSlice/categoriesSlices";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import {
   Select,
@@ -71,19 +65,35 @@ import {
 } from "@/components/ui/select";
 import { ResourcesPageSkeleton } from "@/components/card/TablePlaceHolderAdviserResource";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { useApiNotification } from "@/components/ui/api-notification";
 
 export default function MentorResourcesPage() {
+  const router = useRouter();
 
-const router = useRouter();
+  // Initialize API notification
+  const {
+    showSuccess,
+    showError,
+    showLoading,
+    closeNotification,
+    NotificationComponent,
+  } = useApiNotification();
 
   const { data: adviserProfile } = useGetUserProfileQuery();
+
+  // Pagination and search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
   const {
     data: papersData,
     error: papersError,
     isLoading: papersLoading,
   } = useGetPapersByAuthorQuery({
     page: 0,
-    size: 10,
+    size: 100, // Get more items for client-side filtering and pagination
     sortBy: "createdAt",
     direction: "desc",
   });
@@ -279,13 +289,19 @@ const router = useRouter();
     try {
       // Validate required fields
       if (!formData.title.trim()) {
-        toast.error("Title is required");
+        showError("Validation Error", "Title is required");
         return;
       }
       if (!formData.fileUrl.trim()) {
-        toast.error("Please upload a file");
+        showError("Validation Error", "Please upload a file");
         return;
       }
+
+      // Show loading notification
+      showLoading(
+        "Publishing Resource",
+        "Please wait while we publish your resource..."
+      );
 
       const paperData = {
         title: formData.title.trim(),
@@ -299,17 +315,24 @@ const router = useRouter();
 
       await createPaper(paperData).unwrap();
 
-      toast.success(
+      // Close loading and show success
+      closeNotification();
+      showSuccess(
+        "Resource Published!",
         isDraft
-          ? "Paper saved as draft successfully!"
-          : "Paper published successfully!"
+          ? "Your paper has been saved as draft successfully"
+          : "Your resource has been published and is now available to students"
       );
 
       // Reset form and close dialog
       resetForm();
     } catch (error) {
       console.log("Error creating paper:", error);
-      toast.error("Failed to create paper. Please try again.");
+      closeNotification();
+      showError(
+        "Publishing Failed",
+        "Failed to publish resource. Please try again."
+      );
     }
   };
 
@@ -322,58 +345,162 @@ const router = useRouter();
     }
   };
 
-  const resources =
-    papersData?.papers?.content?.map((paper) => ({
-      id: paper.uuid,
-      title: paper.title,
-      description: paper.abstractText || "No description available",
-      type: "PDF",
-      size: "Unknown", // API doesn't provide file size
-      uploadDate: new Date(paper.createdAt).toISOString().split("T")[0],
-      downloads: paper.downloads || 0,
-      category: paper.categoryNames?.[0] || "Uncategorized",
-      fileUrl: paper.fileUrl,
-      thumbnailUrl: paper.thumbnailUrl,
-      status: paper.status,
-      isPublished: paper.isPublished,
-      isApproved: paper.isApproved,
-    })) || [];
+  // Transform and memoize resources
+  const allResources = useMemo(
+    () =>
+      papersData?.papers?.content?.map((paper) => ({
+        id: paper.uuid,
+        title: paper.title,
+        description: paper.abstractText || "No description available",
+        type: "PDF",
+        size: "Unknown", // API doesn't provide file size
+        uploadDate: new Date(paper.createdAt).toISOString().split("T")[0],
+        createdAt: paper.createdAt,
+        downloads: paper.downloads || 0,
+        category: paper.categoryNames?.[0] || "Uncategorized",
+        fileUrl: paper.fileUrl,
+        thumbnailUrl: paper.thumbnailUrl,
+        status: paper.status,
+        isPublished: paper.isPublished,
+        isApproved: paper.isApproved,
+      })) || [],
+    [papersData?.papers?.content]
+  );
+
+  // Filter and sort resources (latest first)
+  const filteredAndSortedResources = useMemo(() => {
+    const filtered = allResources.filter(
+      (resource) =>
+        resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        resource.description
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        resource.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        resource.uploadDate.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // Sort by creation date - latest first
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA; // Descending order (newest first)
+    });
+  }, [allResources, searchQuery]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(
+    filteredAndSortedResources.length / itemsPerPage
+  );
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentResources = filteredAndSortedResources.slice(
+    startIndex,
+    endIndex
+  );
+
+  // Reset to page 1 when search query changes
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   const [deletePaper] = useDeletePaperMutation();
   const [createPublishedPaper] = usePublishedPaperMutation();
 
   const handleDeletePaper = async (uuid: string) => {
     try {
+      showLoading(
+        "Deleting Resource",
+        "Please wait while we delete this resource..."
+      );
       await deletePaper(uuid).unwrap();
+      closeNotification();
+      showSuccess(
+        "Resource Deleted!",
+        "The resource has been successfully removed from your library"
+      );
     } catch (error) {
       console.log("Failed to delete paper:", error);
+      closeNotification();
+      showError(
+        "Delete Failed",
+        "Failed to delete resource. Please try again."
+      );
     }
   };
 
-  const handleDownload = (fileUrl: string) => {
-    // Create a download link for the paper file
-    if (fileUrl) {
-      const a = document.createElement("a");
-      a.href = fileUrl;
-      a.download = `${fileUrl
-        .split("/")
-        .pop()!
-        .replace(/[^a-z0-9\-\s]/gi, "")
-        .replace(/\s+/g, "-")}.pdf`;
-      a.target = "_blank";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+  const handleDownload = async (fileUrl: string) => {
+    try {
+      // Create a download link for the paper file
+      if (fileUrl) {
+        showLoading(
+          "Preparing Download",
+          "Please wait while we prepare your file..."
+        );
+
+        // Fetch the file as a blob to force download
+        const response = await fetch(fileUrl);
+        const blob = await response.blob();
+
+        // Create a blob URL
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        // Create download link
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = `${fileUrl
+          .split("/")
+          .pop()!
+          .replace(/[^a-z0-9\-\s]/gi, "")
+          .replace(/\s+/g, "-")}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+
+        // Cleanup
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+
+        // Close loading and show success
+        closeNotification();
+        showSuccess(
+          "Download Started!",
+          "Your resource file is now downloading"
+        );
+      }
+    } catch (error) {
+      console.log("Failed to download:", error);
+      closeNotification();
+      showError(
+        "Download Failed",
+        "Failed to download resource. Please try again."
+      );
     }
   };
 
   const handlePublish = async (uuid: string) => {
-    await createPublishedPaper(uuid).unwrap();
+    try {
+      showLoading(
+        "Publishing Resource",
+        "Please wait while we publish this resource..."
+      );
+      await createPublishedPaper(uuid).unwrap();
+      closeNotification();
+      showSuccess(
+        "Resource Published!",
+        "Your resource is now published and available to students"
+      );
+    } catch (error) {
+      console.log("Failed to publish paper:", error);
+      closeNotification();
+      showError(
+        "Publishing Failed",
+        "Failed to publish resource. Please try again."
+      );
+    }
   };
 
   const handlePreview = (uuid: string) => {
-    router.push(`/papers/${uuid}`);
-  }
+    router.push(`/adviser/documents/${uuid}`);
+  };
 
   if (papersLoading) {
     return (
@@ -395,473 +522,817 @@ const router = useRouter();
     >
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Resources</h1>
-            <p className="text-muted-foreground">
-              Share materials and resources with your students
-            </p>
-          </div>
-          <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                <Upload className="h-4 w-4 mr-2" />
-                Upload Resource
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-semibold bg-foreground bg-clip-text text-transparent">
-                  Upload New Resource
-                </DialogTitle>
-                <DialogDescription className="text-muted-foreground">
-                  Share educational materials and resources with your students
-                </DialogDescription>
-              </DialogHeader>
+        <div className="adviser-resources-page-header">
+          <div className="adviser-resources-accent-bar" />
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-4xl font-bold gradient-text mb-2">
+                Resources
+              </h1>
+              <p className="text-muted-foreground text-lg">
+                Share materials and resources with your students
+              </p>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+              <DialogTrigger asChild>
+                <button className="adviser-resources-upload-btn flex items-center gap-2">
+                  <Upload className="h-5 w-5" />
+                  Upload Resource
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto w-[95vw]">
+                {/* Custom Gradient Header */}
+                <div className="upload-modal-header">
+                  <h2 className="upload-modal-title">Upload New Resource</h2>
+                  <p className="upload-modal-subtitle">
+                    Share educational materials and resources with your students
+                  </p>
+                </div>
 
-              <div className="space-y-6">
-                {/* Title and Description */}
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="res-title"
-                      className="text-sm font-medium flex items-center gap-1"
-                    >
-                      Title <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="res-title"
-                      placeholder="Enter a descriptive title for your resource"
-                      value={formData.title}
-                      onChange={(e) =>
-                        handleInputChange("title", e.target.value)
-                      }
-                      className="border-1  transition-colors"
-                    />
+                <div className="space-y-6">
+                  {/* Title and Description */}
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="space-y-2">
+                      <label htmlFor="res-title" className="upload-modal-label">
+                        Title <span style={{ color: "#ef4444" }}>*</span>
+                      </label>
+                      <Input
+                        id="res-title"
+                        placeholder="Enter a descriptive title for your resource"
+                        value={formData.title}
+                        onChange={(e) =>
+                          handleInputChange("title", e.target.value)
+                        }
+                        className="upload-modal-input"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label htmlFor="res-desc" className="upload-modal-label">
+                        Description
+                      </label>
+                      <Textarea
+                        id="res-desc"
+                        placeholder="Provide a detailed description of the resource content..."
+                        value={formData.abstractText}
+                        onChange={(e) =>
+                          handleInputChange("abstractText", e.target.value)
+                        }
+                        className="upload-modal-textarea"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="upload-modal-label">
+                        Category <span style={{ color: "#ef4444" }}>*</span>
+                      </label>
+                      {categoriesLoading ? (
+                        <div className="flex items-center gap-2 p-3 rounded-md">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span className="text-sm text-muted-foreground">
+                            Loading categories...
+                          </span>
+                        </div>
+                      ) : categoriesError ? (
+                        <div className="p-3 border border-red-200 rounded-md bg-red-50">
+                          <span className="text-sm text-red-600">
+                            Failed to load categories
+                          </span>
+                        </div>
+                      ) : (
+                        <Select
+                          value={selectedCategoryUuid}
+                          onValueChange={handleCategorySelect}
+                        >
+                          <SelectTrigger className="upload-modal-input">
+                            <SelectValue placeholder="Select a category for your resource" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card text-foreground">
+                            {categoriesData?.content?.map((category) => (
+                              <SelectItem
+                                key={category.uuid}
+                                value={category.uuid}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">
+                                    {category.name}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    ({category.slug})
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      {selectedCategoryUuid && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Selected: {formData.categoryNames[0]}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="res-desc" className="text-sm font-medium">
-                      Description
-                    </Label>
-                    <Textarea
-                      id="res-desc"
-                      placeholder="Provide a detailed description of the resource content..."
-                      value={formData.abstractText}
-                      onChange={(e) =>
-                        handleInputChange("abstractText", e.target.value)
-                      }
-                      className="min-h-[100px] border-1transition-colors resize-none"
-                    />
-                  </div>
+                  {/* File Upload Section */}
+                  <div className="space-y-4">
+                    <div className="space-y-3">
+                      <label className="upload-modal-label">
+                        Document File{" "}
+                        <span style={{ color: "#ef4444" }}>*</span>
+                        <span
+                          className="text-xs font-normal"
+                          style={{ color: "var(--muted-foreground)" }}
+                        >
+                          (PDF, DOC, DOCX - Max 10MB)
+                        </span>
+                      </label>
 
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">
-                      Category <span className="text-red-500">*</span>
-                    </Label>
-                    {categoriesLoading ? (
-                      <div className="flex items-center gap-2 p-3 rounded-md">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm text-muted-foreground">
-                          Loading categories...
-                        </span>
-                      </div>
-                    ) : categoriesError ? (
-                      <div className="p-3 border border-red-200 rounded-md bg-red-50">
-                        <span className="text-sm text-red-600">
-                          Failed to load categories
-                        </span>
-                      </div>
-                    ) : (
-                      <Select
-                        value={selectedCategoryUuid}
-                        onValueChange={handleCategorySelect}
-                      >
-                        <SelectTrigger className="border-1 transition-colors">
-                          <SelectValue placeholder="Select a category for your resource" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-card text-foreground">
-                          {categoriesData?.content?.map((category) => (
-                            <SelectItem
-                              key={category.uuid}
-                              value={category.uuid}
-                            >
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">
-                                  {category.name}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  ({category.slug})
-                                </span>
+                      {!uploadedFile ? (
+                        <div
+                          className="upload-modal-file-area"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="upload-modal-file-icon">
+                              <File className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                              <p
+                                className="text-sm font-medium"
+                                style={{ color: "var(--foreground)" }}
+                              >
+                                Click to upload document
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                or drag and drop your file here
+                              </p>
+                            </div>
+                          </div>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            className="hidden"
+                            accept=".pdf,.doc,.docx"
+                            onChange={(e) => handleFileInputChange(e, false)}
+                          />
+                        </div>
+                      ) : (
+                        <div className="upload-modal-success-area">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="p-2 rounded-lg"
+                                style={{
+                                  background:
+                                    "linear-gradient(135deg, #10b981, #059669)",
+                                }}
+                              >
+                                <File className="h-5 w-5 text-white" />
                               </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                    {selectedCategoryUuid && (
-                      <div className="text-xs text-muted-foreground">
-                        Selected: {formData.categoryNames[0]}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* File Upload Section */}
-                <div className="space-y-4">
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium flex items-center gap-1">
-                      Document File <span className="text-red-500">*</span>
-                      <span className="text-xs text-muted-foreground font-normal">
-                        (PDF, DOC, DOCX - Max 10MB)
-                      </span>
-                    </Label>
-
-                    {!uploadedFile ? (
-                      <div
-                        className="border bg-card rounded-lg p-6 text-center cursor-pointer transition-colors"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="p-3 bg-blue-100 rounded-full">
-                            <File className="h-6 w-6 text-blue-600" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-foreground">
-                              Click to upload document
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              or drag and drop your file here
-                            </p>
+                              <div>
+                                <p
+                                  className="text-sm font-medium"
+                                  style={{ color: "#065f46" }}
+                                >
+                                  {uploadedFile.name}
+                                </p>
+                                <p
+                                  className="text-xs"
+                                  style={{ color: "#059669" }}
+                                >
+                                  {formatFileSize(uploadedFile.size)}
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleFileDelete(false)}
+                              disabled={isDeleting}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              {isDeleting ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <X className="h-4 w-4" />
+                              )}
+                            </Button>
                           </div>
                         </div>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          className="hidden"
-                          accept=".pdf,.doc,.docx"
-                          onChange={(e) => handleFileInputChange(e, false)}
-                        />
-                      </div>
-                    ) : (
-                      <div className="border-2 border-green-200 bg-green-50 rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-green-100 rounded-lg">
-                              <File className="h-5 w-5 text-green-600" />
+                      )}
+                    </div>
+
+                    {/* Thumbnail Upload */}
+                    <div className="space-y-3">
+                      <label className="upload-modal-label">
+                        Thumbnail Image{" "}
+                        <span
+                          className="text-xs font-normal"
+                          style={{ color: "var(--muted-foreground)" }}
+                        >
+                          (Optional - JPG, PNG, WebP - Max 10MB)
+                        </span>
+                      </label>
+
+                      {!uploadedThumbnail ? (
+                        <div
+                          className="upload-modal-file-area"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(37, 99, 235, 0.05))",
+                            borderColor: "rgba(245, 158, 11, 0.3)",
+                          }}
+                          onClick={() => thumbnailInputRef.current?.click()}
+                        >
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="upload-modal-thumbnail-icon">
+                              <ImageIcon className="h-5 w-5 text-white" />
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-green-900">
-                                {uploadedFile.name}
+                              <p
+                                className="text-sm font-medium"
+                                style={{ color: "var(--foreground)" }}
+                              >
+                                Upload thumbnail
                               </p>
-                              <p className="text-xs text-green-600">
-                                {formatFileSize(uploadedFile.size)}
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleFileDelete(false)}
-                            disabled={isDeleting}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          >
-                            {isDeleting ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <X className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Thumbnail Upload */}
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium">
-                      Thumbnail Image{" "}
-                      <span className="text-xs text-muted-foreground font-normal">
-                        (Optional - JPG, PNG, WebP - Max 10MB)
-                      </span>
-                    </Label>
-
-                    {!uploadedThumbnail ? (
-                      <div
-                        className="border border-gray-300 rounded-lg p-4 text-center cursor-pointer transition-colors bg-card"
-                        onClick={() => thumbnailInputRef.current?.click()}
-                      >
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="p-2 bg-white rounded-full">
-                            <ImageIcon className="h-5 w-5 text-primary" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-foreground">
-                              Upload thumbnail
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Preview image for your resource
-                            </p>
-                          </div>
-                        </div>
-                        <input
-                          ref={thumbnailInputRef}
-                          type="file"
-                          className="hidden"
-                          accept="image/*"
-                          onChange={(e) => handleFileInputChange(e, true)}
-                        />
-                      </div>
-                    ) : (
-                      <div className="border-2 border-green-200 bg-card rounded-lg p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-green-100 rounded-lg">
-                              <ImageIcon className="h-4 w-4 text-green-600" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-green-900">
-                                {uploadedThumbnail.name}
-                              </p>
-                              <p className="text-xs text-green-600">
-                                {formatFileSize(uploadedThumbnail.size)}
+                              <p className="text-xs text-muted-foreground">
+                                Preview image for your resource
                               </p>
                             </div>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleFileDelete(true)}
-                            disabled={isDeleting}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          >
-                            {isDeleting ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <X className="h-4 w-4" />
-                            )}
-                          </Button>
+                          <input
+                            ref={thumbnailInputRef}
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={(e) => handleFileInputChange(e, true)}
+                          />
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="upload-modal-success-area">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="p-2 rounded-lg"
+                                style={{
+                                  background:
+                                    "linear-gradient(135deg, #10b981, #059669)",
+                                }}
+                              >
+                                <ImageIcon className="h-4 w-4 text-white" />
+                              </div>
+                              <div>
+                                <p
+                                  className="text-sm font-medium"
+                                  style={{ color: "#065f46" }}
+                                >
+                                  {uploadedThumbnail.name}
+                                </p>
+                                <p
+                                  className="text-xs"
+                                  style={{ color: "#059669" }}
+                                >
+                                  {formatFileSize(uploadedThumbnail.size)}
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleFileDelete(true)}
+                              disabled={isDeleting}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              {isDeleting ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <X className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Upload Status */}
-                {(isUploading || isDeleting) && (
-                  <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    {isUploading ? "Uploading file..." : "Deleting file..."}
-                  </div>
-                )}
-              </div>
-
-              <DialogFooter className="gap-2 pt-6">
-                <Button
-                  onClick={() => handleSubmit(false)}
-                  disabled={
-                    isCreating ||
-                    isUploading ||
-                    isDeleting ||
-                    !selectedCategoryUuid
-                  }
-                  className="bg-accent hover:bg-accent-foreground/90 text-accent-foreground"
-                >
-                  {isCreating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Publishing...
-                    </>
-                  ) : (
-                    "Publish Resource"
+                  {/* Upload Status */}
+                  {(isUploading || isDeleting) && (
+                    <div
+                      className="flex items-center gap-2 text-sm p-3 rounded-lg"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(245, 158, 11, 0.1))",
+                        color: "#2563eb",
+                        border: "1px solid rgba(37, 99, 235, 0.2)",
+                      }}
+                    >
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {isUploading ? "Uploading file..." : "Deleting file..."}
+                    </div>
                   )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                </div>
+
+                <DialogFooter className="gap-2 pt-6">
+                  <button
+                    onClick={() => handleSubmit(false)}
+                    disabled={
+                      isCreating ||
+                      isUploading ||
+                      isDeleting ||
+                      !selectedCategoryUuid
+                    }
+                    className="upload-modal-publish-btn flex items-center justify-center gap-2"
+                  >
+                    {isCreating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Publishing...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4" />
+                        Publish Resource
+                      </>
+                    )}
+                  </button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
-        {/* Search and Filter */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search resources..." className="pl-10" />
+        {/* Modern Search Bar */}
+        <Card className="dashboard-card border-0">
+          <CardContent className="p-6">
+            <div className="relative group">
+              {/* Search icon with animated background */}
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+                <div className="relative">
+                  <div
+                    className="absolute inset-0 rounded-full blur-md opacity-40 group-hover:opacity-60 transition-opacity"
+                    style={{
+                      background: "linear-gradient(to right, #2563eb, #f59e0b)",
+                    }}
+                  ></div>
+                  <div
+                    className="relative p-2 rounded-full shadow-lg"
+                    style={{
+                      background: "linear-gradient(to right, #2563eb, #f59e0b)",
+                    }}
+                  >
+                    <Search className="h-5 w-5 text-white" />
+                  </div>
+                </div>
               </div>
+
+              {/* Search input */}
+              <Input
+                placeholder="Search your resources by title, description, or category..."
+                className="pl-16 pr-12 py-7 text-base bg-card text-card-foreground border-border rounded-xl focus:shadow-lg transition-all duration-300 placeholder:text-muted-foreground/60"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+
+              {/* Clear button (shows when there's text) */}
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all duration-200"
+                  style={{
+                    background: "#f59e0b",
+                    color: "white",
+                  }}
+                  aria-label="Clear search"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
             </div>
-          </CardHeader>
+
+            {/* Search suggestions/info */}
+            <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+              <Sparkles className="w-3.5 h-3.5" style={{ color: "#2563eb" }} />
+              <span>
+                Filter by title, description, category, or upload date
+              </span>
+            </div>
+          </CardContent>
         </Card>
 
         {/* Upload Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+          {/* Total Resources */}
+          <div className="adviser-resources-stat-card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 Total Resources
-              </CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{resources.length}</div>
-              <p className="text-xs text-muted-foreground">Shared materials</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Downloads
-              </CardTitle>
-              <Download className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {resources.reduce(
-                  (sum, resource) => sum + resource.downloads,
-                  0
-                )}
+              </h3>
+              <div className="adviser-resources-stat-icon-blue">
+                <FileText className="h-5 w-5" style={{ color: "#2563eb" }} />
               </div>
-              <p className="text-xs text-muted-foreground">
-                <span className="text-green-600">+12</span> this week
-              </p>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="text-3xl font-bold" style={{ color: "#2563eb" }}>
+              {filteredAndSortedResources.length}
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              {searchQuery ? "Filtered results" : "Shared materials"}
+            </p>
+          </div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+          {/* Total Downloads */}
+          <div className="adviser-resources-stat-card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Total Downloads
+              </h3>
+              <div className="adviser-resources-stat-icon-green">
+                <Download className="h-5 w-5" style={{ color: "#10b981" }} />
+              </div>
+            </div>
+            <div className="text-3xl font-bold" style={{ color: "#10b981" }}>
+              {filteredAndSortedResources.reduce(
+                (sum, resource) => sum + resource.downloads,
+                0
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              <span style={{ color: "#10b981", fontWeight: "600" }}>+12</span>{" "}
+              this week
+            </p>
+          </div>
+
+          {/* Most Popular */}
+          <div className="adviser-resources-stat-card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 Most Popular
-              </CardTitle>
-              <Badge variant="secondary" className="text-xs" />
-              {resources.length > 0
-                ? resources
+              </h3>
+              <div className="adviser-resources-stat-icon-orange">
+                <FileText className="h-5 w-5" style={{ color: "#f59e0b" }} />
+              </div>
+            </div>
+            <div className="text-3xl font-bold" style={{ color: "#f59e0b" }}>
+              {filteredAndSortedResources.length > 0
+                ? Math.max(
+                    ...filteredAndSortedResources.map((r) => r.downloads)
+                  )
+                : 0}
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              {filteredAndSortedResources.length > 0
+                ? filteredAndSortedResources
                     .reduce((prev, current) =>
                       prev.downloads > current.downloads ? prev : current
                     )
-                    .title.substring(0, 10)
-                : "N/A"}
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {resources.length > 0
-                  ? Math.max(...resources.map((r) => r.downloads))
-                  : 0}
-              </div>
-              <p className="text-xs text-muted-foreground">Downloads</p>
-            </CardContent>
-          </Card>
+                    .title.substring(0, 20) + "..."
+                : "No resources yet"}
+            </p>
+          </div>
         </div>
 
         {/* Resources Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Uploaded Resources</CardTitle>
-            <CardDescription>
+        <div className="adviser-resources-table-card">
+          <div className="adviser-resources-table-header">
+            <h2 className="text-2xl font-bold gradient-text">
+              Uploaded Resources
+            </h2>
+            <p className="text-muted-foreground text-base mt-1">
               Manage your shared materials and track their usage
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <CardContent className="p-6">
             {papersError && (
-              <div className="text-red-500 mb-4">
-                Error loading resources. Please try again.
+              <div className="adviser-resources-empty-state">
+                <XCircle
+                  className="w-16 h-16 mx-auto mb-4"
+                  style={{ color: "#ef4444" }}
+                />
+                <h3
+                  className="text-xl font-bold mb-2"
+                  style={{ color: "#dc2626" }}
+                >
+                  Error loading resources
+                </h3>
+                <p className="text-muted-foreground">
+                  Please try again later or contact support if the issue
+                  persists.
+                </p>
               </div>
             )}
-            {resources.length === 0 && !papersLoading ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No resources uploaded yet.
+            {filteredAndSortedResources.length === 0 &&
+            !papersLoading &&
+            !papersError ? (
+              <div className="adviser-resources-empty-state">
+                {searchQuery ? (
+                  <>
+                    <Search
+                      className="w-16 h-16 mx-auto mb-4"
+                      style={{ color: "#2563eb" }}
+                    />
+                    <h3
+                      className="text-xl font-bold mb-2"
+                      style={{ color: "#2563eb" }}
+                    >
+                      No resources match your search
+                    </h3>
+                    <p className="text-muted-foreground">
+                      Try adjusting your search terms or filters
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Upload
+                      className="w-16 h-16 mx-auto mb-4"
+                      style={{ color: "#2563eb" }}
+                    />
+                    <h3
+                      className="text-xl font-bold mb-2"
+                      style={{ color: "#2563eb" }}
+                    >
+                      No resources uploaded yet
+                    </h3>
+                    <p className="text-muted-foreground">
+                      Start sharing educational materials with your students by
+                      uploading your first resource.
+                    </p>
+                  </>
+                )}
               </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Resource</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Downloads</TableHead>
-                    <TableHead>Upload Date</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {resources.map((resource) => (
-                    <TableRow key={resource.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{resource.title}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {resource.description.length > 100
-                              ? `${resource.description.substring(0, 100)}...`
-                              : resource.description}
+            ) : filteredAndSortedResources.length > 0 ? (
+              <>
+                {/* Resources Grid */}
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {currentResources.map((resource) => (
+                    <Card
+                      key={resource.id}
+                      className="dashboard-card overflow-hidden hover:shadow-xl transition-all duration-300 group"
+                      style={{ border: "1px solid rgba(229, 231, 235, 0.5)" }}
+                    >
+                      {/* Top Accent Bar */}
+                      <div
+                        className="h-1.5"
+                        style={{
+                          background:
+                            "linear-gradient(to right, #2563eb, #f59e0b)",
+                        }}
+                      ></div>
+
+                      <CardContent className="p-6">
+                        <div className="space-y-4">
+                          {/* Thumbnail */}
+                          <div
+                            onClick={() => handlePreview(resource.id)}
+                            className="cursor-pointer"
+                          >
+                            {resource.thumbnailUrl ? (
+                              <div className="relative w-full h-48 rounded-xl overflow-hidden shadow-lg group-hover:shadow-2xl transition-all">
+                                <Image
+                                  src={resource.thumbnailUrl}
+                                  alt={resource.title}
+                                  fill
+                                  className="object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
+                                  unoptimized
+                                />
+                              </div>
+                            ) : (
+                              <div
+                                className="relative w-full h-48 rounded-xl overflow-hidden flex items-center justify-center shadow-lg group-hover:shadow-2xl transition-all"
+                                style={{
+                                  background:
+                                    "linear-gradient(135deg, #2563eb, #1951cc)",
+                                  opacity: 0.9,
+                                }}
+                              >
+                                <FileText className="h-16 w-16 text-white" />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Title & Status Row */}
+                          <div className="space-y-3">
+                            <div
+                              onClick={() => handlePreview(resource.id)}
+                              className="block cursor-pointer"
+                            >
+                              <h3 className="text-xl font-bold text-card-foreground group-hover:text-blue-600 transition-colors line-clamp-2">
+                                {resource.title}
+                              </h3>
+                            </div>
+
+                            {/* Status Badge */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <div
+                                className={
+                                  resource.isPublished
+                                    ? "adviser-resources-badge-published"
+                                    : "adviser-resources-badge-draft"
+                                }
+                              >
+                                {resource.isPublished ? "Published" : "Draft"}
+                              </div>
+                              <Badge
+                                className="text-xs font-semibold"
+                                style={{
+                                  background: "#2563eb",
+                                  color: "white",
+                                }}
+                              >
+                                {resource.category}
+                              </Badge>
+                            </div>
+                          </div>
+
+                          {/* Description */}
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {resource.description}
+                          </p>
+
+                          {/* Stats & Date Info */}
+                          <div className="space-y-3 pt-4 border-t border-border/50">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground font-medium">
+                                Downloads:
+                              </span>
+                              <span className="font-semibold text-card-foreground flex items-center gap-1">
+                                <Download
+                                  className="h-3.5 w-3.5"
+                                  style={{ color: "#10b981" }}
+                                />
+                                {resource.downloads}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground font-medium">
+                                Uploaded:
+                              </span>
+                              <span className="font-semibold text-card-foreground">
+                                {resource.uploadDate}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-2 pt-4">
+                            <button
+                              onClick={() => handlePreview(resource.id)}
+                              className="flex-1 font-semibold text-white py-2 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+                              style={{
+                                background:
+                                  "linear-gradient(135deg, #2563eb, #1951cc)",
+                              }}
+                            >
+                              <Eye className="h-4 w-4" />
+                              View
+                            </button>
+
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button className="border-2 border-border hover:bg-accent p-2 rounded-lg transition-all">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="end"
+                                className="bg-background shadow-lg"
+                              >
+                                {!resource.isPublished && (
+                                  <DropdownMenuItem
+                                    onClick={() => handlePublish(resource.id)}
+                                  >
+                                    <Upload className="h-4 w-4 mr-2" />
+                                    Publish
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleDownload(resource.fileUrl)
+                                  }
+                                >
+                                  <Download className="h-4 w-4 mr-2" />
+                                  Download
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-red-600"
+                                  onClick={() => handleDeletePaper(resource.id)}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{resource.type}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{resource.category}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            resource.isPublished ? "approved" : "secondary"
-                          }
-                        >
-                          {resource.isPublished ? "Published" : "Draft"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {resource.downloads}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {resource.uploadDate}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {resource.isPublished ? null : (
-                              <DropdownMenuItem
-                                onClick={() => handlePublish(resource.id)}
-                              >
-                                <Upload className="h-4 w-4 mr-2" />
-                                Publish
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem onClick={() => handlePreview(resource.id)}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              Preview
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDownload(resource.fileUrl)}
-                            >
-                              <Download className="h-4 w-4 mr-2" />
-                              Download
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-red-600"
-                              onClick={() => handleDeletePaper(resource.id)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
+                      </CardContent>
+                    </Card>
                   ))}
-                </TableBody>
-              </Table>
-            )}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <Card className="dashboard-card border-0 mt-6">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        {/* Page Info */}
+                        <div className="text-sm text-muted-foreground">
+                          Showing {startIndex + 1} to{" "}
+                          {Math.min(
+                            endIndex,
+                            filteredAndSortedResources.length
+                          )}{" "}
+                          of {filteredAndSortedResources.length} resources
+                        </div>
+
+                        {/* Pagination Controls */}
+                        <div className="flex items-center gap-2">
+                          {/* Previous Button */}
+                          <button
+                            onClick={() =>
+                              setCurrentPage((prev) => Math.max(prev - 1, 1))
+                            }
+                            disabled={currentPage === 1}
+                            className="adviser-documents-pagination-btn"
+                          >
+                            Previous
+                          </button>
+
+                          {/* Page Numbers */}
+                          <div className="flex items-center gap-1">
+                            {Array.from(
+                              { length: totalPages },
+                              (_, i) => i + 1
+                            ).map((page) => {
+                              // Show first page, last page, current page, and pages around current
+                              if (
+                                page === 1 ||
+                                page === totalPages ||
+                                (page >= currentPage - 1 &&
+                                  page <= currentPage + 1)
+                              ) {
+                                return (
+                                  <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`adviser-documents-pagination-btn w-10 h-10 p-0 ${
+                                      page === currentPage
+                                        ? "adviser-documents-pagination-active"
+                                        : ""
+                                    }`}
+                                  >
+                                    {page}
+                                  </button>
+                                );
+                              } else if (
+                                page === currentPage - 2 ||
+                                page === currentPage + 2
+                              ) {
+                                return (
+                                  <span key={page} className="px-2">
+                                    ...
+                                  </span>
+                                );
+                              }
+                              return null;
+                            })}
+                          </div>
+
+                          {/* Next Button */}
+                          <button
+                            onClick={() =>
+                              setCurrentPage((prev) =>
+                                Math.min(prev + 1, totalPages)
+                              )
+                            }
+                            disabled={currentPage === totalPages}
+                            className="adviser-documents-pagination-btn"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            ) : null}
           </CardContent>
-        </Card>
+        </div>
       </div>
+
+      {/* API Notification */}
+      <NotificationComponent />
     </DashboardLayout>
   );
 }

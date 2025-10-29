@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import HeroSection from "@/components/heroSection/HeroSection";
 import DevelopmentServicesBanner from "@/components/carousel/LogoCarousel";
 import ButtonScrollHorizontal from "@/components/scrollHorizontal/buttonScrollHorizontal";
@@ -178,6 +179,7 @@ const getYear = (paper: {
 
 export default function Home() {
   const { scrollYProgress } = useScroll();
+  const [selectedFilter, setSelectedFilter] = useState("All");
 
   const handleViewPaper = (paperId: number) => {
     if (typeof window !== "undefined") {
@@ -187,6 +189,10 @@ export default function Home() {
 
   const handleDownloadPDF = (paperId: number) =>
     console.log("Download PDF:", paperId);
+
+  const handleFilterChange = (filter: string) => {
+    setSelectedFilter(filter);
+  };
 
   // Fetch papers using RTK Query
   const {
@@ -227,7 +233,26 @@ export default function Home() {
     fileUrl: paper.fileUrl,
   }));
 
-  const papersToShow = apiPapers.length > 0 ? apiPapers : researchPapers;
+  const allPapers = apiPapers.length > 0 ? apiPapers : researchPapers;
+
+  // Filter papers by categoryName and title
+  const papersToShow = allPapers.filter((paper) => {
+    if (selectedFilter === "All") return true;
+
+    // Check if the filter matches any category name
+    const matchesCategory = paper.tags?.some(
+      (tag) =>
+        tag.toLowerCase().includes(selectedFilter.toLowerCase()) ||
+        selectedFilter.toLowerCase().includes(tag.toLowerCase())
+    );
+
+    // Check if the filter matches the title
+    const matchesTitle = paper.title
+      .toLowerCase()
+      .includes(selectedFilter.toLowerCase());
+
+    return matchesCategory || matchesTitle;
+  });
 
   return (
     <>
@@ -252,59 +277,75 @@ export default function Home() {
         <DevelopmentServicesBanner />
 
         {/* Card Section */}
-        <section className="w-full max-w-[1400px] mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-6 md:py-8 lg:py-12">
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-center text-[var(--color-foreground)] mb-4 md:mb-6 lg:mb-8">
-            New Documents
-          </h2>
-          <div className="mb-8 md:mb-10">
-            <ButtonScrollHorizontal />
+        <section className="dashboard-background w-full px-2 sm:px-4 md:px-6 lg:px-8 py-8 md:py-12 lg:py-16">
+          <div className="max-w-[1400px] mx-auto">
+            <div className="home-section-header text-center">
+              <h2 className="home-section-title text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-3">
+                New Documents
+              </h2>
+              <p className="text-base sm:text-lg text-muted-foreground">
+                Explore the latest academic papers and research publications
+              </p>
+            </div>
+            <div className="mb-8 md:mb-10">
+              <ButtonScrollHorizontal onFilterChange={handleFilterChange} />
+            </div>
+
+            {/* Loading State */}
+            {isLoading && (
+              <div className="home-section-card flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+                <span className="ml-3 text-lg font-medium text-foreground">
+                  Loading papers...
+                </span>
+              </div>
+            )}
+
+            {/* Error State */}
+            {error && (
+              <div className="home-section-card text-center py-12">
+                <p className="text-red-500 mb-2 text-lg font-semibold">
+                  Failed to load papers from API
+                </p>
+                <p className="text-base text-muted-foreground">
+                  Showing sample data instead
+                </p>
+              </div>
+            )}
+
+            {/* Papers Grid */}
+            {!isLoading && (
+              <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {papersToShow.map((paper) => (
+                  <PaperCardWithAuthor
+                    key={paper.id}
+                    paper={paper}
+                    onDownloadPDF={() => handleDownloadPDF(Number(paper.id))}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-
-          {/* Loading State */}
-          {isLoading && (
-            <div className="flex justify-center items-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-2 text-gray-600">Loading papers...</span>
-            </div>
-          )}
-
-          {/* Error State */}
-          {error && (
-            <div className="text-center py-8">
-              <p className="text-red-500 mb-2">
-                Failed to load papers from API
-              </p>
-              <p className="text-sm text-gray-500">
-                Showing sample data instead
-              </p>
-            </div>
-          )}
-
-          {/* Papers Grid */}
-          {!isLoading && (
-            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {papersToShow.map((paper) => (
-                <PaperCardWithAuthor
-                  key={paper.id}
-                  paper={paper}
-                  onDownloadPDF={() => handleDownloadPDF(Number(paper.id))}
-                />
-              ))}
-            </div>
-          )}
         </section>
 
         {/* Most Popular Documents */}
-        <section className="w-full px-2 sm:px-4 md:px-6 py-6 sm:py-8 md:py-10 bg-background">
-          <h2 className="font-semibold text-xl sm:text-2xl md:text-3xl lg:text-5xl lg:text-section-headings text-center mb-6 sm:mb-8 md:mb-10">
-            Popular Documents
-          </h2>
-          <HorizontalCardCarousel
-            papers={researchPapers}
-            onViewPaper={handleViewPaper}
-            onDownloadPDF={handleDownloadPDF}
-            onToggleBookmark={() => {}}
-          />
+        <section className="dashboard-background w-full px-2 sm:px-4 md:px-6 lg:px-8 py-8 md:py-12 lg:py-16">
+          <div className="max-w-[1400px] mx-auto">
+            <div className="home-section-header text-center">
+              <h2 className="home-section-title text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-3">
+                Popular Documents
+              </h2>
+              <p className="text-base sm:text-lg text-muted-foreground">
+                Discover the most viewed and cited research papers
+              </p>
+            </div>
+            <HorizontalCardCarousel
+              papers={researchPapers}
+              onViewPaper={handleViewPaper}
+              onDownloadPDF={handleDownloadPDF}
+              onToggleBookmark={() => {}}
+            />
+          </div>
         </section>
 
         {/* Feature Section */}
@@ -314,23 +355,34 @@ export default function Home() {
         <DiscussionForumSection />
 
         {/* Feedback Section */}
-        <section className="w-full py-6 sm:py-8 md:py-12">
-          <div className="relative w-full h-40 sm:h-56 md:h-72 lg:h-[28rem] bg-[url('/banner/feedbackBanner.png')] bg-cover bg-center">
-            <div className="absolute inset-0 bg-black/60"></div>
-            <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-2 sm:px-4 md:px-6 text-center sm:text-left sm:pl-10 z-10">
-              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-7xl font-bold text-white mb-1 sm:mb-2 md:mb-4">
-                We Prominent Truly Trusted IT Student
-              </h1>
+        <section className="dashboard-background w-full py-8 md:py-12 lg:py-16">
+          <div className="max-w-[1400px] mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
+            <div className="home-section-header text-center mb-8">
+              <h2 className="home-section-title text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-3">
+                Student Testimonials
+              </h2>
+              <p className="text-base sm:text-lg text-muted-foreground">
+                Hear from our community of students and researchers
+              </p>
             </div>
-          </div>
 
-          <div className="max-w-[90%] sm:max-w-[85%] md:max-w-7xl mx-auto -mt-16 sm:-mt-20 md:-mt-32 mb-8 sm:mb-12 md:mb-20 px-2 sm:px-4 md:px-6 lg:px-8">
-            <FeedbackCardCarousel
-              feedbacks={feedbacksData}
-              autoPlay
-              autoPlayInterval={6000}
-              showIndicators
-            />
+            <div className="relative w-full h-40 sm:h-56 md:h-72 lg:h-[28rem] bg-[url('/banner/feedbackBanner.png')] bg-cover bg-center rounded-2xl overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-900/70 to-blue-600/50"></div>
+              <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-2 sm:px-4 md:px-6 text-center sm:text-left sm:pl-10 z-10">
+                <h1 className="text-lg sm:text-xl md:text-2xl lg:text-7xl font-bold text-white mb-1 sm:mb-2 md:mb-4">
+                  We Prominent Truly Trusted IT Student
+                </h1>
+              </div>
+            </div>
+
+            <div className="home-section-card -mt-16 sm:-mt-20 md:-mt-32 mb-8 sm:mb-12">
+              <FeedbackCardCarousel
+                feedbacks={feedbacksData}
+                autoPlay
+                autoPlayInterval={6000}
+                showIndicators
+              />
+            </div>
           </div>
         </section>
       </div>

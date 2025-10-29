@@ -25,6 +25,8 @@ import {
   BookOpen,
   Calendar,
   Loader2,
+  FileText,
+  Mail,
 } from "lucide-react";
 import PDFEdit from "@/components/pdf/PDFEdit";
 import { useGetPaperByUuidQuery } from "@/feature/paperSlice/papers";
@@ -32,7 +34,7 @@ import { useGetUserByIdQuery } from "@/feature/users/usersSlice";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
 import { useCreateFeedbackMutation } from "@/feature/feedbackSlice/feedbackSlice";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "react-toastify";
+import { useApiNotification } from "@/components/ui/api-notification";
 
 export default function AdviserDocumentDetailPage({
   params,
@@ -48,6 +50,15 @@ export default function AdviserDocumentDetailPage({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string>("");
+
+  // API Notification hook
+  const {
+    showSuccess,
+    showError,
+    showLoading,
+    closeNotification,
+    NotificationComponent,
+  } = useApiNotification();
 
   // Fetch adviser profile
   const { data: adviserProfile } = useGetUserProfileQuery();
@@ -83,14 +94,20 @@ export default function AdviserDocumentDetailPage({
       case "PENDING":
       case "UNDER_REVIEW":
         return (
-          <Badge variant="secondary">
+          <Badge
+            variant="secondary"
+            className="bg-amber-500/10 text-amber-700 border-amber-500/20 backdrop-blur-sm"
+          >
             <Clock className="w-3 h-3 mr-1" />
             Pending Review
           </Badge>
         );
       case "APPROVED":
         return (
-          <Badge variant="default" className="bg-green-500">
+          <Badge
+            variant="default"
+            className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20 backdrop-blur-sm"
+          >
             <CheckCircle className="w-3 h-3 mr-1" />
             Approved
           </Badge>
@@ -98,7 +115,10 @@ export default function AdviserDocumentDetailPage({
       case "REJECTED":
       case "ADMIN_REJECTED":
         return (
-          <Badge variant="destructive">
+          <Badge
+            variant="destructive"
+            className="bg-rose-500/10 text-rose-700 border-rose-500/20 backdrop-blur-sm"
+          >
             <XCircle className="w-3 h-3 mr-1" />
             Rejected
           </Badge>
@@ -133,6 +153,11 @@ export default function AdviserDocumentDetailPage({
     }
 
     setIsSubmitting(true);
+    showLoading(
+      "Submitting Review",
+      "Please wait while we submit your review to the student..."
+    );
+
     try {
       // Create feedback with the uploaded file URL - using exact UUID from paper object
       const feedbackData = {
@@ -147,12 +172,22 @@ export default function AdviserDocumentDetailPage({
 
       const result = await createFeedback(feedbackData).unwrap();
       if (result.status === 201) {
-        toast.success("Feedback submitted successfully");
+        closeNotification();
+        showSuccess(
+          "Review Submitted Successfully",
+          "Your feedback has been submitted and the student has been notified."
+        );
+        setTimeout(() => {
+          router.push("/adviser/documents");
+        }, 2000);
       }
-
-      router.push("/adviser/documents");
     } catch (error) {
       console.log("Error submitting feedback:", error);
+      closeNotification();
+      showError(
+        "Submission Failed",
+        "Failed to submit review. Please check your connection and try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -227,33 +262,48 @@ export default function AdviserDocumentDetailPage({
       userName={adviserProfile?.user.fullName || "Adviser Name"}
       userAvatar={adviserProfile?.user.imageUrl || undefined}
     >
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
+      <NotificationComponent />
+      <div className="space-y-6 pb-8">
+        {/* Header with gradient background */}
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#2563eb]/10 via-[#1951cc]/10 to-[#f59e0b]/10 border border-border/50 backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-lg">
+          <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+          <div className="relative z-10">
             <Button
               variant="ghost"
               onClick={() => router.push("/adviser/documents")}
+              className="mb-4 hover:bg-card/80 transition-all duration-200"
             >
               <ArrowLeft className="h-4 w-4 mr-2" /> Back to Documents
             </Button>
-            <h1 className="text-2xl font-bold mt-2">{paper.title}</h1>
-            <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <User className="w-3 h-3" />
-                {studentLoading
-                  ? "Loading..."
-                  : studentData?.fullName || "Unknown Student"}
-              </span>
-              <span className="flex items-center gap-1">
-                <BookOpen className="w-3 h-3" />
-                {paper.categoryNames?.[0] || "N/A"}
-              </span>
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                Submitted: {new Date(paper.submittedAt).toLocaleDateString()}
-              </span>
-              {getStatusBadge(paper.status)}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold mb-3 bg-gradient-to-r from-[#2563eb] via-[#1951cc] to-[#f59e0b] bg-clip-text text-transparent">
+                  {paper.title}
+                </h1>
+                <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1.5 bg-card/50 px-3 py-1.5 rounded-full border border-border/50 backdrop-blur-sm">
+                    <User className="w-4 h-4 text-[#2563eb]" />
+                    <span className="font-medium">
+                      {studentLoading
+                        ? "Loading..."
+                        : studentData?.fullName || "Unknown Student"}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1.5 bg-card/50 px-3 py-1.5 rounded-full border border-border/50 backdrop-blur-sm">
+                    <BookOpen className="w-4 h-4 text-[#1951cc]" />
+                    <span className="font-medium">
+                      {paper.categoryNames?.[0] || "N/A"}
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-1.5 bg-card/50 px-3 py-1.5 rounded-full border border-border/50 backdrop-blur-sm">
+                    <Calendar className="w-4 h-4 text-[#f59e0b]" />
+                    <span className="font-medium">
+                      {new Date(paper.submittedAt).toLocaleDateString()}
+                    </span>
+                  </span>
+                  {getStatusBadge(paper.status)}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -261,28 +311,39 @@ export default function AdviserDocumentDetailPage({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* PDF Viewer */}
           <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Document Review</CardTitle>
-                <CardDescription>
-                  Review and annotate the student document. Click &quot;Upload
-                  to Student&quot; to save your annotations.
-                </CardDescription>
+            <Card className="border-border/50 shadow-lg hover:shadow-xl transition-all duration-300 bg-card/50 backdrop-blur-sm">
+              <CardHeader className="border-b border-border/50 bg-gradient-to-r from-[#2563eb]/5 via-[#1951cc]/5 to-[#f59e0b]/5">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#2563eb] to-[#1951cc]">
+                    <FileText className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl">Document Review</CardTitle>
+                    <CardDescription className="mt-1">
+                      Review and annotate the student document. Click
+                      &quot;Upload to Student&quot; to save your annotations.
+                    </CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
-                <div className="rounded-lg overflow-hidden">
-                  {uploadedFileUrl && (
-                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <p className="text-sm text-green-800 flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4" />
-                        Annotated PDF uploaded successfully! You can now submit
-                        your review.
-                      </p>
-                    </div>
-                  )}
+              <CardContent className="p-6">
+                {uploadedFileUrl && (
+                  <div className="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl backdrop-blur-sm">
+                    <p className="text-sm text-emerald-700 flex items-center gap-2 font-medium">
+                      <CheckCircle className="w-5 h-5" />
+                      Annotated PDF uploaded successfully! You can now submit
+                      your review.
+                    </p>
+                  </div>
+                )}
+                <div className="rounded-xl overflow-hidden border border-border/50 shadow-inner">
                   <PDFEdit
                     pdfUri={paper.fileUrl}
                     onUploadSuccess={handleUploadSuccess}
+                    showSuccess={showSuccess}
+                    showError={showError}
+                    showLoading={showLoading}
+                    closeNotification={closeNotification}
                   />
                 </div>
               </CardContent>
@@ -291,60 +352,88 @@ export default function AdviserDocumentDetailPage({
 
           {/* Review Panel */}
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Review & Feedback</CardTitle>
-                <CardDescription>Provide feedback and decision</CardDescription>
+            <Card className="border-border/50 shadow-lg hover:shadow-xl transition-all duration-300 bg-card/50 backdrop-blur-sm">
+              <CardHeader className="border-b border-border/50 bg-gradient-to-r from-[#f59e0b]/5 via-[#e38519]/5 to-[#2563eb]/5">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#f59e0b] to-[#e38519]">
+                    <CheckCircle className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl">Review & Feedback</CardTitle>
+                    <CardDescription className="mt-1">
+                      Provide feedback and decision
+                    </CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-5 p-6">
                 <div>
-                  <Label htmlFor="feedback">Detailed Feedback</Label>
+                  <Label
+                    htmlFor="feedback"
+                    className="text-sm font-semibold mb-2 flex items-center gap-2"
+                  >
+                    <Mail className="w-4 h-4 text-[#f59e0b]" />
+                    Detailed Feedback
+                  </Label>
                   <Textarea
                     id="feedback"
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
                     placeholder="Provide detailed feedback on the document..."
                     rows={6}
-                    className="mt-1"
+                    className="mt-2 border-border/50 focus:ring-2 focus:ring-[#2563eb]/20 transition-all duration-200"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => setDecision("APPROVED")}
-                    className={`flex-1 ${
-                      decision === "APPROVED"
-                        ? "bg-green-500 hover:bg-green-600"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                    }`}
-                    disabled={isSubmitting}
-                  >
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Approved
-                  </Button>
-                  <Button
-                    onClick={() => setDecision("REVISION")}
-                    className={`flex-1 ${
-                      decision === "REVISION"
-                        ? "bg-red-500 hover:bg-red-600"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                    }`}
-                    disabled={isSubmitting}
-                  >
-                    <XCircle className="w-4 h-4 mr-2" />
-                    Revision
-                  </Button>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">Decision</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      onClick={() => setDecision("APPROVED")}
+                      variant={decision === "APPROVED" ? "default" : "outline"}
+                      className={`h-auto py-4 transition-all duration-200 ${
+                        decision === "APPROVED"
+                          ? "bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/30 border-0"
+                          : "border-border/50 hover:border-emerald-500/50 hover:bg-emerald-500/5"
+                      }`}
+                      disabled={isSubmitting}
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <CheckCircle className="w-5 h-5" />
+                        <span className="font-semibold">Approve</span>
+                      </div>
+                    </Button>
+                    <Button
+                      onClick={() => setDecision("REVISION")}
+                      variant={decision === "REVISION" ? "default" : "outline"}
+                      className={`h-auto py-4 transition-all duration-200 ${
+                        decision === "REVISION"
+                          ? "bg-gradient-to-br from-rose-500 to-red-600 text-white shadow-lg shadow-rose-500/30 border-0"
+                          : "border-border/50 hover:border-rose-500/50 hover:bg-rose-500/5"
+                      }`}
+                      disabled={isSubmitting}
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <XCircle className="w-5 h-5" />
+                        <span className="font-semibold">Revision</span>
+                      </div>
+                    </Button>
+                  </div>
                 </div>
+
                 {!uploadedFileUrl && (
-                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-sm text-yellow-800">
-                      ⚠️ Please upload the annotated PDF before submitting your
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl backdrop-blur-sm">
+                    <p className="text-sm text-amber-700 flex items-center gap-2 font-medium">
+                      <Clock className="w-4 h-4" />
+                      Please upload the annotated PDF before submitting your
                       review
                     </p>
                   </div>
                 )}
+
                 <Button
                   onClick={handleSubmitReview}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  className="w-full h-12 bg-gradient-to-r from-[#2563eb] via-[#1951cc] to-[#f59e0b] hover:from-[#1951cc] hover:via-[#2563eb] hover:to-[#e38519] text-white shadow-lg hover:shadow-xl transition-all duration-300 font-semibold"
                   disabled={
                     !decision ||
                     !feedback.trim() ||
@@ -354,8 +443,8 @@ export default function AdviserDocumentDetailPage({
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Submitting...
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Submitting Review...
                     </>
                   ) : (
                     "Submit Review"
@@ -364,14 +453,21 @@ export default function AdviserDocumentDetailPage({
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Document Info</CardTitle>
+            <Card className="border-border/50 shadow-lg hover:shadow-xl transition-all duration-300 bg-card/50 backdrop-blur-sm">
+              <CardHeader className="border-b border-border/50 bg-gradient-to-r from-[#2563eb]/5 via-[#f59e0b]/5 to-[#1951cc]/5">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-[#2563eb] to-[#f59e0b]">
+                    <BookOpen className="w-5 h-5 text-white" />
+                  </div>
+                  <CardTitle className="text-xl">Document Info</CardTitle>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <div className="text-sm text-muted-foreground">Student</div>
-                  <div className="font-medium flex items-center gap-2">
+              <CardContent className="space-y-4 p-6">
+                <div className="p-4 bg-gradient-to-br from-[#2563eb]/5 to-[#f59e0b]/5 rounded-xl border border-border/50">
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    Student
+                  </div>
+                  <div className="font-semibold flex items-center gap-3">
                     {studentLoading ? (
                       <Skeleton className="h-4 w-32" />
                     ) : (
@@ -380,69 +476,91 @@ export default function AdviserDocumentDetailPage({
                           <Image
                             src={studentData.imageUrl}
                             alt={studentData.fullName}
-                            className="w-6 h-6 rounded-full"
-                            width={24}
-                            height={24}
+                            className="w-10 h-10 rounded-full border-2 border-[#2563eb]/20"
+                            width={40}
+                            height={40}
                             unoptimized
                           />
                         )}
-                        {studentData?.fullName || "Unknown Student"}
+                        <div>
+                          <div className="text-foreground">
+                            {studentData?.fullName || "Unknown Student"}
+                          </div>
+                          {studentData?.email && (
+                            <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                              <Mail className="w-3 h-3" />
+                              {studentData.email}
+                            </div>
+                          )}
+                        </div>
                       </>
                     )}
                   </div>
-                  {studentData?.email && (
-                    <div className="text-sm text-muted-foreground">
-                      {studentData.email}
-                    </div>
-                  )}
                 </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">
+
+                <div className="space-y-2">
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Categories
                   </div>
-                  <div className="flex flex-wrap gap-1 mt-1">
+                  <div className="flex flex-wrap gap-2">
                     {paper.categoryNames?.map((category, index) => (
-                      <Badge key={index} variant="secondary">
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="bg-gradient-to-r from-[#2563eb]/10 to-[#f59e0b]/10 border-[#2563eb]/20 text-[#1951cc]"
+                      >
                         {category}
                       </Badge>
                     )) || <span className="text-sm">N/A</span>}
                   </div>
                 </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">Submitted</div>
-                  <div className="font-medium">
-                    {new Date(paper.submittedAt).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 bg-gradient-to-br from-[#2563eb]/5 to-[#1951cc]/5 rounded-lg border border-border/50">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                      Submitted
+                    </div>
+                    <div className="font-semibold text-sm">
+                      {new Date(paper.submittedAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-gradient-to-br from-[#f59e0b]/5 to-[#e38519]/5 rounded-lg border border-border/50">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                      Status
+                    </div>
+                    <div>{getStatusBadge(paper.status)}</div>
                   </div>
                 </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">Status</div>
-                  <div className="mt-1">{getStatusBadge(paper.status)}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">
-                    Description
+
+                <div className="p-4 bg-gradient-to-br from-[#1951cc]/5 to-[#2563eb]/5 rounded-xl border border-border/50">
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    Abstract
                   </div>
-                  <div className="text-sm mt-1">
+                  <div className="text-sm leading-relaxed">
                     {paper.abstractText || "No description available"}
                   </div>
                 </div>
+
                 {paper.thumbnailUrl && (
                   <div>
-                    <div className="text-sm text-muted-foreground mb-2">
-                      Thumbnail
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                      Document Preview
                     </div>
-                    <Image
-                      src={paper.thumbnailUrl}
-                      alt={paper.title}
-                      className="w-full rounded-lg object-cover"
-                      width={700}
-                      height={300}
-                      unoptimized
-                    />
+                    <div className="relative overflow-hidden rounded-xl border border-border/50 shadow-md group">
+                      <Image
+                        src={paper.thumbnailUrl}
+                        alt={paper.title}
+                        className="w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        width={700}
+                        height={300}
+                        unoptimized
+                      />
+                    </div>
                   </div>
                 )}
               </CardContent>

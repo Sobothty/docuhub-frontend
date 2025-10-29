@@ -45,11 +45,11 @@ const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
       const page = await pdf.getPage(pageNumber);
       const canvas = canvasRef.current;
       const context = canvas.getContext("2d");
-      
+
       if (!context) {
         throw new Error("Failed to get 2D context from canvas");
       }
-      
+
       const viewport = page.getViewport({ scale: 1.5 });
 
       canvas.height = viewport.height;
@@ -126,7 +126,6 @@ const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
 
   return (
     <div className="w-full max-w-7xl">
-
       {/* Loading Display */}
       {loading && (
         <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -165,18 +164,18 @@ const PDFViewer = ({ pdfUri }: { pdfUri: string }) => {
           <button
             onClick={prevPage}
             disabled={currentPage <= 1 || loading}
-            className="flex items-center px-3 py-1 border bg-accent hover:bg-accent-hover text-white rounded-lg disabled:bg-transparent text-md"
+            className="pdf-nav-button"
           >
             <ChevronLeft size={16} />
             Previous
           </button>
-          <span className="font-medium">
+          <span className="pdf-page-indicator">
             Page {currentPage} of {totalPages}
           </span>
           <button
             onClick={nextPage}
             disabled={currentPage >= totalPages || loading}
-            className="flex items-center px-3 py-1 border bg-accent hover:bg-accent-hover text-white rounded-lg disabled:bg-transparent text-md"
+            className="pdf-nav-button"
           >
             Next
             <ChevronRight size={16} />

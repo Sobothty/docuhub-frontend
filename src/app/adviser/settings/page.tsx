@@ -1,7 +1,8 @@
-// AdviserSettingsPage.tsx - Fully typed version
+// AdviserSettingsPage.tsx - Modern UI matching student settings
 "use client";
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import ProfileExport from "@/components/profiles/profileExport";
 import {
   Card,
   CardContent,
@@ -39,15 +40,13 @@ import {
   Camera,
   Loader2,
   Globe,
-  AtSign,
   MessageCircle,
   Calendar,
   Shield,
   Download,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { toast } from "react-toastify";
-import ProfileExport from "@/components/profiles/profileExport";
+import { useApiNotification } from "@/components/ui/api-notification";
 
 // Type definitions
 interface ApiError {
@@ -154,6 +153,16 @@ export default function AdviserSettingsPage() {
   const [isEditingProfessional, setIsEditingProfessional] = useState(false);
   const [showExportProfile, setShowExportProfile] = useState(false);
 
+  // Notification system
+  const {
+    showSuccess,
+    showError,
+    showInfo,
+    showLoading,
+    closeNotification,
+    NotificationComponent,
+  } = useApiNotification();
+
   const [profileForm, setProfileForm] = useState<ProfileFormState>({
     userName: "",
     firstName: "",
@@ -215,49 +224,50 @@ export default function AdviserSettingsPage() {
     }
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
+      showError("Invalid File Type", "Please select an image file");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size should be less than 5MB");
+      showError("File Too Large", "Image size should be less than 5MB");
       return;
     }
 
     try {
-      // Step 1: Upload the image file to /media endpoint
       const formData = new FormData();
       formData.append("file", file);
 
-      toast.info("Uploading image...");
+      showLoading(
+        "Uploading Image",
+        "Please wait while we upload your profile picture..."
+      );
 
       console.log("Step 1: Uploading file to /media endpoint");
       const uploadResponse = (await uploadFile(
         formData
       ).unwrap()) as MediaUploadResponse;
+      console.log("Upload response:", uploadResponse);
 
-      // Extract image URL from response
       let imageUrl: string;
       if (uploadResponse.data?.uri) {
         imageUrl = uploadResponse.data.uri;
-      } else if (uploadResponse.uri) {
-        imageUrl = uploadResponse.uri;
-      } else if (uploadResponse.url) {
-        imageUrl = uploadResponse.url;
-      } else if (uploadResponse.data?.url) {
-        imageUrl = uploadResponse.data.url;
       } else {
+        console.error("Unexpected upload response structure:", uploadResponse);
         throw new Error("No image URL returned from upload");
       }
 
-      // Step 2: Update user profile with the image URL
       if (adviserProfile?.user?.uuid) {
+        console.log("Step 2: Updating user profile with image URL");
+        console.log("UUID:", adviserProfile.user.uuid);
+        console.log("Image URL to send:", imageUrl);
+
         await updateProfileImage({
           uuid: adviserProfile.user.uuid,
           imageUrl: imageUrl,
         }).unwrap();
 
-        toast.success("Profile image updated successfully");
+        closeNotification();
+        showSuccess("Upload Successful", "Profile image updated successfully");
         refetch();
       } else {
         throw new Error("User UUID not available");
@@ -268,7 +278,7 @@ export default function AdviserSettingsPage() {
         error,
         "Failed to upload profile image. Please try again."
       );
-      toast.error(errorMessage);
+      showError("Upload Failed", errorMessage);
     }
   };
 
@@ -281,79 +291,87 @@ export default function AdviserSettingsPage() {
   const handleProfileUpdate = async () => {
     try {
       if (!adviserProfile?.user?.uuid) {
-        toast.error("User UUID not found");
+        showError("Update Failed", "User UUID not found");
         return;
       }
 
-      // Prepare data for backend
       const updateData = prepareDataForBackend(profileForm);
 
-      // Check if there's actually data to update
       if (Object.keys(updateData).length === 0) {
-        toast.info("No changes to save");
+        showInfo("No Changes", "No changes to save");
         setIsEditingProfile(false);
         return;
       }
 
+      showLoading(
+        "Updating Profile",
+        "Please wait while we save your changes..."
+      );
       await updateUserProfile({
         uuid: adviserProfile.user.uuid,
         updateData: updateData,
       }).unwrap();
 
-      toast.success("Profile updated successfully");
+      closeNotification();
+      showSuccess("Update Successful", "Profile updated successfully");
       setIsEditingProfile(false);
       refetch();
     } catch (error) {
-      console.error("Update error:", error);
+      console.log("❌ Update error:", error);
       const errorMessage = handleApiError(
         error,
         "Failed to update profile. Please check your input and try again."
       );
-      toast.error(errorMessage);
+      showError("Update Failed", errorMessage);
     }
   };
 
   // Professional update function
   const handleProfessionalUpdate = async () => {
     try {
-      // Prepare data for backend
+      if (!adviserProfile?.user?.uuid) {
+        showError("Update Failed", "User UUID not found");
+        return;
+      }
+
       const updateData = prepareDataForBackend(professionalForm);
 
-      // Check if there's actually data to update
       if (Object.keys(updateData).length === 0) {
-        toast.info("No changes to save");
+        showInfo("No Changes", "No changes to save");
         setIsEditingProfessional(false);
         return;
       }
 
-      if (!adviserProfile?.user?.uuid) {
-        toast.error("User UUID not found");
-        return;
-      }
-
+      showLoading(
+        "Updating Professional Info",
+        "Please wait while we save your professional information..."
+      );
       await updateAdviserDetails({
         uuid: adviserProfile.user.uuid,
         updateData: updateData,
       }).unwrap();
 
-      toast.success("Professional information updated successfully");
+      closeNotification();
+      showSuccess(
+        "Update Successful",
+        "Professional information updated successfully"
+      );
       setIsEditingProfessional(false);
       refetch();
     } catch (error) {
-      console.error("Professional update error:", error);
       const errorMessage = handleApiError(
         error,
         "Failed to update professional information. Please check your input and try again."
       );
-      toast.error(errorMessage);
+      showError("Update Failed", errorMessage);
     }
   };
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         <Skeleton className="h-8 w-1/3" />
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
           <Skeleton className="h-[400px] w-full" />
           <Skeleton className="h-[400px] w-full" />
         </div>
@@ -362,9 +380,8 @@ export default function AdviserSettingsPage() {
   }
 
   if (error) {
-    console.error("Profile loading error:", error);
     return (
-      <div className="p-6 text-destructive font-medium">
+      <div className="p-4 sm:p-6 text-destructive font-medium">
         Failed to load settings.{" "}
         {handleApiError(error, "Please try refreshing the page.")}
       </div>
@@ -373,7 +390,7 @@ export default function AdviserSettingsPage() {
 
   if (!adviserProfile) {
     return (
-      <div className="p-6 text-destructive font-medium">
+      <div className="p-4 sm:p-6 text-destructive font-medium">
         No profile data available.
       </div>
     );
@@ -392,127 +409,171 @@ export default function AdviserSettingsPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="space-y-8 max-w-6xl mx-auto"
+        className="space-y-6 sm:space-y-8 max-w-7xl mx-auto px-3 sm:px-4 lg:px-6"
       >
-        {/* Enhanced Header Section */}
-        <div className="text-center space-y-4">
-          <motion.div
-            className="relative inline-block group"
-            whileHover={{ scale: 1.02 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <div className="relative">
-              <Image
-                src={user?.imageUrl || "/placeholder.svg"}
-                alt={user?.fullName || "Profile"}
-                width={140}
-                height={140}
-                className="rounded-full border-4 border-white shadow-lg object-cover"
-                unoptimized
-              />
-              <button
-                onClick={handleCameraClick}
-                disabled={isUpdatingImage || isUploadingFile}
-                className="absolute bottom-2 right-2 bg-primary rounded-full p-2 shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+        {/* Modern Header Section */}
+        <Card className="dashboard-card border-0 mb-8 overflow-hidden">
+          {/* Top Accent Bar */}
+          <div
+            className="h-1"
+            style={{ backgroundColor: "var(--color-secondary)" }}
+          />
+
+          <CardContent className="p-6 sm:p-8">
+            <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
+              {/* Profile Image Section */}
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.4 }}
+                className="relative flex-shrink-0"
               >
-                {isUpdatingImage || isUploadingFile ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-white" />
-                ) : (
-                  <Camera className="h-4 w-4 text-white" />
-                )}
-              </button>
+                <div className="relative group">
+                  <Image
+                    src={user?.imageUrl || "/placeholder.svg"}
+                    alt={user?.fullName || "Profile"}
+                    width={120}
+                    height={120}
+                    className="w-[120px] h-[120px] rounded-full object-cover shadow-lg border-4 border-white dark:border-gray-800"
+                    unoptimized
+                  />
+
+                  {/* Camera Button */}
+                  <button
+                    onClick={handleCameraClick}
+                    disabled={isUpdatingImage || isUploadingFile}
+                    className="absolute bottom-1 right-1 p-2 rounded-full shadow-lg transition-all duration-200 disabled:opacity-50 hover:scale-110 border-2 border-white dark:border-gray-800"
+                    style={{ backgroundColor: "var(--color-secondary)" }}
+                  >
+                    {isUpdatingImage || isUploadingFile ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
+                    ) : (
+                      <Camera className="h-3.5 w-3.5 text-white" />
+                    )}
+                  </button>
+                </div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  accept="image/*"
+                  className="hidden"
+                />
+              </motion.div>
+
+              {/* User Info Section */}
+              <div className="flex-1 text-center lg:text-left">
+                <h1 className="text-2xl sm:text-3xl font-bold text-card-foreground mb-1">
+                  {user.fullName}
+                </h1>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {adviser?.office || "Independent Researcher"}
+                </p>
+
+                {/* Badges */}
+                <div className="flex flex-wrap gap-2 justify-center lg:justify-start mb-4">
+                  <Badge
+                    className="gap-1 px-3 py-1 text-xs font-semibold text-white border-0"
+                    style={{ backgroundColor: "var(--color-secondary)" }}
+                  >
+                    <User className="h-3 w-3" />
+                    {user.gender || "N/A"}
+                  </Badge>
+                  <Badge
+                    className="gap-1 px-3 py-1 text-xs font-semibold text-white border-0"
+                    style={{ backgroundColor: "var(--color-secondary)" }}
+                  >
+                    <Briefcase className="h-3 w-3" />
+                    {adviser?.experienceYears || 0} Years Exp
+                  </Badge>
+                  <Badge
+                    className="gap-1 px-3 py-1 text-xs font-semibold text-white border-0"
+                    style={{ backgroundColor: "var(--color-secondary)" }}
+                  >
+                    <Shield className="h-3 w-3" />
+                    Adviser
+                  </Badge>
+                </div>
+
+                {/* Export Button */}
+                <Button
+                  onClick={() => setShowExportProfile(true)}
+                  size="sm"
+                  className="gap-2 text-white shadow-md hover:opacity-90 transition-opacity font-semibold border-0"
+                  style={{ backgroundColor: "var(--color-secondary)" }}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Export Profile
+                </Button>
+              </div>
             </div>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-              accept="image/*"
-              className="hidden"
-            />
-          </motion.div>
+          </CardContent>
+        </Card>
 
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold">
-              {user.fullName}
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              {adviser?.office || "Independent Researcher"}
-            </p>
-            <div className="flex flex-wrap gap-2 justify-center">
-              <Badge variant="secondary" className="gap-1">
-                <User className="h-3 w-3" />
-                {user.gender || "N/A"}
-              </Badge>
-              <Badge variant="outline" className="gap-1">
-                <Briefcase className="h-3 w-3" />
-                {adviser?.experienceYears || 0} Years Exp
-              </Badge>
-              <Badge variant="default" className="gap-1">
-                <Shield className="h-3 w-3" />
-                Professional Adviser
-              </Badge>
-            </div>
-          </div>
+        {/* Export Profile Modal */}
+        {showExportProfile && (
+          <ProfileExport
+            userType="adviser"
+            onClose={() => setShowExportProfile(false)}
+          />
+        )}
 
-          {/* Export Profile Button */}
-          <div className="flex justify-center mt-4">
-            <Button
-              onClick={() => setShowExportProfile(true)}
-              className="gap-2 bg-blue-600 hover:bg-blue/90"
-              size="lg"
-            >
-              <Download className="h-4 w-4" />
-              Export Profile
-            </Button>
-          </div>
-
-          {/* Export Profile Modal */}
-          {showExportProfile && (
-            <ProfileExport
-              userType="adviser"
-              onClose={() => setShowExportProfile(false)}
-            />
-          )}
-        </div>
-
-        {/* Two Column Layout */}
-        <div className="grid gap-8 lg:grid-cols-2">
+        {/* Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Left Column - Profile Information */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Profile Information Card */}
-            <Card className="border border-border/30 bg-card/60 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
+            <Card className="dashboard-card border-0 overflow-hidden">
+              {/* Top Accent Bar */}
+              <div
+                className="h-1"
+                style={{ backgroundColor: "var(--color-secondary)" }}
+              />
+
               <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="flex items-center gap-2">
-                      <User className="h-5 w-5 text-primary" />
-                      Profile Information
-                    </CardTitle>
-                    <CardDescription>
-                      Your personal and contact details
-                    </CardDescription>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="p-2 rounded-lg"
+                      style={{ backgroundColor: "var(--color-secondary)" }}
+                    >
+                      <User className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-bold text-card-foreground">
+                        Profile Information
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        Personal and contact details
+                      </CardDescription>
+                    </div>
                   </div>
+
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setIsEditingProfile(!isEditingProfile)}
                     disabled={isUpdatingUser}
-                    className="gap-2"
+                    className="gap-1.5"
                   >
                     {isEditingProfile ? (
-                      <X className="h-4 w-4" />
+                      <>
+                        <X className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Cancel</span>
+                      </>
                     ) : (
-                      <Edit2 className="h-4 w-4" />
+                      <>
+                        <Edit2 className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Edit</span>
+                      </>
                     )}
-                    {isEditingProfile ? "Cancel" : "Edit"}
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 sm:space-y-4">
                 {/* Username Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="username" className="flex items-center gap-2">
-                    <AtSign className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="username" className="text-sm sm:text-base">
                     Username
                   </Label>
                   {isEditingProfile ? (
@@ -526,19 +587,24 @@ export default function AdviserSettingsPage() {
                         })
                       }
                       placeholder="Enter username"
+                      className="h-10 sm:h-12"
                     />
                   ) : (
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <AtSign className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{user.userName}</span>
+                    <div className="flex items-center gap-2 p-2 sm:p-3 rounded-md bg-muted/50">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium text-sm sm:text-base">
+                        {user.userName}
+                      </span>
                     </div>
                   )}
                 </div>
 
                 {/* Name Fields */}
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
+                    <Label htmlFor="firstName" className="text-sm sm:text-base">
+                      First Name
+                    </Label>
                     {isEditingProfile ? (
                       <Input
                         id="firstName"
@@ -550,13 +616,20 @@ export default function AdviserSettingsPage() {
                           })
                         }
                         placeholder="First name"
+                        className="h-10 sm:h-12"
                       />
                     ) : (
-                      <Input value={user.firstName || "N/A"} disabled />
+                      <Input
+                        value={user.firstName || "N/A"}
+                        disabled
+                        className="h-10 sm:h-12"
+                      />
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
+                    <Label htmlFor="lastName" className="text-sm sm:text-base">
+                      Last Name
+                    </Label>
                     {isEditingProfile ? (
                       <Input
                         id="lastName"
@@ -568,17 +641,25 @@ export default function AdviserSettingsPage() {
                           })
                         }
                         placeholder="Last name"
+                        className="h-10 sm:h-12"
                       />
                     ) : (
-                      <Input value={user.lastName || "N/A"} disabled />
+                      <Input
+                        value={user.lastName || "N/A"}
+                        disabled
+                        className="h-10 sm:h-12"
+                      />
                     )}
                   </div>
                 </div>
 
                 {/* Gender and Contact */}
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="gender" className="flex items-center gap-2">
+                    <Label
+                      htmlFor="gender"
+                      className="flex items-center gap-2 text-sm sm:text-base"
+                    >
                       <User className="h-4 w-4 text-muted-foreground" />
                       Gender
                     </Label>
@@ -592,7 +673,7 @@ export default function AdviserSettingsPage() {
                             gender: e.target.value,
                           })
                         }
-                        className="w-full px-3 py-2 border rounded-md bg-background"
+                        className="w-full px-3 py-2 h-10 sm:h-12 border rounded-md bg-background text-sm sm:text-base"
                       >
                         <option value="">Select Gender</option>
                         <option value="MALE">Male</option>
@@ -600,13 +681,17 @@ export default function AdviserSettingsPage() {
                         <option value="OTHER">Other</option>
                       </select>
                     ) : (
-                      <Input value={user.gender || "N/A"} disabled />
+                      <Input
+                        value={user.gender || "N/A"}
+                        disabled
+                        className="h-10 sm:h-12"
+                      />
                     )}
                   </div>
                   <div className="space-y-2">
                     <Label
                       htmlFor="contact"
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 text-sm sm:text-base"
                     >
                       <Phone className="h-4 w-4 text-muted-foreground" />
                       Contact Number
@@ -622,11 +707,13 @@ export default function AdviserSettingsPage() {
                           })
                         }
                         placeholder="Phone number"
+                        className="h-10 sm:h-12"
                       />
                     ) : (
                       <Input
                         value={user.contactNumber || "Not provided"}
                         disabled
+                        className="h-10 sm:h-12"
                       />
                     )}
                   </div>
@@ -634,23 +721,31 @@ export default function AdviserSettingsPage() {
 
                 {/* Email (Read-only) */}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="flex items-center gap-2">
+                  <Label
+                    htmlFor="email"
+                    className="flex items-center gap-2 text-sm sm:text-base"
+                  >
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     Email Address
                   </Label>
-                  <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
+                  <div className="flex items-center gap-2 p-2 sm:p-3 rounded-md bg-muted/50">
                     <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{user.email}</span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {user.email}
+                    </span>
                     <Badge variant="outline" className="ml-auto text-xs">
-                      Cannot be changed
+                      Read-only
                     </Badge>
                   </div>
                 </div>
 
                 {/* Telegram */}
                 <div className="space-y-2">
-                  <Label htmlFor="telegram" className="flex items-center gap-2">
-                    <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                  <Label
+                    htmlFor="telegram"
+                    className="flex items-center gap-2 text-sm sm:text-base"
+                  >
+                    <Phone className="h-4 w-4 text-muted-foreground" />
                     Telegram ID
                   </Label>
                   {isEditingProfile ? (
@@ -664,15 +759,23 @@ export default function AdviserSettingsPage() {
                         })
                       }
                       placeholder="@username"
+                      className="h-10 sm:h-12"
                     />
                   ) : (
-                    <Input value={user.telegramId || "Not provided"} disabled />
+                    <Input
+                      value={user.telegramId || "Not provided"}
+                      disabled
+                      className="h-10 sm:h-12"
+                    />
                   )}
                 </div>
 
                 {/* Address */}
                 <div className="space-y-2">
-                  <Label htmlFor="address" className="flex items-center gap-2">
+                  <Label
+                    htmlFor="address"
+                    className="flex items-center gap-2 text-sm sm:text-base"
+                  >
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     Address
                   </Label>
@@ -687,18 +790,22 @@ export default function AdviserSettingsPage() {
                         })
                       }
                       placeholder="Your address"
+                      className="h-10 sm:h-12"
                     />
                   ) : (
                     <Input
                       value={user.address || "No address provided"}
                       disabled
+                      className="h-10 sm:h-12"
                     />
                   )}
                 </div>
 
                 {/* Bio */}
                 <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
+                  <Label htmlFor="bio" className="text-sm sm:text-base">
+                    Bio
+                  </Label>
                   {isEditingProfile ? (
                     <Textarea
                       id="bio"
@@ -707,10 +814,10 @@ export default function AdviserSettingsPage() {
                         setProfileForm({ ...profileForm, bio: e.target.value })
                       }
                       placeholder="Tell us about yourself, your expertise, and experience..."
-                      className="min-h-[100px] resize-none"
+                      className="min-h-[80px] sm:min-h-[100px] resize-none text-sm sm:text-base"
                     />
                   ) : (
-                    <div className="p-3 rounded-md bg-muted/50 min-h-[100px]">
+                    <div className="p-3 rounded-md bg-muted/50 min-h-[80px] sm:min-h-[100px]">
                       <p className="text-sm">
                         {user.bio ||
                           "No biography provided yet. Share something about yourself!"}
@@ -721,26 +828,35 @@ export default function AdviserSettingsPage() {
 
                 {/* Save/Cancel Buttons */}
                 {isEditingProfile && (
-                  <div className="flex gap-2 pt-4 border-t">
+                  <div className="flex gap-2 pt-3 border-t">
                     <Button
                       variant="outline"
                       onClick={() => setIsEditingProfile(false)}
                       disabled={isUpdatingUser}
+                      size="sm"
                       className="flex-1"
                     >
+                      <X className="h-3.5 w-3.5 mr-1.5" />
                       Cancel
                     </Button>
                     <Button
                       onClick={handleProfileUpdate}
                       disabled={isUpdatingUser}
-                      className="flex-1 gap-2"
+                      size="sm"
+                      className="flex-1 gap-1.5 text-white border-0"
+                      style={{ backgroundColor: "var(--color-secondary)" }}
                     >
                       {isUpdatingUser ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Saving...
+                        </>
                       ) : (
-                        <Save className="h-4 w-4" />
+                        <>
+                          <Save className="h-3.5 w-3.5" />
+                          Save
+                        </>
                       )}
-                      {isUpdatingUser ? "Saving..." : "Save Changes"}
                     </Button>
                   </div>
                 )}
@@ -748,28 +864,43 @@ export default function AdviserSettingsPage() {
             </Card>
 
             {/* Account Details Card */}
-            <Card className="border border-border/30 bg-card/60 backdrop-blur-sm shadow-sm">
+            <Card className="dashboard-card border-0 overflow-hidden">
+              {/* Top Accent Bar */}
+              <div
+                className="h-1"
+                style={{ backgroundColor: "var(--color-secondary)" }}
+              />
+
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary" />
-                  Account Details
-                </CardTitle>
-                <CardDescription>
-                  Account metadata and information
-                </CardDescription>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="p-2 rounded-lg"
+                    style={{ backgroundColor: "var(--color-secondary)" }}
+                  >
+                    <Shield className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-bold text-card-foreground">
+                      Account Details
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Account metadata and information
+                    </CardDescription>
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
+              <CardContent className="space-y-3 sm:space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">
                       Account Created
                     </Label>
                     <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">
+                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+                      <span className="text-xs sm:text-sm font-medium">
                         {new Date(user.createDate).toLocaleDateString("en-US", {
                           year: "numeric",
-                          month: "long",
+                          month: "short",
                           day: "numeric",
                         })}
                       </span>
@@ -780,11 +911,11 @@ export default function AdviserSettingsPage() {
                       Last Updated
                     </Label>
                     <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">
+                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+                      <span className="text-xs sm:text-sm font-medium">
                         {new Date(user.updateDate).toLocaleDateString("en-US", {
                           year: "numeric",
-                          month: "long",
+                          month: "short",
                           day: "numeric",
                         })}
                       </span>
@@ -796,20 +927,34 @@ export default function AdviserSettingsPage() {
           </div>
 
           {/* Right Column - Professional Information */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Professional Information Card */}
-            <Card className="border border-border/30 bg-card/60 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
+            <Card className="dashboard-card border-0 overflow-hidden">
+              {/* Top Accent Bar */}
+              <div
+                className="h-1"
+                style={{ backgroundColor: "var(--color-secondary)" }}
+              />
+
               <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="flex items-center gap-2">
-                      <Briefcase className="h-5 w-5 text-primary" />
-                      Professional Information
-                    </CardTitle>
-                    <CardDescription>
-                      Your academic and professional details
-                    </CardDescription>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="p-2 rounded-lg"
+                      style={{ backgroundColor: "var(--color-secondary)" }}
+                    >
+                      <Briefcase className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-bold text-card-foreground">
+                        Professional Information
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        Academic and professional details
+                      </CardDescription>
+                    </div>
                   </div>
+
                   <Button
                     variant="outline"
                     size="sm"
@@ -817,22 +962,30 @@ export default function AdviserSettingsPage() {
                       setIsEditingProfessional(!isEditingProfessional)
                     }
                     disabled={isUpdatingAdviser}
-                    className="gap-2"
+                    className="gap-1.5"
                   >
                     {isEditingProfessional ? (
-                      <X className="h-4 w-4" />
+                      <>
+                        <X className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Cancel</span>
+                      </>
                     ) : (
-                      <Edit2 className="h-4 w-4" />
+                      <>
+                        <Edit2 className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Edit</span>
+                      </>
                     )}
-                    {isEditingProfessional ? "Cancel" : "Edit"}
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 sm:space-y-4">
                 {/* Office and Experience */}
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="office" className="flex items-center gap-2">
+                    <Label
+                      htmlFor="office"
+                      className="flex items-center gap-2 text-sm sm:text-base"
+                    >
                       <Briefcase className="h-4 w-4 text-muted-foreground" />
                       Office / Institution
                     </Label>
@@ -847,18 +1000,20 @@ export default function AdviserSettingsPage() {
                           })
                         }
                         placeholder="Your office or institution"
+                        className="h-10 sm:h-12"
                       />
                     ) : (
                       <Input
                         value={adviser?.office || "Not specified"}
                         disabled
+                        className="h-10 sm:h-12"
                       />
                     )}
                   </div>
                   <div className="space-y-2">
                     <Label
                       htmlFor="experience"
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 text-sm sm:text-base"
                     >
                       <Briefcase className="h-4 w-4 text-muted-foreground" />
                       Experience (Years)
@@ -876,11 +1031,13 @@ export default function AdviserSettingsPage() {
                             experienceYears: parseInt(e.target.value) || 0,
                           })
                         }
+                        className="h-10 sm:h-12"
                       />
                     ) : (
                       <Input
                         value={`${adviser?.experienceYears || 0} years`}
                         disabled
+                        className="h-10 sm:h-12"
                       />
                     )}
                   </div>
@@ -888,7 +1045,10 @@ export default function AdviserSettingsPage() {
 
                 {/* LinkedIn */}
                 <div className="space-y-2">
-                  <Label htmlFor="linkedin" className="flex items-center gap-2">
+                  <Label
+                    htmlFor="linkedin"
+                    className="flex items-center gap-2 text-sm sm:text-base"
+                  >
                     <Link2 className="h-4 w-4 text-muted-foreground" />
                     LinkedIn Profile
                   </Label>
@@ -903,19 +1063,22 @@ export default function AdviserSettingsPage() {
                         })
                       }
                       placeholder="https://linkedin.com/in/yourprofile"
+                      className="h-10 sm:h-12"
                     />
                   ) : adviser?.linkedinUrl ? (
                     <a
                       href={adviser.linkedinUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 p-2 rounded-md bg-card hover:bg-card/80 transition-colors"
+                      className="flex items-center gap-2 p-2 sm:p-3 rounded-md bg-muted/50 hover:bg-muted transition-colors"
                     >
-                      <Link2 className="h-4 w-4" />
-                      <span className="font-medium">{adviser.linkedinUrl}</span>
+                      <Link2 className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium text-sm sm:text-base truncate">
+                        {adviser.linkedinUrl}
+                      </span>
                     </a>
                   ) : (
-                    <div className="p-2 rounded-md bg-muted/50">
+                    <div className="p-2 sm:p-3 rounded-md bg-muted/50">
                       <span className="text-sm text-muted-foreground">
                         No LinkedIn profile added
                       </span>
@@ -927,7 +1090,7 @@ export default function AdviserSettingsPage() {
                 <div className="space-y-2">
                   <Label
                     htmlFor="socialLinks"
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 text-sm sm:text-base"
                   >
                     <Globe className="h-4 w-4 text-muted-foreground" />
                     Other Social Links
@@ -943,7 +1106,7 @@ export default function AdviserSettingsPage() {
                         })
                       }
                       placeholder="Enter multiple links separated by commas"
-                      className="min-h-[80px] resize-none"
+                      className="min-h-[80px] sm:min-h-[100px] resize-none text-sm sm:text-base"
                     />
                   ) : (
                     <div className="space-y-2">
@@ -954,9 +1117,9 @@ export default function AdviserSettingsPage() {
                             href={link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors group"
+                            className="flex items-center gap-2 p-2 sm:p-3 rounded-md bg-muted/50 hover:bg-muted transition-colors group"
                           >
-                            <Link2 className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <Link2 className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm font-medium truncate">
                               {link}
                             </span>
@@ -975,74 +1138,46 @@ export default function AdviserSettingsPage() {
 
                 {/* Save/Cancel Buttons */}
                 {isEditingProfessional && (
-                  <div className="flex gap-2 pt-4 border-t">
+                  <div className="flex gap-2 pt-3 border-t">
                     <Button
                       variant="outline"
                       onClick={() => setIsEditingProfessional(false)}
                       disabled={isUpdatingAdviser}
+                      size="sm"
                       className="flex-1"
                     >
+                      <X className="h-3.5 w-3.5 mr-1.5" />
                       Cancel
                     </Button>
                     <Button
                       onClick={handleProfessionalUpdate}
                       disabled={isUpdatingAdviser}
-                      className="flex-1 gap-2"
+                      size="sm"
+                      className="flex-1 gap-1.5 text-white border-0"
+                      style={{ backgroundColor: "var(--color-secondary)" }}
                     >
                       {isUpdatingAdviser ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Saving...
+                        </>
                       ) : (
-                        <Save className="h-4 w-4" />
+                        <>
+                          <Save className="h-3.5 w-3.5" />
+                          Save
+                        </>
                       )}
-                      {isUpdatingAdviser ? "Saving..." : "Save Changes"}
                     </Button>
                   </div>
                 )}
               </CardContent>
             </Card>
-
-            {/* Status Card */}
-            <Card className="border border-border/30 bg-card/60 backdrop-blur-sm shadow-sm">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 " />
-                  Account Status
-                </CardTitle>
-                <CardDescription>
-                  Your current account permissions and status
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-card border border-green-200">
-                  <span className="font-medium">Status</span>
-                  <Badge
-                    variant="default"
-                    className="bg-green-100 text-green-900"
-                  >
-                    Active
-                  </Badge>
-                </div>
-                <div className="grid gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Adviser Role</span>
-                    <Badge variant="secondary">Professional</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">
-                      Profile Completion
-                    </span>
-                    <Badge variant="outline">
-                      {user.bio && user.contactNumber && user.address
-                        ? "Complete"
-                        : "Incomplete"}
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </motion.div>
+
+      {/* Notification Component */}
+      <NotificationComponent />
     </DashboardLayout>
   );
 }

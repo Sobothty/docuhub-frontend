@@ -31,10 +31,11 @@ const nextConfig = {
       { protocol: "https", hostname: "s3.docuhub.me" },
       // Allow example.com over HTTP for external images
       { protocol: "http", hostname: "example.com" },
+      // API server for blog/uploads
+      { protocol: "http", hostname: "blog-api.srengchipor.dev" },
+      { protocol: "https", hostname: "blog-api.srengchipor.dev" },
     ],
-    domains: [
-      'res.cloudinary.com',
-    ]
+    domains: ["res.cloudinary.com"],
   },
 };
 

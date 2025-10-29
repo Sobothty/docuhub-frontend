@@ -29,7 +29,10 @@ export function LoadingBar() {
 
   return (
     <div className="fixed top-0 left-0 right-0 h-1.5 bg-transparent z-[100]">
-      <div className="h-full bg-accent animate-loading-bar origin-left" />
+      <div
+        className="h-full animate-loading-bar origin-left"
+        style={{ background: "linear-gradient(to right, #f59e0b, #e38519)" }}
+      />
     </div>
   );
 }
