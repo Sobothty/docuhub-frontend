@@ -121,7 +121,7 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
         size="icon"
         className={cn(
           "fixed z-50 transition-all duration-300 ease-in-out sidebar-toggle",
-          isOpen ? "left-64 top-4" : "left-16 top-4 md:left-16",
+          isOpen ? "left-64 top-4 md:left-64" : "left-4 top-4 md:left-16",
           "rounded-full"
         )}
         onClick={toggleSidebar}
@@ -139,7 +139,7 @@ export function Sidebar({ userRole, userName, userAvatar }: SidebarProps) {
           "fixed inset-y-0 left-0 z-40 sidebar-container transform transition-all duration-300 ease-in-out",
           isOpen
             ? "w-64 translate-x-0"
-            : "w-16 md:w-16 -translate-x-full md:translate-x-0"
+            : "w-64 md:w-16 -translate-x-full md:translate-x-0"
         )}
       >
         <div className="flex flex-col h-full">

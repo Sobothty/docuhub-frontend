@@ -71,7 +71,6 @@ interface PapersResponse {
 }
 
 interface FilteredDocument {
-  
   id: string;
   title: string;
   status: string;
@@ -349,24 +348,24 @@ export default function StudentOverviewPage() {
     >
       <div className="space-y-5">
         {/* Header */}
-        <div className="dashboard-header rounded-3xl p-8 mb-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-5xl font-bold gradient-text mb-3 tracking-tight">
+        <div className="dashboard-header rounded-3xl p-4 sm:p-6 md:p-8 mb-6 shadow-sm">
+          <div className="flex flex-col md:grid md:grid-cols-2 gap-4 md:gap-6 items-start md:items-center">
+            <div className="w-full">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold gradient-text mb-2 sm:mb-3 tracking-tight">
                 Student Dashboard
               </h1>
-              <p className="text-muted-foreground text-lg font-medium">
+              <p className="text-muted-foreground text-sm sm:text-base md:text-lg font-medium">
                 Track your academic journey and manage your research
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="w-full flex gap-3 justify-start md:justify-end">
               <Button
                 asChild
                 size="lg"
-                className="text-white shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 px-8 rounded-xl font-semibold"
+                className="text-white shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 px-6 sm:px-8 rounded-xl font-semibold text-sm sm:text-base w-full sm:w-auto"
               >
                 <Link href="/student/proposals">
-                  <Plus className="h-5 w-5 mr-2" />
+                  <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   New Document
                 </Link>
               </Button>
@@ -375,22 +374,22 @@ export default function StudentOverviewPage() {
         </div>
 
         {/* Enhanced Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
           <Card className="stat-card border-0 group relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wide">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 sm:pb-3">
+              <CardTitle className="text-xs sm:text-sm font-bold text-muted-foreground uppercase tracking-wide">
                 Total Documents
               </CardTitle>
-              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
               </div>
             </CardHeader>
             <CardContent className="relative z-10">
-              <div className="text-4xl font-black gradient-text mb-1">
+              <div className="text-3xl sm:text-4xl font-black gradient-text mb-1">
                 {authorPapers.length}
               </div>
-              <p className="text-sm text-muted-foreground font-medium">
+              <p className="text-xs sm:text-sm text-muted-foreground font-medium">
                 {papersLoading ? "Loading..." : "Papers submitted"}
               </p>
             </CardContent>
@@ -398,19 +397,19 @@ export default function StudentOverviewPage() {
 
           <Card className="stat-card border-0 group relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wide">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 sm:pb-3">
+              <CardTitle className="text-xs sm:text-sm font-bold text-muted-foreground uppercase tracking-wide">
                 Approved Papers
               </CardTitle>
-              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <CheckCircle className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
               </div>
             </CardHeader>
             <CardContent className="relative z-10">
-              <div className="text-4xl font-black text-blue-600 dark:text-blue-400 mb-1">
+              <div className="text-3xl sm:text-4xl font-black text-blue-600 dark:text-blue-400 mb-1">
                 {authorPapers.filter((p: Paper) => p.isApproved).length}
               </div>
-              <p className="text-sm text-muted-foreground font-medium">
+              <p className="text-xs sm:text-sm text-muted-foreground font-medium">
                 Published documents
               </p>
             </CardContent>
@@ -418,22 +417,22 @@ export default function StudentOverviewPage() {
 
           <Card className="stat-card border-0 group relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-orange-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wide">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 sm:pb-3">
+              <CardTitle className="text-xs sm:text-sm font-bold text-muted-foreground uppercase tracking-wide">
                 Total Downloads
               </CardTitle>
-              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/20 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <TrendingUp className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/20 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600 dark:text-orange-400" />
               </div>
             </CardHeader>
             <CardContent className="relative z-10">
-              <div className="text-4xl font-black text-orange-600 dark:text-orange-400 mb-1">
+              <div className="text-3xl sm:text-4xl font-black text-orange-600 dark:text-orange-400 mb-1">
                 {authorPapers.reduce(
                   (sum: number, p: Paper) => sum + (p.downloads || 0),
                   0
                 )}
               </div>
-              <p className="text-sm text-muted-foreground font-medium">
+              <p className="text-xs sm:text-sm text-muted-foreground font-medium">
                 All time downloads
               </p>
             </CardContent>
@@ -441,21 +440,21 @@ export default function StudentOverviewPage() {
 
           <Card className="stat-card border-0 group relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-orange-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wide">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 sm:pb-3">
+              <CardTitle className="text-xs sm:text-sm font-bold text-muted-foreground uppercase tracking-wide">
                 Star Rating
               </CardTitle>
-              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/20 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Star className="h-6 w-6 text-orange-600 dark:text-orange-400 fill-orange-500/20" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/20 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <Star className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600 dark:text-orange-400 fill-orange-500/20" />
               </div>
             </CardHeader>
             <CardContent className="relative z-10">
-              <div className="text-4xl font-black text-orange-600 dark:text-orange-400 mb-1">
+              <div className="text-3xl sm:text-4xl font-black text-orange-600 dark:text-orange-400 mb-1">
                 {starLoading
                   ? "..."
                   : (starData as StarResponse[])?.length || 0}
               </div>
-              <p className="text-sm text-muted-foreground font-medium">
+              <p className="text-xs sm:text-sm text-muted-foreground font-medium">
                 Academic impact
               </p>
             </CardContent>

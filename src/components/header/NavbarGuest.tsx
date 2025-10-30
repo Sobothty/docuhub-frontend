@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Menu, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../ui/button";
 import Image from "next/image";
@@ -16,12 +16,20 @@ export default function NavbarGuest() {
   const [mounted, setMounted] = useState(false);
   const [currentLang, setCurrentLang] = useState<"en" | "kh">("en");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   const { setTheme, resolvedTheme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
     if (i18n?.language) setCurrentLang(i18n.language as "en" | "kh");
+
+    // Add scroll listener for navbar shadow effect
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [i18n]);
 
   const toggleDarkMode = () => {
@@ -44,104 +52,119 @@ export default function NavbarGuest() {
   const navLinks = [
     { path: "/", name: t("home", "Home") },
     { path: "/browse", name: t("browse", "Browse") },
+    { path: "/roadmap", name: t("roadmap", "Roadmap") },
     { path: "/about", name: t("about", "About Us") },
     { path: "/contact", name: t("contact", "Contact") },
   ];
 
-
   return (
-    <nav className="fixed top-16 sm:top-13 md:top-12 left-0 w-full z-40 border-b bg-background border-border shadow-md">
-      <div className="max-w-7xl mx-auto px-2 md:px-4 flex justify-between items-center">
-        <Link href="/" className="inline-block sm:w-auto w-24 ">
-          <Image
-            src="/logo/Docohub.png"
-            alt="DocuHub Logo"
-            width={120}
-            height={40}
-            className="transition-all hover:brightness-110"
-            priority
-          />
-        </Link>
-
-        {/* Desktop nav */}
-        <div className="hidden md:flex space-x-6">
-          {navLinks.map((link, idx) => (
-            <Link
-              key={idx}
-              href={link.path}
-              className={`transition ${
-                pathname === link.path
-                  ? "text-accent font-semibold"
-                  : "text-foreground hover:text-accent"
-              }`}
-            >
-              {link.name}
-            </Link>
-          ))}
-        </div>
-
-        {/* Desktop actions */}
-        <div className="hidden md:flex items-center space-x-4">
-          <button
-            onClick={toggleDarkMode}
-            className="p-2 rounded-full hover:bg-muted transition"
-          >
-            {resolvedTheme === "dark" ? (
-              <Sun className="h-5 w-5 text-secondary" />
-            ) : (
-              <Moon className="h-5 w-5 text-secondary" />
-            )}
-          </button>
-
-          <div
-            className="flex items-center space-x-2 cursor-pointer"
-            onClick={toggleLanguage}
+    <nav className={`navbar-container ${scrolled ? "scrolled" : ""}`}>
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16 md:h-18">
+          {/* Logo */}
+          <Link
+            href="/"
+            className="inline-flex items-center group transition-transform duration-300 hover:scale-105"
           >
             <Image
-              src={currentLang === "en" ? "/flag-UK.svg" : "/flag-Cam.svg"}
-              alt="flag"
-              width={35}
-              height={15}
-              className="rounded-[8px]"
+              src="/logo/Docohub.png"
+              alt="DocuHub Logo"
+              width={140}
+              height={45}
+              className="transition-all duration-300 group-hover:brightness-110 w-[100px] h-auto sm:w-[120px] md:w-[140px]"
+              priority
             />
-            <span className="text-foreground font-medium">
-              {currentLang.toUpperCase()}
-            </span>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-1 lg:space-x-2">
+            {navLinks.map((link, idx) => (
+              <Link
+                key={idx}
+                href={link.path}
+                className={`navbar-nav-link group ${
+                  pathname === link.path ? "navbar-nav-link-active" : ""
+                }`}
+              >
+                <span className="relative z-10">{link.name}</span>
+                {pathname === link.path ? (
+                  <span className="navbar-nav-link-active-bg" />
+                ) : (
+                  <span className="navbar-nav-link-bg" />
+                )}
+              </Link>
+            ))}
           </div>
 
-          <Button asChild variant="outline" className="font-semibold">
-            <Link href="/login?force=true">{t("login", "Login")}</Link>
-          </Button>
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center space-x-2 lg:space-x-3">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleDarkMode}
+              className="navbar-btn-theme group"
+              aria-label="Toggle theme"
+            >
+              {resolvedTheme === "dark" ? (
+                <Sun className="h-5 w-5 navbar-icon-sun" />
+              ) : (
+                <Moon className="h-5 w-5 navbar-icon-moon" />
+              )}
+            </button>
 
-          <Button
-            asChild
-            className="bg-accent text-white hover:bg-accent/90 font-semibold"
+            {/* Language Switcher */}
+            <button
+              onClick={toggleLanguage}
+              className="navbar-btn-language group"
+              aria-label="Toggle language"
+            >
+              <Image
+                src={currentLang === "en" ? "/flag-UK.svg" : "/flag-Cam.svg"}
+                alt="flag"
+                width={24}
+                height={16}
+                className="rounded shadow-sm group-hover:shadow-lg transition-all duration-300 ease-in-out group-hover:scale-110"
+              />
+              <span className="navbar-btn-language-text">
+                {currentLang.toUpperCase()}
+              </span>
+            </button>
+
+            {/* Login Button */}
+            <Link href="/login?force=true" className="navbar-btn-register">
+              {t("login", "Login")}
+            </Link>
+
+            {/* Sign Up Button */}
+            <Link href="/register" className="navbar-btn-login">
+              {t("signup", "Sign Up")}
+            </Link>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden p-2 rounded-xl hover:bg-muted/50 transition-all duration-300 hover:scale-110 active:scale-95"
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label="Toggle navigation"
           >
-            <Link href="/register">{t("signup", "Sign Up")}</Link>
-          </Button>
+            {mobileOpen ? (
+              <X className="h-6 w-6 text-foreground" />
+            ) : (
+              <Menu className="h-6 w-6 text-foreground" />
+            )}
+          </button>
         </div>
-
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden p-2 rounded-lg border border-border text-foreground"
-          onClick={() => setMobileOpen((v) => !v)}
-          aria-label="Toggle navigation"
-        >
-          <span className="block w-5 h-0.5 bg-foreground mb-1" />
-          <span className="block w-5 h-0.5 bg-foreground mb-1" />
-          <span className="block w-5 h-0.5 bg-foreground" />
-        </button>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile Menu */}
       <div
-        className={`md:hidden border-t border-border bg-background transition-all duration-300 ease-in-out ${
+        className={`md:hidden border-t border-border/50 bg-background/95 backdrop-blur-sm transition-all duration-300 ease-in-out ${
           mobileOpen
-            ? "max-h-96 opacity-100"
+            ? "max-h-[500px] opacity-100"
             : "max-h-0 opacity-0 overflow-hidden"
         }`}
       >
-        <div className="px-4 py-3 flex flex-col gap-3">
+        <div className="px-4 py-4 space-y-2">
+          {/* Mobile Nav Links */}
           {navLinks.map((link, idx) => (
             <Link
               key={idx}
@@ -150,50 +173,64 @@ export default function NavbarGuest() {
                 window.dispatchEvent(new Event("startLoading"));
                 setMobileOpen(false);
               }}
-              className={`transition ${
-                pathname === link.path
-                  ? "text-accent font-semibold"
-                  : "text-foreground hover:text-accent"
+              className={`navbar-mobile-link ${
+                pathname === link.path ? "navbar-mobile-link-active" : ""
               }`}
             >
               {link.name}
             </Link>
           ))}
-          <div className="flex items-center justify-between">
-            <button
-              onClick={toggleDarkMode}
-              className="p-2 rounded-full hover:bg-muted transition"
-            >
-              {resolvedTheme === "dark" ? (
-                <Sun className="h-5 w-5 text-secondary" />
-              ) : (
-                <Moon className="h-5 w-5 text-secondary" />
-              )}
-            </button>
-            <div
-              className="flex items-center space-x-2 cursor-pointer"
-              onClick={toggleLanguage}
-            >
-              <Image
-                src={currentLang === "en" ? "/flag-UK.svg" : "/flag-Cam.svg"}
-                alt="flag"
-                width={32}
-                height={20}
-                className="rounded-[6px]"
-              />
-              <span className="text-foreground font-medium">
-                {currentLang.toUpperCase()}
-              </span>
+
+          {/* Mobile Actions */}
+          <div className="pt-4 border-t border-border/50 space-y-3">
+            <div className="flex items-center justify-around px-2">
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleDarkMode}
+                className="navbar-btn-theme"
+                aria-label="Toggle theme"
+              >
+                {resolvedTheme === "dark" ? (
+                  <Sun className="h-5 w-5 navbar-icon-sun" />
+                ) : (
+                  <Moon className="h-5 w-5 navbar-icon-moon" />
+                )}
+              </button>
+
+              {/* Language Switcher */}
+              <button
+                onClick={toggleLanguage}
+                className="navbar-btn-language"
+                aria-label="Toggle language"
+              >
+                <Image
+                  src={currentLang === "en" ? "/flag-UK.svg" : "/flag-Cam.svg"}
+                  alt="flag"
+                  width={24}
+                  height={16}
+                  className="rounded shadow-sm"
+                />
+                <span className="navbar-btn-language-text">
+                  {currentLang.toUpperCase()}
+                </span>
+              </button>
             </div>
-            <Button asChild variant="outline" className="font-semibold">
-              <Link href="/login?force=true">{t("login", "Login")}</Link>
-            </Button>
-            <Button
-              asChild
-              className="bg-accent text-white hover:bg-accent/90 font-semibold"
-            >
-              <Link href="/register">{t("signup", "Sign Up")}</Link>
-            </Button>
+
+            {/* Mobile Auth Buttons */}
+            <div className="flex gap-3 px-2">
+              <Link
+                href="/login?force=true"
+                className="flex-1 text-center navbar-btn-register"
+              >
+                {t("login", "Login")}
+              </Link>
+              <Link
+                href="/register"
+                className="flex-1 text-center navbar-btn-login"
+              >
+                {t("signup", "Sign Up")}
+              </Link>
+            </div>
           </div>
         </div>
       </div>

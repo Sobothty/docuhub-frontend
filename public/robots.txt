@@ -1,0 +1,36 @@
+# Docuhub Robots.txt
+# https://www.robotstxt.org/
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /profile/settings
+Disallow: /student/settings
+Disallow: /adviser/settings
+
+# Sitemaps
+Sitemap: https://docuhub.vercel.app/sitemap.xml
+
+# Crawl-delay (optional, prevents aggressive crawling)
+Crawl-delay: 1
+
+# Google Bot specific rules
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+
+# Bing Bot specific rules
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+
+# Block bad bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+

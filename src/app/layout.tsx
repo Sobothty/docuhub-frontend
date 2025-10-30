@@ -36,90 +36,142 @@ const kantumroyPro = localFont({
   display: "swap",
 });
 
+// SEO Configuration
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://docuhub.vercel.app";
+const SITE_NAME = "Docuhub";
+const SITE_DESCRIPTION =
+  "Docuhub - Academic Paper Management System. Discover, share, and collaborate on research papers. Connect students with advisers for mentorship and academic excellence.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "DocuHub - Academic Resource Platform",
-    template: "%s | DocuHub",
+    default: `${SITE_NAME} - Academic Paper Management & Research Platform`,
+    template: `%s | ${SITE_NAME}`,
   },
-  description:
-    "DocuHub is your trusted platform for discovering academic documents, sharing research, and connecting with mentors. Access thousands of scholarly papers and educational tools in one place.",
+  description: SITE_DESCRIPTION,
   keywords: [
-    "DocuHub",
-    "academic resources",
-    "scholarly papers",
+    "Docuhub",
+    "academic papers",
     "research platform",
-    "education tools",
-    "mentorship",
-    "Khmer education",
+    "paper management",
+    "scholarly articles",
+    "research repository",
     "academic collaboration",
+    "student research",
+    "adviser mentorship",
+    "peer review",
     "research sharing",
-    "student resources",
-    "adviser connections",
+    "academic documents",
+    "thesis repository",
+    "research papers",
+    "academic network",
+    "education platform",
+    "research discovery",
+    "paper submission",
+    "academic community",
+    "research tools",
+    "Cambodia education",
+    "ISTAD",
+    "Khmer research",
+    "Southeast Asian research",
   ],
   authors: [
     {
-      name: "DocuHub Team",
-      url: "https://scontent.fpnh8-3.fna.fbcdn.net/v/t39.30808-6/489823128_674025992044571_2949088916256174211_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=f727a1&_nc_eui2=AeFa7nVgzrAwkXIitmMZqKA4ParLbrbCR0A9qstutsJHQFBOWAyZhwaaAfHvQV-2zamdQi6AgOpgDSFHy7J9RirY&_nc_ohc=AT7WUSnv1DYQ7kNvwHFD_s2&_nc_oc=AdlF_iA4-_JQRstkBGVeLl-wHLqDwGuYP1TOu8HcQns_56FjWaQPGqeWBrxdGmTQNZU&_nc_zt=23&_nc_ht=scontent.fpnh8-3.fna&_nc_gid=y07fOjx8uMHUnaDinm8gRw&oh=00_AfaoXg6IsNgRnn4jmaBfWaicVe_ZlQOiZDBQ-PyaBueogg&oe=68C6FB9D",
+      name: "Docuhub Team - ISTAD",
+      url: SITE_URL,
     },
   ],
-  creator: "DocuHub Team",
-  publisher: "DocuHub",
+  creator: "Docuhub Team",
+  publisher: "Institute of Science and Technology Advanced Development (ISTAD)",
+  applicationName: SITE_NAME,
+  category: "Education",
+  classification: "Academic Research Platform",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
   openGraph: {
-    title: "DocuHub - Discover, Share, and Connect",
-    description:
-      "Join DocuHub to access a vast repository of academic papers, share your research, and connect with mentors and students worldwide.",
-    url: "https://res.cloudinary.com/diakcg1yq/image/upload/v1761063273/Screenshot_2025-10-20_234401_qbjpqq.png",
-    siteName: "DocuHub",
+    type: "website",
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} - Academic Paper Management & Research Platform`,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    locale: "en_US",
+    alternateLocale: ["km_KH"],
     images: [
+      {
+        url: `${SITE_URL}/og-image.png`,
+        width: 1200,
+        height: 630,
+        alt: `${SITE_NAME} - Academic Research Platform`,
+        type: "image/png",
+      },
       {
         url: "https://res.cloudinary.com/diakcg1yq/image/upload/v1761063273/Screenshot_2025-10-20_234401_qbjpqq.png",
         width: 1200,
         height: 630,
-        alt: "DocuHub Academic Platform",
+        alt: `${SITE_NAME} Platform Screenshot`,
+        type: "image/png",
       },
     ],
-    locale: "en_US",
-    type: "website",
-    alternateLocale: ["km_KH"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "DocuHub - Academic Resource Platform",
-    description:
-      "Explore academic papers, share research, and connect with mentors on DocuHub.",
-    images: ["https://res.cloudinary.com/diakcg1yq/image/upload/v1761063273/Screenshot_2025-10-20_234401_qbjpqq.png"],
-    creator: "@DocuHubTeam",
+    site: "@DocuhubTeam",
+    creator: "@DocuhubTeam",
+    title: `${SITE_NAME} - Academic Paper Management Platform`,
+    description: SITE_DESCRIPTION,
+    images: [`${SITE_URL}/twitter-image.png`],
   },
   robots: {
     index: true,
     follow: true,
+    nocache: false,
     googleBot: {
       index: true,
       follow: true,
+      noimageindex: false,
       "max-video-preview": -1,
       "max-image-preview": "large",
       "max-snippet": -1,
     },
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
     shortcut: "/favicon-16x16.png",
-    apple: "/apple-touch-icon.png",
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    other: [
+      {
+        rel: "apple-touch-icon-precomposed",
+        url: "/apple-touch-icon.png",
+      },
+    ],
   },
+  manifest: "/site.webmanifest",
   alternates: {
-    canonical:
-      "https://scontent.fpnh8-3.fna.fbcdn.net/v/t39.30808-6/489823128_674025992044571_2949088916256174211_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=f727a1&_nc_eui2=AeFa7nVgzrAwkXIitmMZqKA4ParLbrbCR0A9qstutsJHQFBOWAyZhwaaAfHvQV-2zamdQi6AgOpgDSFHy7J9RirY&_nc_ohc=AT7WUSnv1DYQ7kNvwHFD_s2&_nc_oc=AdlF_iA4-_JQRstkBGVeLl-wHLqDwGuYP1TOu8HcQns_56FjWaQPGqeWBrxdGmTQNZU&_nc_zt=23&_nc_ht=scontent.fpnh8-3.fna&_nc_gid=y07fOjx8uMHUnaDinm8gRw&oh=00_AfaoXg6IsNgRnn4jmaBfWaicVe_ZlQOiZDBQ-PyaBueogg&oe=68C6FB9D",
+    canonical: SITE_URL,
     languages: {
-      "en-US":
-        "https://scontent.fpnh8-3.fna.fbcdn.net/v/t39.30808-6/489823128_674025992044571_2949088916256174211_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=f727a1&_nc_eui2=AeFa7nVgzrAwkXIitmMZqKA4ParLbrbCR0A9qstutsJHQFBOWAyZhwaaAfHvQV-2zamdQi6AgOpgDSFHy7J9RirY&_nc_ohc=AT7WUSnv1DYQ7kNvwHFD_s2&_nc_oc=AdlF_iA4-_JQRstkBGVeLl-wHLqDwGuYP1TOu8HcQns_56FjWaQPGqeWBrxdGmTQNZU&_nc_zt=23&_nc_ht=scontent.fpnh8-3.fna&_nc_gid=y07fOjx8uMHUnaDinm8gRw&oh=00_AfaoXg6IsNgRnn4jmaBfWaicVe_ZlQOiZDBQ-PyaBueogg&oe=68C6FB9D",
-      "km-KH":
-        "https://scontent.fpnh8-3.fna.fbcdn.net/v/t39.30808-6/489823128_674025992044571_2949088916256174211_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=f727a1&_nc_eui2=AeFa7nVgzrAwkXIitmMZqKA4ParLbrbCR0A9qstutsJHQFBOWAyZhwaaAfHvQV-2zamdQi6AgOpgDSFHy7J9RirY&_nc_ohc=AT7WUSnv1DYQ7kNvwHFD_s2&_nc_oc=AdlF_iA4-_JQRstkBGVeLl-wHLqDwGuYP1TOu8HcQns_56FjWaQPGqeWBrxdGmTQNZU&_nc_zt=23&_nc_ht=scontent.fpnh8-3.fna&_nc_gid=y07fOjx8uMHUnaDinm8gRw&oh=00_AfaoXg6IsNgRnn4jmaBfWaicVe_ZlQOiZDBQ-PyaBueogg&oe=68C6FB9D",
+      "en-US": `${SITE_URL}/en`,
+      "km-KH": `${SITE_URL}/kh`,
     },
+  },
+  verification: {
+    google: "your-google-verification-code",
+    yandex: "your-yandex-verification-code",
+    yahoo: "your-yahoo-verification-code",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
   },
 };
 
@@ -132,29 +184,67 @@ export const viewport: Viewport = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${SITE_URL}/browse?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+    publisher: {
+      "@type": "EducationalOrganization",
+      name: "Institute of Science and Technology Advanced Development",
+      alternateName: "ISTAD",
+      url: "https://www.istad.edu.kh",
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/logo/Docohub.png`,
+      },
+    },
+    inLanguage: ["en", "km"],
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+
         {/* Hreflang for multilingual SEO */}
-        <link
-          rel="alternate"
-          hrefLang="en-US"
-          href="https://www.cstad.edu.kh/"
-        />
-        <link
-          rel="alternate"
-          hrefLang="km-KH"
-          href="https://www.cstad.edu.kh/"
-        />
-        <link
-          rel="alternate"
-          hrefLang="x-default"
-          href="https://www.cstad.edu.kh/"
-        />
+        <link rel="alternate" hrefLang="en" href={`${SITE_URL}/en`} />
+        <link rel="alternate" hrefLang="km" href={`${SITE_URL}/kh`} />
+        <link rel="alternate" hrefLang="x-default" href={SITE_URL} />
+
         {/* Additional meta tags */}
         <meta name="theme-color" content="#2563EB" />
-        <meta name="application-name" content="DocuHub" />
-        <meta name="apple-mobile-web-app-title" content="DocuHub" />
+        <meta name="application-name" content={SITE_NAME} />
+        <meta name="apple-mobile-web-app-title" content={SITE_NAME} />
+
+        {/* DNS Prefetch for performance */}
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+
+        {/* Preconnect for performance */}
+        <link
+          rel="preconnect"
+          href="https://fonts.googleapis.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
       </head>
       <body
         suppressHydrationWarning

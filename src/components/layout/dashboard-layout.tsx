@@ -33,9 +33,9 @@ function DashboardLayoutContent({
       <div
         className={`${
           isOpen ? "md:pl-64" : "md:pl-16"
-        } transition-all duration-300`}
+        } transition-all duration-300 w-full`}
       >
-        <main className="px-4 sm:px-6 lg:px-8 pt-4 pb-8 max-w-7xl mx-auto">
+        <main className="px-4 sm:px-6 lg:px-8 pt-16 md:pt-4 pb-8 max-w-7xl mx-auto">
           {children}
         </main>
       </div>
