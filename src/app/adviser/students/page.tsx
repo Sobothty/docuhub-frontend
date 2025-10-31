@@ -16,7 +16,6 @@ import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -27,6 +26,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Search,
   MoreHorizontal,
@@ -44,35 +50,24 @@ import {
   Clock,
 } from "lucide-react";
 import { useGetUserProfileQuery } from "@/feature/profileSlice/profileSlice";
-import { useGetAssignmentByAdviserQuery } from "@/feature/adviserAssignment/AdviserAssignmentSlice";
+import {
+  useGetAssignmentByAdviserWithPaginationQuery,
+  useGetAssignmentByAdviserQuery,
+} from "@/feature/adviserAssignment/AdviserAssignmentSlice";
+import type { AssignmentItem } from "@/feature/adviserAssignment/adviserAssignmentType";
 import Image from "next/image";
 import { TableLoadingSkeleton } from "@/components/card/TableLoadingForStudentAssigntments";
 import {
   useReactTable,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
-  flexRender,
   createColumnHelper,
-  type ColumnDef,
   type SortingState,
   type ColumnFiltersState,
 } from "@tanstack/react-table";
 
-// Define types
-interface Student {
-  uuid: string;
-  fullName: string;
-  imageUrl?: string | null;
-}
-
-interface Paper {
-  uuid: string;
-  title: string;
-  status: string;
-  deadline: string;
-}
+// Define types (Student and Paper types are imported from AssignmentItem type)
 
 interface StudentTableRow {
   id: string;
@@ -92,11 +87,25 @@ export default function MentorStudentsPage() {
   // ✅ Adviser info
   const { data: adviserProfile } = useGetUserProfileQuery();
 
-  // ✅ Fetch adviser's assigned students
-  const { data, error, isLoading } = useGetAssignmentByAdviserQuery();
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [pageSize] = useState(10);
+
+  // ✅ Fetch ALL assignments for statistics (no pagination)
+  const { data: allAssignmentsData } = useGetAssignmentByAdviserQuery();
+
+  // ✅ Fetch adviser's assigned students with pagination (for table display)
+  const { data, error, isLoading } =
+    useGetAssignmentByAdviserWithPaginationQuery({
+      page,
+      size: pageSize,
+      sortBy: "deadline",
+      direction: "desc",
+    });
 
   // State
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL"); // Status filter state
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isMessageOpen, setIsMessageOpen] = useState(false);
@@ -104,6 +113,24 @@ export default function MentorStudentsPage() {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
     null
   );
+
+  // Reset page when filter changes
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setPage(0); // Reset to first page when filter changes
+  };
+
+  // Get pagination info from API response
+  const paginationInfo = useMemo(() => {
+    return {
+      totalElements: data?.data?.totalElements || 0,
+      totalPages: data?.data?.totalPages || 0,
+      currentPage: data?.data?.pageable?.pageNumber || 0,
+      size: data?.data?.pageable?.pageSize || pageSize,
+      hasNext: !(data?.data?.last ?? true),
+      hasPrevious: data?.data?.first === false,
+    };
+  }, [data, pageSize]);
 
   // Transform data for table
   const tableData = useMemo(() => {
@@ -119,6 +146,12 @@ export default function MentorStudentsPage() {
 
     // Create table rows
     assignments.forEach((assignment) => {
+      // Filter by paper status if not "ALL"
+      const paperStatus = assignment.paper.Status;
+      if (statusFilter !== "ALL" && paperStatus !== statusFilter) {
+        return; // Skip this assignment
+      }
+
       rows.push({
         id: `${assignment.student.uuid}-${assignment.paper.uuid}`,
         studentUuid: assignment.student.uuid,
@@ -126,21 +159,15 @@ export default function MentorStudentsPage() {
         studentImage: assignment.student.imageUrl,
         paperUuid: assignment.paper.uuid,
         paperTitle: assignment.paper.title || "Untitled Paper",
-        status: assignment.status || "ASSIGNED",
+        status: assignment.paper.Status || "PENDING", // Use paper status, not assignment status
         deadline: assignment.deadline,
         papersCount: studentPaperCount.get(assignment.student.uuid) || 0,
       });
     });
 
-    // Sort by deadline - latest first (most recent data first)
-    rows.sort((a, b) => {
-      const dateA = new Date(a.deadline).getTime();
-      const dateB = new Date(b.deadline).getTime();
-      return dateB - dateA; // Descending order (latest deadline first)
-    });
-
+    // Backend already sorts by deadline desc, no need to sort again
     return rows;
-  }, [data]);
+  }, [data, statusFilter]);
 
   // Helper functions
   const getStatusBadge = (status: string) => {
@@ -150,6 +177,20 @@ export default function MentorStudentsPage() {
           <Badge className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
             <CheckCircle className="h-3 w-3 mr-1" />
             Approved
+          </Badge>
+        );
+      case "UNDER_REVIEW":
+        return (
+          <Badge className="bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
+            <Clock className="h-3 w-3 mr-1" />
+            Under Review
+          </Badge>
+        );
+      case "PENDING":
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800">
+            <Clock className="h-3 w-3 mr-1" />
+            Pending
           </Badge>
         );
       case "REVISION":
@@ -165,13 +206,6 @@ export default function MentorStudentsPage() {
           <Badge className="bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800">
             <XCircle className="h-3 w-3 mr-1" />
             Rejected
-          </Badge>
-        );
-      case "ASSIGNED":
-        return (
-          <Badge className="bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
-            <Clock className="h-3 w-3 mr-1" />
-            Assigned
           </Badge>
         );
       default:
@@ -203,15 +237,6 @@ export default function MentorStudentsPage() {
     const diffTime = deadline.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
-  };
-
-  const getDeadlineColor = (daysRemaining: number | null) => {
-    if (daysRemaining === null) return "text-muted-foreground";
-    if (daysRemaining < 0) return "text-red-600 dark:text-red-400"; // Overdue
-    if (daysRemaining === 0) return "text-red-600 dark:text-red-400"; // Today
-    if (daysRemaining <= 3) return "text-orange-600 dark:text-orange-400"; // Urgent
-    if (daysRemaining <= 7) return "text-yellow-600 dark:text-yellow-500"; // Soon
-    return "text-green-600 dark:text-green-400"; // On track
   };
 
   const getDeadlineBadge = (daysRemaining: number | null) => {
@@ -361,16 +386,30 @@ export default function MentorStudentsPage() {
         ),
       }),
     ],
-    [router]
+    [router, columnHelper]
   );
 
-  // Create table instance
+  // Custom global filter function to search student names and paper titles
+  const globalFilterFn = (
+    row: { original: StudentTableRow },
+    columnId: string,
+    filterValue: string
+  ) => {
+    const studentName = row.original.studentName?.toLowerCase() || "";
+    const paperTitle = row.original.paperTitle?.toLowerCase() || "";
+    const searchLower = filterValue.toLowerCase();
+
+    return (
+      studentName.includes(searchLower) || paperTitle.includes(searchLower)
+    );
+  };
+
+  // Create table instance (without client-side pagination)
   const table = useReactTable({
     data: tableData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -380,31 +419,40 @@ export default function MentorStudentsPage() {
       globalFilter: searchQuery,
     },
     onGlobalFilterChange: setSearchQuery,
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
-    },
+    globalFilterFn: globalFilterFn,
+    manualPagination: true, // Server-side pagination
+    pageCount: paginationInfo.totalPages,
   });
 
-  // Get unique students count
+  // Get unique students count from ALL assignments
   const uniqueStudents = useMemo(() => {
-    const studentSet = new Set(tableData.map((row) => row.studentUuid));
+    const allAssignments = allAssignmentsData?.data?.content || [];
+    const studentSet = new Set(
+      allAssignments.map(
+        (assignment: AssignmentItem) => assignment.student.uuid
+      )
+    );
     return studentSet.size;
-  }, [tableData]);
+  }, [allAssignmentsData]);
 
-  // Get statistics
+  // Get statistics from ALL assignments (not just current page)
   const stats = useMemo(() => {
-    const approved = tableData.filter(
-      (row) => row.status === "APPROVED"
+    const allAssignments = allAssignmentsData?.data?.content || [];
+    const approved = allAssignments.filter(
+      (assignment: AssignmentItem) => assignment.paper.Status === "APPROVED"
     ).length;
-    const pending = tableData.filter((row) => row.status === "ASSIGNED").length;
-    const revision = tableData.filter(
-      (row) => row.status === "REVISION"
+    const pending = allAssignments.filter(
+      (assignment: AssignmentItem) =>
+        assignment.paper.Status === "PENDING" ||
+        assignment.paper.Status === "UNDER_REVIEW"
     ).length;
+    const revision = allAssignments.filter(
+      (assignment: AssignmentItem) => assignment.paper.Status === "REVISION"
+    ).length;
+    const totalPapers = allAssignments.length;
 
-    return { approved, pending, revision };
-  }, [tableData]);
+    return { approved, pending, revision, totalPapers };
+  }, [allAssignmentsData]);
 
   const sendMessage = () => {
     if (!selectedStudentId) return;
@@ -471,7 +519,7 @@ export default function MentorStudentsPage() {
                   className="text-4xl font-bold mb-1"
                   style={{ color: "#f59e0b" }}
                 >
-                  {tableData.length}
+                  {stats.totalPapers}
                 </div>
                 <CardTitle className="adviser-students-stat-label">
                   Total Papers
@@ -537,25 +585,113 @@ export default function MentorStudentsPage() {
                 </CardDescription>
               </div>
 
-              {/* Search */}
-              <div className="relative w-full sm:w-80">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by student or paper..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-10"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
+              {/* Filter and Search */}
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                {/* Status Filter */}
+                <Select
+                  value={statusFilter}
+                  onValueChange={handleStatusFilterChange}
+                >
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Status</SelectItem>
+                    <SelectItem value="APPROVED">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span>Approved</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="UNDER_REVIEW">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-blue-600" />
+                        <span>Under Review</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="REVISION">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 text-orange-600" />
+                        <span>Revision</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="PENDING">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-yellow-600" />
+                        <span>Pending</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="ADMIN_REJECTED">
+                      <div className="flex items-center gap-2">
+                        <XCircle className="h-4 w-4 text-red-600" />
+                        <span>Rejected</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Search */}
+                <div className="relative w-full sm:w-80">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by student or paper..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-10"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
+
+            {/* Filter Badge */}
+            {(statusFilter !== "ALL" || searchQuery) && (
+              <div className="px-6 pb-4 flex flex-wrap items-center gap-2">
+                {statusFilter !== "ALL" && (
+                  <Badge
+                    variant="secondary"
+                    className="flex items-center gap-2 w-fit bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800"
+                  >
+                    <span>
+                      Status: <strong>{statusFilter.replace("_", " ")}</strong>
+                    </span>
+                    <button
+                      onClick={() => handleStatusFilterChange("ALL")}
+                      className="hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+                {searchQuery && (
+                  <Badge
+                    variant="secondary"
+                    className="flex items-center gap-2 w-fit bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800"
+                  >
+                    <span>
+                      Search: <strong>&quot;{searchQuery}&quot;</strong>
+                    </span>
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="hover:bg-purple-200 dark:hover:bg-purple-800 rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+                <span className="text-sm text-muted-foreground">
+                  {table.getRowModel().rows.length} result
+                  {table.getRowModel().rows.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto lg:overflow-x-visible -mx-4 sm:mx-0">
@@ -659,11 +795,7 @@ export default function MentorStudentsPage() {
                                     : "text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:font-bold"
                                 }`}
                               >
-                                #
-                                {index +
-                                  1 +
-                                  table.getState().pagination.pageIndex *
-                                    table.getState().pagination.pageSize}
+                                #{index + 1 + page * pageSize}
                               </span>
                             </div>
 
@@ -781,22 +913,30 @@ export default function MentorStudentsPage() {
                                       Approved
                                     </>
                                   )}
+                                  {row.original.status === "UNDER_REVIEW" && (
+                                    <>
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      Under Review
+                                    </>
+                                  )}
+                                  {row.original.status === "PENDING" && (
+                                    <>
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      Pending
+                                    </>
+                                  )}
                                   {row.original.status === "REVISION" && (
                                     <>
                                       <AlertCircle className="h-3 w-3 mr-1" />
                                       Revision
                                     </>
                                   )}
-                                  {row.original.status === "REJECTED" && (
+                                  {(row.original.status === "REJECTED" ||
+                                    row.original.status ===
+                                      "ADMIN_REJECTED") && (
                                     <>
                                       <XCircle className="h-3 w-3 mr-1" />
                                       Rejected
-                                    </>
-                                  )}
-                                  {row.original.status === "ASSIGNED" && (
-                                    <>
-                                      <Clock className="h-3 w-3 mr-1" />
-                                      Assigned
                                     </>
                                   )}
                                 </Badge>
@@ -861,29 +1001,24 @@ export default function MentorStudentsPage() {
                       ))}
                     </div>
 
-                    {/* Pagination */}
-                    {table.getPageCount() > 1 && (
+                    {/* Server-Side Pagination */}
+                    {paginationInfo.totalPages > 1 && (
                       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
                         <div className="text-sm text-muted-foreground">
-                          Showing{" "}
-                          {table.getState().pagination.pageIndex *
-                            table.getState().pagination.pageSize +
-                            1}{" "}
-                          to{" "}
+                          Showing {page * pageSize + 1} to{" "}
                           {Math.min(
-                            (table.getState().pagination.pageIndex + 1) *
-                              table.getState().pagination.pageSize,
-                            table.getFilteredRowModel().rows.length
+                            (page + 1) * pageSize,
+                            paginationInfo.totalElements
                           )}{" "}
-                          of {table.getFilteredRowModel().rows.length} entries
+                          of {paginationInfo.totalElements} entries
                         </div>
 
                         <div className="flex items-center gap-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
+                            onClick={() => setPage(page - 1)}
+                            disabled={!paginationInfo.hasPrevious || isLoading}
                             className="gap-1"
                           >
                             <ChevronLeft className="h-4 w-4" />
@@ -892,28 +1027,41 @@ export default function MentorStudentsPage() {
 
                           <div className="flex gap-1">
                             {Array.from(
-                              { length: table.getPageCount() },
-                              (_, i) => i + 1
-                            ).map((page) => (
+                              {
+                                length: Math.min(paginationInfo.totalPages, 5),
+                              },
+                              (_, i) => {
+                                // Show first 5 pages or pages around current page
+                                let pageNumber;
+                                if (paginationInfo.totalPages <= 5) {
+                                  pageNumber = i;
+                                } else if (page < 3) {
+                                  pageNumber = i;
+                                } else if (
+                                  page >=
+                                  paginationInfo.totalPages - 3
+                                ) {
+                                  pageNumber =
+                                    paginationInfo.totalPages - 5 + i;
+                                } else {
+                                  pageNumber = page - 2 + i;
+                                }
+                                return pageNumber;
+                              }
+                            ).map((pageNum) => (
                               <Button
-                                key={page}
+                                key={pageNum}
                                 variant={
-                                  table.getState().pagination.pageIndex + 1 ===
-                                  page
-                                    ? "default"
-                                    : "outline"
+                                  page === pageNum ? "default" : "outline"
                                 }
                                 size="sm"
-                                onClick={() => table.setPageIndex(page - 1)}
+                                onClick={() => setPage(pageNum)}
+                                disabled={isLoading}
                                 className={
-                                  table.getState().pagination.pageIndex + 1 ===
-                                  page
-                                    ? "text-white border-0"
-                                    : ""
+                                  page === pageNum ? "text-white border-0" : ""
                                 }
                                 style={
-                                  table.getState().pagination.pageIndex + 1 ===
-                                  page
+                                  page === pageNum
                                     ? {
                                         backgroundColor:
                                           "var(--color-secondary)",
@@ -921,7 +1069,7 @@ export default function MentorStudentsPage() {
                                     : {}
                                 }
                               >
-                                {page}
+                                {pageNum + 1}
                               </Button>
                             ))}
                           </div>
@@ -929,8 +1077,8 @@ export default function MentorStudentsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
+                            onClick={() => setPage(page + 1)}
+                            disabled={!paginationInfo.hasNext || isLoading}
                             className="gap-1"
                           >
                             Next

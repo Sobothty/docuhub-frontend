@@ -50,6 +50,7 @@ export default function AdviserDocumentDetailPage({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string>("");
+  const [customDeadline, setCustomDeadline] = useState<string>("");
 
   // API Notification hook
   const {
@@ -159,28 +160,42 @@ export default function AdviserDocumentDetailPage({
     );
 
     try {
+      // Use custom deadline if set, otherwise calculate automatically
+      let finalDeadline = customDeadline;
+
+      if (!finalDeadline) {
+        // Calculate deadline: 30 days from now for revisions, 7 days for approved
+        const deadlineDate = new Date();
+        deadlineDate.setDate(
+          deadlineDate.getDate() + (decision === "APPROVED" ? 7 : 30)
+        );
+        finalDeadline = deadlineDate.toISOString().split("T")[0]; // Format: YYYY-MM-DD
+      }
+
       // Create feedback with the uploaded file URL - using exact UUID from paper object
       const feedbackData = {
-        paperUuid: paper.uuid, // This should be "b34f8df2-cbf9-42c4-b4f9-582b5110fd95"
+        paperUuid: paper.uuid,
         feedbackText: feedback.trim(),
         fileUrl: uploadedFileUrl,
         status: decision,
         advisorUuid: adviserProfile.user.uuid,
-        deadline: decision === "APPROVED" ? "" : "2025-12-31",
+        deadline: finalDeadline,
       };
-      console.log("Feedback : ", feedbackData);
+      console.log("Feedback Data: ", feedbackData);
 
       const result = await createFeedback(feedbackData).unwrap();
-      if (result.status === 201) {
-        closeNotification();
-        showSuccess(
-          "Review Submitted Successfully",
-          "Your feedback has been submitted and the student has been notified."
-        );
-        setTimeout(() => {
-          router.push("/adviser/documents");
-        }, 2000);
-      }
+      console.log("Feedback API Response:", result);
+
+      // If .unwrap() succeeds without throwing, the API call was successful (201/200)
+      // The HTTP status code (201) is not part of the response body
+      closeNotification();
+      showSuccess(
+        "Review Submitted Successfully",
+        "Your feedback has been submitted and the student has been notified."
+      );
+      setTimeout(() => {
+        router.push("/adviser/documents");
+      }, 2000);
     } catch (error) {
       console.log("Error submitting feedback:", error);
       closeNotification();
@@ -419,6 +434,39 @@ export default function AdviserDocumentDetailPage({
                       </div>
                     </Button>
                   </div>
+                </div>
+
+                {/* Custom Deadline Picker */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Set Deadline (Optional)
+                  </Label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={customDeadline}
+                      onChange={(e) => setCustomDeadline(e.target.value)}
+                      min={new Date().toISOString().split("T")[0]}
+                      className="w-full h-11 px-4 rounded-lg border border-border/50 bg-background focus:ring-2 focus:ring-[#2563eb]/20 focus:border-[#2563eb]/50 transition-all duration-200 text-sm"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {customDeadline ? (
+                      <>
+                        Deadline set to:{" "}
+                        <span className="font-semibold text-foreground">
+                          {new Date(customDeadline).toLocaleDateString()}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        Auto: {decision === "APPROVED" ? "7 days" : "30 days"}{" "}
+                        from submission
+                      </>
+                    )}
+                  </p>
                 </div>
 
                 {!uploadedFileUrl && (
