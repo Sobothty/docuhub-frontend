@@ -1,36 +1,98 @@
 # Docuhub Robots.txt
+# Academic Paper Management & Research Platform
 # https://www.robotstxt.org/
+# https://docuhub.vercel.app
 
+# Default rules for all crawlers
 User-agent: *
 Allow: /
+Allow: /browse
+Allow: /about
+Allow: /contact
+Allow: /roadmap
+Allow: /register
+Allow: /papers/
+Allow: /users/
 Disallow: /api/
 Disallow: /admin/
-Disallow: /profile/settings
-Disallow: /student/settings
-Disallow: /adviser/settings
+Disallow: /student/
+Disallow: /adviser/
+Disallow: /profile/
+Disallow: /login
+Disallow: /*/settings$
+Disallow: /*/favorites$
 
 # Sitemaps
 Sitemap: https://docuhub.vercel.app/sitemap.xml
 
-# Crawl-delay (optional, prevents aggressive crawling)
+# Crawl-delay (prevents aggressive crawling, helps with server performance)
 Crawl-delay: 1
 
 # Google Bot specific rules
 User-agent: Googlebot
 Allow: /
+Allow: /browse
+Allow: /about
+Allow: /contact
+Allow: /roadmap
+Allow: /papers/
+Allow: /users/
 Disallow: /api/
 Disallow: /admin/
+Disallow: /student/
+Disallow: /adviser/
+Disallow: /profile/
+Disallow: /login
+Crawl-delay: 0.5
+
+# Google Image Bot
+User-agent: Googlebot-Image
+Allow: /
+Allow: /images/
+Allow: /logo/
+Allow: /subject-logo/
+Disallow: /api/
+Crawl-delay: 1
 
 # Bing Bot specific rules
 User-agent: Bingbot
 Allow: /
+Allow: /browse
+Allow: /about
+Allow: /contact
+Allow: /roadmap
+Allow: /papers/
+Allow: /users/
 Disallow: /api/
 Disallow: /admin/
+Disallow: /student/
+Disallow: /adviser/
+Disallow: /profile/
+Crawl-delay: 1
 
-# Block bad bots
+# DuckDuckGo Bot
+User-agent: DuckDuckBot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /student/
+Disallow: /adviser/
+Disallow: /profile/
+Crawl-delay: 1
+
+# Block aggressive SEO crawlers
 User-agent: AhrefsBot
 Disallow: /
 
 User-agent: SemrushBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: BLEXBot
 Disallow: /
 

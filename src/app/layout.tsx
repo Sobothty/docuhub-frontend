@@ -203,12 +203,47 @@ export default function RootLayout({
       name: "Institute of Science and Technology Advanced Development",
       alternateName: "ISTAD",
       url: "https://www.istad.edu.kh",
+      address: {
+        "@type": "PostalAddress",
+        addressCountry: "KH",
+        addressRegion: "Phnom Penh",
+      },
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "Customer Support",
+        email: "info@istad.edu.kh",
+      },
       logo: {
         "@type": "ImageObject",
         url: `${SITE_URL}/logo/Docohub.png`,
+        width: 512,
+        height: 512,
       },
     },
     inLanguage: ["en", "km"],
+    keywords: [
+      "academic papers",
+      "research platform",
+      "paper management",
+      "scholarly articles",
+      "academic repository",
+      "research collaboration",
+      "student research",
+      "ISTAD Cambodia",
+    ],
+    audience: {
+      "@type": "EducationalAudience",
+      educationalRole: ["student", "researcher", "professor"],
+    },
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    sameAs: [
+      "https://www.istad.edu.kh",
+      // Add social media links when available
+    ],
   };
 
   return (

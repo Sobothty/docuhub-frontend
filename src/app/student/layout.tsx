@@ -1,5 +1,9 @@
 import type React from "react"
+import type { Metadata } from "next"
 import ProtectedRoute from "@/components/auth/protected-route"
+import { pageSEO } from "@/lib/seo"
+
+export const metadata: Metadata = pageSEO.studentDashboard
 
 export default function StudentLayout({
   children,
