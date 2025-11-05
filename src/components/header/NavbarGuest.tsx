@@ -159,8 +159,8 @@ export default function NavbarGuest() {
       <div
         className={`md:hidden border-t border-border/50 bg-background/95 backdrop-blur-sm transition-all duration-300 ease-in-out ${
           mobileOpen
-            ? "max-h-[500px] opacity-100"
-            : "max-h-0 opacity-0 overflow-hidden"
+            ? "max-h-[500px] opacity-100 visible"
+            : "max-h-0 opacity-0 invisible overflow-hidden"
         }`}
       >
         <div className="px-4 py-4 space-y-2">

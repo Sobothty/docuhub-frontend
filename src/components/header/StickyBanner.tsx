@@ -1,7 +1,7 @@
-'use client';
-import { usePathname } from 'next/navigation';
-import { Mail, Phone } from 'lucide-react';
-import { useEffect, useState } from 'react';
+"use client";
+import { usePathname } from "next/navigation";
+import { Mail, Phone } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function StickyBanner() {
   const pathname = usePathname();
@@ -11,13 +11,13 @@ export default function StickyBanner() {
     setIsClient(true);
   }, []);
   const hiddenPaths = [
-    '/login',
-    '/register',
-    '/dashboard',
-    '/student',
-    '/adviser',
-    '/profile',
-    "/unauthorized"
+    "/login",
+    "/register",
+    "/dashboard",
+    "/student",
+    "/adviser",
+    "/profile",
+    "/unauthorized",
   ];
   const shouldHide = hiddenPaths.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`)
@@ -30,27 +30,27 @@ export default function StickyBanner() {
   }
 
   return (
-    <div className="fixed top-0 left-0 w-full z-50 bg-primary text-foreground py-2 px-2 ">
-      <div className="max-w-7xl mx-auto flex flex-wrap gap-y-2 justify-between items-center ">
+    <div className="fixed top-0 left-0 w-full z-50 bg-primary text-foreground py-2 px-2 min-h-[2.5rem]">
+      <div className="max-w-7xl mx-auto flex flex-wrap gap-y-2 justify-between items-center">
         {/* Left Section - Contact Information */}
-        <div className="flex items-center justify-between gap-12 sm:gap-6 mx-auto">
+        <div className="flex items-center justify-between gap-4 sm:gap-6 flex-1 min-w-0">
           {/* Email */}
-          <div className="flex items-center space-x-2">
-            <Mail className="h-4 w-4 text-accent" />
+          <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+            <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-accent flex-shrink-0" />
             <a
               href="mailto:docuhub@gmail.com"
-              className="text-xs text-gray-100 sm:text-sm hover:text-accent transition-colors"
+              className="text-[10px] xs:text-xs sm:text-sm text-gray-100 hover:text-accent transition-colors truncate"
             >
               docuhub@gmail.com
             </a>
           </div>
 
           {/* Phone */}
-          <div className="flex items-center space-x-2">
-            <Phone className="h-4 w-4 text-accent" />
+          <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+            <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-accent flex-shrink-0" />
             <a
               href="tel:+85512312123"
-              className="text-xs text-gray-100 sm:text-sm hover:text-accent transition-colors"
+              className="text-[10px] xs:text-xs sm:text-sm text-gray-100 hover:text-accent transition-colors whitespace-nowrap"
             >
               +855-123-12123
             </a>
@@ -58,13 +58,13 @@ export default function StickyBanner() {
         </div>
 
         {/* Right Section - Social Media */}
-        <div className="flex items-center gap-2 sm:gap-4 mx-auto">
-          <span className="hidden text-gray-100 sm:inline text-sm font-medium">
+        <div className="flex items-center gap-1 sm:gap-2 md:gap-4 flex-shrink-0">
+          <span className="hidden md:inline text-gray-100 text-xs sm:text-sm font-medium">
             Follow Us:
           </span>
 
           {/* Social Media Icons */}
-          <div className="flex gap-2 sm:gap-3 ">
+          <div className="flex gap-1 sm:gap-2 md:gap-3">
             {/* Facebook */}
             <div className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 transition">
               <a href="#" className="text-gray-400 hover:text-white">

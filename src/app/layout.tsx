@@ -288,7 +288,7 @@ export default function RootLayout({
         <Providers>
           <StickyBanner />
           <NavbarWrapper />
-          <main className="mt-20 overflow-x-hidden">
+          <main className="mt-[calc(2.5rem+4rem)] sm:mt-[calc(2.5rem+4.5rem)] md:mt-20 overflow-x-hidden">
             <OfflineIndicator />
             <LoadingBar />
             {children}

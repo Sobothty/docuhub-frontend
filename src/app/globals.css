@@ -69,10 +69,18 @@
 
 /* Base styles */
 @layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     @apply bg-background text-foreground font-sans;
     background: linear-gradient(135deg, #f0f4f8 0%, #e8eef3 50%, #f5f7fa 100%);
     transition: background-color 0.3s ease, color 0.3s ease;
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
   }
 
   .dark body {
@@ -3723,7 +3731,7 @@
   /* Navbar Container */
   .navbar-container {
     position: fixed;
-    top: 3rem;
+    top: 2.5rem; /* Height of StickyBanner */
     left: 0;
     width: 100%;
     z-index: 40;
@@ -3736,13 +3744,13 @@
 
   @media (min-width: 640px) {
     .navbar-container {
-      top: 3.25rem;
+      top: 2.5rem; /* Consistent height */
     }
   }
 
   @media (min-width: 768px) {
     .navbar-container {
-      top: 3rem;
+      top: 2.5rem; /* Consistent height */
     }
   }
 
