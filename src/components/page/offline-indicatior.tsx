@@ -1,36 +1,23 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { WifiOff, Wifi } from "lucide-react"
+import { useState, useEffect } from "react";
+import { WifiOff, Wifi } from "lucide-react";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 
 export function OfflineIndicator() {
-  const [isOnline, setIsOnline] = useState(true)
-  const [showReconnected, setShowReconnected] = useState(false)
+  const { isOnline, wasOffline } = useNetworkStatus();
+  const [showReconnected, setShowReconnected] = useState(false);
 
+  // Show reconnected message when coming back online
   useEffect(() => {
-    setIsOnline(navigator.onLine)
-
-    const handleOnline = () => {
-      setIsOnline(true)
-      setShowReconnected(true)
-      setTimeout(() => setShowReconnected(false), 3000)
+    if (wasOffline && isOnline && !showReconnected) {
+      setShowReconnected(true);
+      const timer = setTimeout(() => setShowReconnected(false), 3000);
+      return () => clearTimeout(timer);
     }
+  }, [wasOffline, isOnline, showReconnected]);
 
-    const handleOffline = () => {
-      setIsOnline(false)
-      setShowReconnected(false)
-    }
-
-    window.addEventListener("online", handleOnline)
-    window.addEventListener("offline", handleOffline)
-
-    return () => {
-      window.removeEventListener("online", handleOnline)
-      window.removeEventListener("offline", handleOffline)
-    }
-  }, [])
-
-  if (isOnline && !showReconnected) return null
+  if (isOnline && !showReconnected) return null;
 
   return (
     <>
@@ -115,7 +102,7 @@ export function OfflineIndicator() {
           animation: successBounce 0.6s ease-out;
         }
       `}</style>
-      
+
       <div className="fixed top-0 left-0 right-0 z-50 animate-slide-down">
         {!isOnline ? (
           <div className="relative bg-gradient-to-r from-red-500 via-red-600 to-red-500 text-white px-6 py-4 shadow-2xl overflow-hidden">
@@ -137,7 +124,7 @@ export function OfflineIndicator() {
                 ))}
               </div>
             </div>
-            
+
             <div className="container mx-auto relative z-10">
               <div className="flex items-center justify-center gap-4">
                 {/* Icon with ripple effect */}
@@ -147,14 +134,18 @@ export function OfflineIndicator() {
                     <WifiOff className="h-6 w-6" />
                   </div>
                 </div>
-                
+
                 <div className="flex flex-col">
-                  <p className="text-base font-bold tracking-wide">No Internet Connection</p>
-                  <p className="text-sm text-red-100 font-medium">Some features may be unavailable</p>
+                  <p className="text-base font-bold tracking-wide">
+                    No Internet Connection
+                  </p>
+                  <p className="text-sm text-red-100 font-medium">
+                    Some features may be unavailable
+                  </p>
                 </div>
               </div>
             </div>
-            
+
             {/* Bottom glow effect */}
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white to-transparent opacity-30" />
           </div>
@@ -178,7 +169,7 @@ export function OfflineIndicator() {
                 ))}
               </div>
             </div>
-            
+
             <div className="container mx-auto relative z-10">
               <div className="flex items-center justify-center gap-4">
                 {/* Success icon with celebration effect */}
@@ -188,25 +179,46 @@ export function OfflineIndicator() {
                     <Wifi className="h-6 w-6" />
                   </div>
                 </div>
-                
+
                 <div className="flex flex-col">
-                  <p className="text-base font-bold tracking-wide">Back Online!</p>
-                  <p className="text-sm text-emerald-100 font-medium">Connection successfully restored</p>
+                  <p className="text-base font-bold tracking-wide">
+                    Back Online!
+                  </p>
+                  <p className="text-sm text-emerald-100 font-medium">
+                    Connection successfully restored
+                  </p>
                 </div>
-                
+
                 {/* Checkmark animation */}
-                <svg className="h-8 w-8 animate-success-bounce" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.3" />
-                  <path d="M8 12l3 3 5-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                <svg
+                  className="h-8 w-8 animate-success-bounce"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    opacity="0.3"
+                  />
+                  <path
+                    d="M8 12l3 3 5-6"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </div>
             </div>
-            
+
             {/* Bottom shine effect */}
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white to-transparent opacity-40" />
           </div>
         )}
       </div>
     </>
-  )
+  );
 }

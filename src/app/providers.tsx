@@ -8,6 +8,7 @@ import ReduxProvider from "@/lib/Provider";
 import { SessionProvider } from "next-auth/react";
 import { AutoSignOutHandler } from "@/components/auth/autoSignOut";
 import { WebSocketProvider } from "@/components/providers/WebSocketProvider";
+import { ServiceWorkerProvider } from "@/components/providers/ServiceWorkerProvider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Keep <html lang> in sync with current language
@@ -29,19 +30,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ReduxProvider>
       <SessionProvider>
-        <WebSocketProvider>
-          <I18nextProvider i18n={i18n} defaultNS="common">
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="light"
-              enableSystem={false}
-              disableTransitionOnChange
-            >
-              <AutoSignOutHandler />
-              {children}
-            </ThemeProvider>
-          </I18nextProvider>
-        </WebSocketProvider>
+        <ServiceWorkerProvider>
+          <WebSocketProvider>
+            <I18nextProvider i18n={i18n} defaultNS="common">
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="light"
+                enableSystem={false}
+                disableTransitionOnChange
+              >
+                <AutoSignOutHandler />
+                {children}
+              </ThemeProvider>
+            </I18nextProvider>
+          </WebSocketProvider>
+        </ServiceWorkerProvider>
       </SessionProvider>
     </ReduxProvider>
   );

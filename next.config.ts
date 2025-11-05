@@ -6,6 +6,24 @@ const nextConfig = {
   outputFileTracingRoot: __dirname,
   // Remove i18n for App Router compatibility
   // i18n, // This is not supported in App Router
+  // Service Worker and PWA support
+  async headers() {
+    return [
+      {
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, must-revalidate",
+          },
+          {
+            key: "Service-Worker-Allowed",
+            value: "/",
+          },
+        ],
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "randomuser.me" },
